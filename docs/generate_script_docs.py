@@ -236,8 +236,6 @@ def create_script_rst_file(module_name, help_content):
                 f.write(f"    {line}\n")
         
         # Move automodule directive to the end to avoid disrupting the flow
-        f.write("\n\n.. automodule:: micaflow.scripts.{}\n".format(module_name))
-        f.write("   :noindex:\n")
 
 def create_scripts_index():
     """Create the index file that will list all script modules."""
