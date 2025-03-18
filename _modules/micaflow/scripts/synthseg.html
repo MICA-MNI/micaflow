@@ -1,0 +1,377 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>micaflow.scripts.synthseg &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scripts.html">Scripts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">micaflow.scripts.synthseg</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for micaflow.scripts.synthseg</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">synthseg - Neural Network-Based Brain MRI Segmentation</span>
+
+<span class="sd">Part of the micaflow processing pipeline for neuroimaging data.</span>
+
+<span class="sd">This module provides an interface to SynthSeg, a deep learning-based tool for automated </span>
+<span class="sd">brain MRI segmentation that works across different MRI contrasts without retraining. </span>
+<span class="sd">SynthSeg segments brain anatomical structures in T1w, T2w, FLAIR, and other MR contrasts, </span>
+<span class="sd">providing both whole-brain segmentation and optional cortical parcellation.</span>
+
+<span class="sd">Features:</span>
+<span class="sd">--------</span>
+<span class="sd">- Contrast-agnostic segmentation working across different MRI acquisition types</span>
+<span class="sd">- Whole-brain anatomical structure segmentation with 37 labels</span>
+<span class="sd">- Optional cortical parcellation (up to 95 additional regions)</span>
+<span class="sd">- Multiple execution modes: standard, robust (higher quality), and fast</span>
+<span class="sd">- Volumetric analysis with CSV output for region-wise measurements</span>
+<span class="sd">- Quality control metrics for assessing segmentation reliability</span>
+<span class="sd">- GPU acceleration with optional CPU-only execution</span>
+
+<span class="sd">API Usage:</span>
+<span class="sd">---------</span>
+<span class="sd">micaflow synthseg </span>
+<span class="sd">    --i &lt;path/to/image.nii.gz&gt;</span>
+<span class="sd">    --o &lt;path/to/segmentation.nii.gz&gt;</span>
+<span class="sd">    [--parc]</span>
+<span class="sd">    [--robust]</span>
+<span class="sd">    [--fast]</span>
+<span class="sd">    [--vol &lt;path/to/volumes.csv&gt;]</span>
+<span class="sd">    [--qc &lt;path/to/qc_scores.csv&gt;]</span>
+<span class="sd">    [--threads &lt;num_threads&gt;]</span>
+
+<span class="sd">Python Usage:</span>
+<span class="sd">-----------</span>
+<span class="sd">&gt;&gt;&gt; from micaflow.scripts.synthseg import main</span>
+<span class="sd">&gt;&gt;&gt; main({</span>
+<span class="sd">...     &#39;i&#39;: &#39;input_image.nii.gz&#39;,</span>
+<span class="sd">...     &#39;o&#39;: &#39;segmentation.nii.gz&#39;,</span>
+<span class="sd">...     &#39;parc&#39;: True,</span>
+<span class="sd">...     &#39;robust&#39;: False,</span>
+<span class="sd">...     &#39;fast&#39;: True,</span>
+<span class="sd">...     &#39;vol&#39;: &#39;volumes.csv&#39;,</span>
+<span class="sd">...     &#39;threads&#39;: 4</span>
+<span class="sd">... })</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># python imports</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">argparse</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArgumentParser</span><span class="p">,</span> <span class="n">RawDescriptionHelpFormatter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">colorama</span><span class="w"> </span><span class="kn">import</span> <span class="n">init</span><span class="p">,</span> <span class="n">Fore</span><span class="p">,</span> <span class="n">Style</span>
+
+<span class="n">init</span><span class="p">()</span>
+
+<div class="viewcode-block" id="print_extended_help">
+<a class="viewcode-back" href="../../../scripts/synthseg.html#micaflow.scripts.synthseg.print_extended_help">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">print_extended_help</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Print extended help message with examples and usage instructions.&quot;&quot;&quot;</span>
+    <span class="c1"># ANSI color codes</span>
+    <span class="n">CYAN</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">CYAN</span>
+    <span class="n">GREEN</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">GREEN</span>
+    <span class="n">YELLOW</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">YELLOW</span>
+    <span class="n">BLUE</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">BLUE</span>
+    <span class="n">MAGENTA</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">MAGENTA</span>
+    <span class="n">BOLD</span> <span class="o">=</span> <span class="n">Style</span><span class="o">.</span><span class="n">BRIGHT</span>
+    <span class="n">RESET</span> <span class="o">=</span> <span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span>
+    
+    <span class="n">help_text</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">╔════════════════════════════════════════════════════════════════╗</span>
+<span class="s2">    ║                         SYNTHSEG                               ║</span>
+<span class="s2">    ╚════════════════════════════════════════════════════════════════╝</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    </span>
+<span class="s2">    This script runs the SynthSeg neural network-based tool for brain MRI</span>
+<span class="s2">    segmentation. It provides automated segmentation of anatomical structures</span>
+<span class="s2">    even across different contrasts and acquisition types.</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">────────────────────────── USAGE ──────────────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">      micaflow synthseg </span><span class="si">{</span><span class="n">GREEN</span><span class="si">}</span><span class="s2">[options]</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">─────────────────── REQUIRED ARGUMENTS ───────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--i</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> PATH       : Input image(s) to segment (file or folder)</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--o</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> PATH       : Output segmentation file(s) or folder</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">─────────────────── OPTIONAL ARGUMENTS ───────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--parc</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">         : Enable cortical parcellation</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--robust</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">       : Use robust mode (slower but better quality)</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--fast</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">         : Faster processing (less postprocessing)</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--threads</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> N    : Set number of CPU threads (default: 1)</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--cpu</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">          : Force CPU processing (instead of GPU)</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--vol</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> PATH     : Output volumetric CSV file</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--qc</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> PATH      : Output quality control scores CSV file</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--post</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> PATH    : Output posterior probability maps</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--resample</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> PATH: Output resampled images</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--crop</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> N [N ...]: Size of 3D patches to analyze (default: 192)</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--ct</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">           : Clip intensities for CT scans [0,80]</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--v1</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">           : Use SynthSeg 1.0 instead of 2.0</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">────────────────── EXAMPLE USAGE ────────────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">BLUE</span><span class="si">}</span><span class="s2"># Basic segmentation</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    micaflow synthseg </span><span class="se">\\</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--i</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> t1w_scan.nii.gz </span><span class="se">\\</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--o</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> segmentation.nii.gz</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">BLUE</span><span class="si">}</span><span class="s2"># With cortical parcellation</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    micaflow synthseg </span><span class="se">\\</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--i</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> t1w_scan.nii.gz </span><span class="se">\\</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--o</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> segmentation.nii.gz </span><span class="se">\\</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--parc</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">BLUE</span><span class="si">}</span><span class="s2"># Batch processing with volume calculation</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    micaflow synthseg </span><span class="se">\\</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--i</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> input_folder/ </span><span class="se">\\</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--o</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> output_folder/ </span><span class="se">\\</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--vol</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> volumes.csv</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">────────────────────────── NOTES ───────────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    </span><span class="si">{</span><span class="n">MAGENTA</span><span class="si">}</span><span class="s2">•</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> SynthSeg works with any MRI contrast without retraining</span>
+<span class="s2">    </span><span class="si">{</span><span class="n">MAGENTA</span><span class="si">}</span><span class="s2">•</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> GPU acceleration is used by default for faster processing</span>
+<span class="s2">    </span><span class="si">{</span><span class="n">MAGENTA</span><span class="si">}</span><span class="s2">•</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> The robust mode provides better quality but is slower</span>
+<span class="s2">    </span><span class="si">{</span><span class="n">MAGENTA</span><span class="si">}</span><span class="s2">•</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> For batch processing, input and output paths must be folders</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">help_text</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../../scripts/synthseg.html#micaflow.scripts.synthseg.main">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+  <span class="n">synthseg_home</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+  <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">synthseg_home</span><span class="p">)</span>
+  <span class="n">model_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">synthseg_home</span><span class="p">,</span> <span class="s1">&#39;models&#39;</span><span class="p">)</span>
+  <span class="n">labels_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">synthseg_home</span><span class="p">,</span> <span class="s1">&#39;data/labels_classes_priors&#39;</span><span class="p">)</span>
+  <span class="c1"># The rest of your code remains unchanged</span>
+  <span class="c1"># print SynthSeg version and checks boolean params for SynthSeg-robust</span>
+  <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;robust&#39;</span><span class="p">]:</span>
+      <span class="n">args</span><span class="p">[</span><span class="s1">&#39;fast&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+      <span class="k">assert</span> <span class="ow">not</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;v1&#39;</span><span class="p">],</span> <span class="s1">&#39;The flag --v1 cannot be used with --robust since SynthSeg-robust only came out with 2.0.&#39;</span>
+      <span class="n">version</span> <span class="o">=</span> <span class="s1">&#39;SynthSeg-robust 2.0&#39;</span>
+  <span class="k">else</span><span class="p">:</span>
+      <span class="n">version</span> <span class="o">=</span> <span class="s1">&#39;SynthSeg 1.0&#39;</span> <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;v1&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="s1">&#39;SynthSeg 2.0&#39;</span>
+      <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;fast&#39;</span><span class="p">]:</span>
+          <span class="n">version</span> <span class="o">+=</span> <span class="s1">&#39; (fast)&#39;</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">version</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+  <span class="c1"># enforce CPU processing if necessary</span>
+  <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;cpu&#39;</span><span class="p">]:</span>
+      <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;using CPU, hiding all CUDA_VISIBLE_DEVICES&#39;</span><span class="p">)</span>
+      <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;CUDA_VISIBLE_DEVICES&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;-1&#39;</span>
+
+  <span class="c1"># limit the number of threads to be used if running on CPU</span>
+  <span class="kn">import</span><span class="w"> </span><span class="nn">tensorflow</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tf</span>
+  <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;threads&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+      <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;using 1 thread&#39;</span><span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+      <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;using </span><span class="si">%s</span><span class="s1"> threads&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;threads&#39;</span><span class="p">])</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">threading</span><span class="o">.</span><span class="n">set_inter_op_parallelism_threads</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;threads&#39;</span><span class="p">])</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">threading</span><span class="o">.</span><span class="n">set_intra_op_parallelism_threads</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;threads&#39;</span><span class="p">])</span>
+
+
+  <span class="c1"># path models</span>
+  <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;robust&#39;</span><span class="p">]:</span>
+      <span class="n">args</span><span class="p">[</span><span class="s1">&#39;path_model_segmentation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span> <span class="s1">&#39;synthseg_robust_2.0.h5&#39;</span><span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+      <span class="n">args</span><span class="p">[</span><span class="s1">&#39;path_model_segmentation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span> <span class="s1">&#39;synthseg_2.0.h5&#39;</span><span class="p">)</span>
+  <span class="n">args</span><span class="p">[</span><span class="s1">&#39;path_model_parcellation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span> <span class="s1">&#39;synthseg_parc_2.0.h5&#39;</span><span class="p">)</span>
+  <span class="n">args</span><span class="p">[</span><span class="s1">&#39;path_model_qc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span> <span class="s1">&#39;synthseg_qc_2.0.h5&#39;</span><span class="p">)</span>
+
+  <span class="c1"># path labels</span>
+  <span class="n">args</span><span class="p">[</span><span class="s1">&#39;labels_segmentation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">labels_dir</span><span class="p">,</span> <span class="s1">&#39;synthseg_segmentation_labels_2.0.npy&#39;</span><span class="p">)</span>
+  <span class="n">args</span><span class="p">[</span><span class="s1">&#39;labels_denoiser&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">labels_dir</span><span class="p">,</span> <span class="s1">&#39;synthseg_denoiser_labels_2.0.npy&#39;</span><span class="p">)</span>
+  <span class="n">args</span><span class="p">[</span><span class="s1">&#39;labels_parcellation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">labels_dir</span><span class="p">,</span> <span class="s1">&#39;synthseg_parcellation_labels.npy&#39;</span><span class="p">)</span>
+  <span class="n">args</span><span class="p">[</span><span class="s1">&#39;labels_qc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">labels_dir</span><span class="p">,</span> <span class="s1">&#39;synthseg_qc_labels_2.0.npy&#39;</span><span class="p">)</span>
+  <span class="n">args</span><span class="p">[</span><span class="s1">&#39;names_segmentation_labels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">labels_dir</span><span class="p">,</span> <span class="s1">&#39;synthseg_segmentation_names_2.0.npy&#39;</span><span class="p">)</span>
+  <span class="n">args</span><span class="p">[</span><span class="s1">&#39;names_parcellation_labels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">labels_dir</span><span class="p">,</span> <span class="s1">&#39;synthseg_parcellation_names.npy&#39;</span><span class="p">)</span>
+  <span class="n">args</span><span class="p">[</span><span class="s1">&#39;names_qc_labels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">labels_dir</span><span class="p">,</span> <span class="s1">&#39;synthseg_qc_names_2.0.npy&#39;</span><span class="p">)</span>
+  <span class="n">args</span><span class="p">[</span><span class="s1">&#39;topology_classes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">labels_dir</span><span class="p">,</span> <span class="s1">&#39;synthseg_topological_classes_2.0.npy&#39;</span><span class="p">)</span>
+  <span class="n">args</span><span class="p">[</span><span class="s1">&#39;n_neutral_labels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">19</span>
+
+  <span class="c1"># use previous model if needed</span>
+  <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;v1&#39;</span><span class="p">]:</span>
+      <span class="n">args</span><span class="p">[</span><span class="s1">&#39;path_model_segmentation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span> <span class="s1">&#39;synthseg_1.0.h5&#39;</span><span class="p">)</span>
+      <span class="n">args</span><span class="p">[</span><span class="s1">&#39;labels_segmentation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;labels_segmentation&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_2.0.npy&#39;</span><span class="p">,</span> <span class="s1">&#39;.npy&#39;</span><span class="p">)</span>
+      <span class="n">args</span><span class="p">[</span><span class="s1">&#39;labels_qc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;labels_qc&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_2.0.npy&#39;</span><span class="p">,</span> <span class="s1">&#39;.npy&#39;</span><span class="p">)</span>
+      <span class="n">args</span><span class="p">[</span><span class="s1">&#39;names_segmentation_labels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;names_segmentation_labels&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_2.0.npy&#39;</span><span class="p">,</span> <span class="s1">&#39;.npy&#39;</span><span class="p">)</span>
+      <span class="n">args</span><span class="p">[</span><span class="s1">&#39;names_qc_labels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;names_qc_labels&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_2.0.npy&#39;</span><span class="p">,</span> <span class="s1">&#39;.npy&#39;</span><span class="p">)</span>
+      <span class="n">args</span><span class="p">[</span><span class="s1">&#39;topology_classes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;topology_classes&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_2.0.npy&#39;</span><span class="p">,</span> <span class="s1">&#39;.npy&#39;</span><span class="p">)</span>
+      <span class="n">args</span><span class="p">[</span><span class="s1">&#39;n_neutral_labels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">18</span>
+
+  <span class="kn">from</span><span class="w"> </span><span class="nn">SynthSeg.predict_synthseg</span><span class="w"> </span><span class="kn">import</span> <span class="n">predict</span>
+  <span class="c1"># run prediction</span>
+  <span class="n">predict</span><span class="p">(</span><span class="n">path_images</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">],</span>
+          <span class="n">path_segmentations</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;o&#39;</span><span class="p">],</span>
+          <span class="n">path_model_segmentation</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;path_model_segmentation&#39;</span><span class="p">],</span>
+          <span class="n">labels_segmentation</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;labels_segmentation&#39;</span><span class="p">],</span>
+          <span class="n">robust</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;robust&#39;</span><span class="p">],</span>
+          <span class="n">fast</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;fast&#39;</span><span class="p">],</span>
+          <span class="n">v1</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;v1&#39;</span><span class="p">],</span>
+          <span class="n">do_parcellation</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;parc&#39;</span><span class="p">],</span>
+          <span class="n">n_neutral_labels</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;n_neutral_labels&#39;</span><span class="p">],</span>
+          <span class="n">names_segmentation</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;names_segmentation_labels&#39;</span><span class="p">],</span>
+          <span class="n">labels_denoiser</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;labels_denoiser&#39;</span><span class="p">],</span>
+          <span class="n">path_posteriors</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;post&#39;</span><span class="p">],</span>
+          <span class="n">path_resampled</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;resample&#39;</span><span class="p">],</span>
+          <span class="n">path_volumes</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;vol&#39;</span><span class="p">],</span>
+          <span class="n">path_model_parcellation</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;path_model_parcellation&#39;</span><span class="p">],</span>
+          <span class="n">labels_parcellation</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;labels_parcellation&#39;</span><span class="p">],</span>
+          <span class="n">names_parcellation</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;names_parcellation_labels&#39;</span><span class="p">],</span>
+          <span class="n">path_model_qc</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;path_model_qc&#39;</span><span class="p">],</span>
+          <span class="n">labels_qc</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;labels_qc&#39;</span><span class="p">],</span>
+          <span class="n">path_qc_scores</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;qc&#39;</span><span class="p">],</span>
+          <span class="n">names_qc</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;names_qc_labels&#39;</span><span class="p">],</span>
+          <span class="n">cropping</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;crop&#39;</span><span class="p">],</span>
+          <span class="n">topology_classes</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;topology_classes&#39;</span><span class="p">],</span>
+          <span class="n">ct</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;ct&#39;</span><span class="p">])</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="c1"># Check if help flags are provided or no arguments</span>
+  <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="s1">&#39;-h&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="ow">or</span> <span class="s1">&#39;--help&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">:</span>
+      <span class="n">print_extended_help</span><span class="p">()</span>
+      <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+  <span class="c1"># parse arguments</span>
+  <span class="n">parser</span> <span class="o">=</span> <span class="n">ArgumentParser</span><span class="p">(</span>
+      <span class="n">description</span><span class="o">=</span><span class="s2">&quot;SynthSeg: Deep learning tool for brain MRI segmentation&quot;</span><span class="p">,</span> 
+      <span class="n">epilog</span><span class="o">=</span><span class="s2">&quot;For more details see: https://github.com/BBillot/SynthSeg&quot;</span><span class="p">,</span>
+      <span class="n">formatter_class</span><span class="o">=</span><span class="n">RawDescriptionHelpFormatter</span>
+  <span class="p">)</span>
+
+  <span class="c1"># input/outputs</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--i&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Image(s) to segment. Can be a path to an image or to a folder.&quot;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--o&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Segmentation output(s). Must be a folder if --i designates a folder.&quot;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--parc&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;(optional) Whether to perform cortex parcellation.&quot;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--robust&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;(optional) Whether to use robust predictions (slower).&quot;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--fast&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;(optional) Bypass some postprocessing for faster predictions.&quot;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--ct&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;(optional) Clip intensities to [0,80] for CT scans.&quot;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--vol&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;(optional) Path to output CSV file with volumes (mm3) for all regions and subjects.&quot;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--qc&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;(optional) Path to output CSV file with qc scores for all subjects.&quot;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--post&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;(optional) Posteriors output(s). Must be a folder if --i designates a folder.&quot;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--resample&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;(optional) Resampled image(s). Must be a folder if --i designates a folder.&quot;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--crop&quot;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;(optional) Size of 3D patches to analyse. Default is 192.&quot;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--threads&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;(optional) Number of cores to be used. Default is 1.&quot;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--cpu&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;(optional) Enforce running with CPU rather than GPU.&quot;</span><span class="p">)</span>
+  <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--v1&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;(optional) Use SynthSeg 1.0 (updated 25/06/22).&quot;</span><span class="p">)</span>
+
+  <span class="c1"># parse commandline</span>
+  <span class="n">args</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">())</span>
+  <span class="n">main</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

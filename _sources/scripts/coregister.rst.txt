@@ -1,0 +1,105 @@
+Coregister
+==========
+
+coregister - Image Registration for Aligning Neuroimaging Data
+
+Part of the micaflow processing pipeline for neuroimaging data.
+
+This module performs comprehensive image registration between two images using the 
+Advanced Normalization Tools (ANTs) SyNRA algorithm, which combines rigid, affine, 
+and symmetric normalization transformations. It aligns a moving image with a fixed 
+reference space, enabling spatial normalization of neuroimaging data for group analysis, 
+multimodal integration, or atlas-based analyses.
+
+Features:
+--------
+- Combined rigid, affine, and SyN nonlinear registration in one step
+- Bidirectional transformation capability (forward and inverse)
+- Option to save all transformation components for later application
+- Uses ANTs' powerful SyNRA algorithm for optimal accuracy
+- Preserves header information in the registered output images
+
+API Usage:
+---------
+micaflow coregister 
+    --fixed-file <path/to/reference.nii.gz>
+    --moving-file <path/to/source.nii.gz>
+    --output <path/to/registered.nii.gz>
+    [--warp-file <path/to/warp.nii.gz>]
+    [--affine-file <path/to/affine.mat>]
+    [--rev-warp-file <path/to/reverse_warp.nii.gz>]
+    [--rev-affine-file <path/to/reverse_affine.mat>]
+
+Python Usage:
+-----------
+>>> from micaflow.scripts.coregister import ants_linear_nonlinear_registration
+>>> ants_linear_nonlinear_registration(
+...     fixed_file="mni152.nii.gz",
+...     moving_file="subject_t1w.nii.gz",
+...     out_file="registered_t1w.nii.gz",
+...     warp_file="warp.nii.gz",
+...     affine_file="affine.mat",
+...     rev_warp_file="reverse_warp.nii.gz",
+...     rev_affine_file="reverse_affine.mat"
+... )
+
+Command Line Usage
+-----------------
+
+.. code-block:: bash
+
+    micaflow coregister [options]
+
+Source Code
+-----------
+
+View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/coregister.py>`_
+
+Description
+-----------
+
+This script performs linear (rigid + affine) and nonlinear (SyN) registration 
+    between two images using ANTs. The registration aligns the moving image to 
+    match the fixed reference image space.
+
+Full Help
+---------
+
+.. code-block:: text
+
+    
+        ╔════════════════════════════════════════════════════════════════╗
+        ║                      IMAGE COREGISTRATION                      ║
+        ╚════════════════════════════════════════════════════════════════╝
+        
+        This script performs linear (rigid + affine) and nonlinear (SyN) registration 
+        between two images using ANTs. The registration aligns the moving image to 
+        match the fixed reference image space.
+        
+        ────────────────────────── USAGE ──────────────────────────
+          micaflow coregister [options]
+        
+        ─────────────────── REQUIRED ARGUMENTS ───────────────────
+          --fixed-file   : Path to the fixed/reference image (.nii.gz)
+          --moving-file  : Path to the moving image to be registered (.nii.gz)
+          --output       : Output path for the registered image (.nii.gz)
+        
+        ─────────────────── OPTIONAL ARGUMENTS ───────────────────
+          --warp-file      : Path to save the forward warp field (.nii.gz)
+          --affine-file    : Path to save the forward affine transform (.mat)
+          --rev-warp-file  : Path to save the reverse warp field (.nii.gz)
+          --rev-affine-file: Path to save the reverse affine transform (.mat)
+        
+        ────────────────── EXAMPLE USAGE ────────────────────────
+        
+        # Register a moving image to a fixed image
+        micaflow coregister --fixed-file mni152.nii.gz --moving-file subject_t1w.nii.gz \
+          --output registered_t1w.nii.gz --warp-file warp.nii.gz --affine-file affine.mat
+        
+        ────────────────────────── NOTES ───────────────────────
+        • The registration performs SyNRA transformation (rigid+affine+SyN)
+        • Forward transforms convert from moving space to fixed space
+        • Reverse transforms convert from fixed space to moving space
+        • The transforms can be applied to other images using apply_warp
+        
+    

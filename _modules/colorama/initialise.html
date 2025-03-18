@@ -1,0 +1,252 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>colorama.initialise &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../scripts.html">Scripts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">colorama.initialise</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for colorama.initialise</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright Jonathan Hartley 2013. BSD 3-Clause license, see LICENSE file.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">atexit</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.ansitowin32</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnsiToWin32</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_wipe_internal_state_for_tests</span><span class="p">():</span>
+    <span class="k">global</span> <span class="n">orig_stdout</span><span class="p">,</span> <span class="n">orig_stderr</span>
+    <span class="n">orig_stdout</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">orig_stderr</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">global</span> <span class="n">wrapped_stdout</span><span class="p">,</span> <span class="n">wrapped_stderr</span>
+    <span class="n">wrapped_stdout</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">wrapped_stderr</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">global</span> <span class="n">atexit_done</span>
+    <span class="n">atexit_done</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">global</span> <span class="n">fixed_windows_console</span>
+    <span class="n">fixed_windows_console</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># no-op if it wasn&#39;t registered</span>
+        <span class="n">atexit</span><span class="o">.</span><span class="n">unregister</span><span class="p">(</span><span class="n">reset_all</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="c1"># python 2: no atexit.unregister. Oh well, we did our best.</span>
+        <span class="k">pass</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">reset_all</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">AnsiToWin32</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>    <span class="c1"># Issue #74: objects might become None at exit</span>
+        <span class="n">AnsiToWin32</span><span class="p">(</span><span class="n">orig_stdout</span><span class="p">)</span><span class="o">.</span><span class="n">reset_all</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="init">
+<a class="viewcode-back" href="../../scripts/texture_generation.html#micaflow.scripts.SDC.init">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">autoreset</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">convert</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">wrap</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">wrap</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">([</span><span class="n">autoreset</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">strip</span><span class="p">]):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;wrap=False conflicts with any other arg=True&#39;</span><span class="p">)</span>
+
+    <span class="k">global</span> <span class="n">wrapped_stdout</span><span class="p">,</span> <span class="n">wrapped_stderr</span>
+    <span class="k">global</span> <span class="n">orig_stdout</span><span class="p">,</span> <span class="n">orig_stderr</span>
+
+    <span class="n">orig_stdout</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span>
+    <span class="n">orig_stderr</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span>
+
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">wrapped_stdout</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">wrapped_stdout</span> <span class="o">=</span> \
+            <span class="n">wrap_stream</span><span class="p">(</span><span class="n">orig_stdout</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">strip</span><span class="p">,</span> <span class="n">autoreset</span><span class="p">,</span> <span class="n">wrap</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">wrapped_stderr</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span> <span class="o">=</span> <span class="n">wrapped_stderr</span> <span class="o">=</span> \
+            <span class="n">wrap_stream</span><span class="p">(</span><span class="n">orig_stderr</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">strip</span><span class="p">,</span> <span class="n">autoreset</span><span class="p">,</span> <span class="n">wrap</span><span class="p">)</span>
+
+    <span class="k">global</span> <span class="n">atexit_done</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">atexit_done</span><span class="p">:</span>
+        <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">reset_all</span><span class="p">)</span>
+        <span class="n">atexit_done</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">deinit</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">orig_stdout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">orig_stdout</span>
+    <span class="k">if</span> <span class="n">orig_stderr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span> <span class="o">=</span> <span class="n">orig_stderr</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">just_fix_windows_console</span><span class="p">():</span>
+    <span class="k">global</span> <span class="n">fixed_windows_console</span>
+
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="o">!=</span> <span class="s2">&quot;win32&quot;</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="n">fixed_windows_console</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="n">wrapped_stdout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">wrapped_stderr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Someone already ran init() and it did stuff, so we won&#39;t second-guess them</span>
+        <span class="k">return</span>
+
+    <span class="c1"># On newer versions of Windows, AnsiToWin32.__init__ will implicitly enable the</span>
+    <span class="c1"># native ANSI support in the console as a side-effect. We only need to actually</span>
+    <span class="c1"># replace sys.stdout/stderr if we&#39;re in the old-style conversion mode.</span>
+    <span class="n">new_stdout</span> <span class="o">=</span> <span class="n">AnsiToWin32</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span> <span class="n">convert</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">autoreset</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">new_stdout</span><span class="o">.</span><span class="n">convert</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">new_stdout</span>
+    <span class="n">new_stderr</span> <span class="o">=</span> <span class="n">AnsiToWin32</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span> <span class="n">convert</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strip</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">autoreset</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">new_stderr</span><span class="o">.</span><span class="n">convert</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span> <span class="o">=</span> <span class="n">new_stderr</span>
+
+    <span class="n">fixed_windows_console</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">colorama_text</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">init</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">yield</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">deinit</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">reinit</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">wrapped_stdout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">wrapped_stdout</span>
+    <span class="k">if</span> <span class="n">wrapped_stderr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span> <span class="o">=</span> <span class="n">wrapped_stderr</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">wrap_stream</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">strip</span><span class="p">,</span> <span class="n">autoreset</span><span class="p">,</span> <span class="n">wrap</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">wrap</span><span class="p">:</span>
+        <span class="n">wrapper</span> <span class="o">=</span> <span class="n">AnsiToWin32</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span>
+            <span class="n">convert</span><span class="o">=</span><span class="n">convert</span><span class="p">,</span> <span class="n">strip</span><span class="o">=</span><span class="n">strip</span><span class="p">,</span> <span class="n">autoreset</span><span class="o">=</span><span class="n">autoreset</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">wrapper</span><span class="o">.</span><span class="n">should_wrap</span><span class="p">():</span>
+            <span class="n">stream</span> <span class="o">=</span> <span class="n">wrapper</span><span class="o">.</span><span class="n">stream</span>
+    <span class="k">return</span> <span class="n">stream</span>
+
+
+<span class="c1"># Use this for initial setup as well, to reduce code duplication</span>
+<span class="n">_wipe_internal_state_for_tests</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
