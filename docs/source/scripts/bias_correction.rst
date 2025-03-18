@@ -1,21 +1,41 @@
 Bias Correction
 ===============
 
-N4 Bias Field Correction script for both anatomical and diffusion MR images.
+bias_correction - N4 Bias Field Correction for MRI data
 
-This script provides functionality to correct intensity non-uniformity (bias field)
-in MR images using the N4 algorithm from the Advanced Normalization Tools (ANTs) library.
-It supports both 3D anatomical images and 4D diffusion-weighted images.
+Part of the micaflow processing pipeline for neuroimaging data.
 
-Examples:
-    # For anatomical (3D) images:
-    python bias_correction.py --input t1w.nii.gz --output corrected.nii.gz
+This module corrects intensity non-uniformity (bias field) in MR images using the 
+N4 algorithm from Advanced Normalization Tools (ANTs). Intensity bias appears as a 
+smooth variation of signal intensity across the image and can affect subsequent analysis 
+steps like segmentation or registration. The N4 algorithm estimates this bias field 
+and removes it, producing more uniform intensities across tissues.
 
-    # For anatomical images with mask:
-    python bias_correction.py --input t1w.nii.gz --output corrected.nii.gz --mask brain_mask.nii.gz
+Features:
+--------
+- Supports both 3D anatomical images and 4D diffusion-weighted images
+- Automatic detection of image dimensionality (3D vs 4D)
+- Optional brain mask input for improved correction accuracy
+- Volume-by-volume processing for 4D images preserves temporal dynamics
+- Maintains image header information in the corrected output
 
-    # For diffusion (4D) images:
-    python bias_correction.py --input dwi.nii.gz --output corrected.nii.gz --mask brain_mask.nii.gz --mode 4d
+API Usage:
+---------
+micaflow bias_correction 
+    --input <path/to/image.nii.gz>
+    --output <path/to/corrected.nii.gz>
+    [--mask <path/to/brain_mask.nii.gz>]
+    [--mode <3d|4d|auto>]
+
+Python Usage:
+-----------
+>>> from micaflow.scripts.bias_correction import run_bias_field_correction
+>>> run_bias_field_correction(
+...     image_path="t1w.nii.gz",
+...     output_path="corrected_t1w.nii.gz",
+...     mask_path="brain_mask.nii.gz",  # optional for 3D images
+...     mode="auto"  # auto, 3d, or 4d
+... )
 
 Command Line Usage
 -----------------
@@ -27,7 +47,7 @@ Command Line Usage
 Source Code
 -----------
 
-View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow2.0/blob/main/micaflow/scripts/bias_correction.py>`_
+View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/bias_correction.py>`_
 
 Description
 -----------

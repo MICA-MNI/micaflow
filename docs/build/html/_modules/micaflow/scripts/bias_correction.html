@@ -52,6 +52,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#dependencies">Dependencies</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../examples.html#example-workflows">Example Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
@@ -90,21 +96,43 @@
            <div itemprop="articleBody">
              
   <h1>Source code for micaflow.scripts.bias_correction</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;N4 Bias Field Correction script for both anatomical and diffusion MR images.</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">bias_correction - N4 Bias Field Correction for MRI data</span>
 
-<span class="sd">This script provides functionality to correct intensity non-uniformity (bias field)</span>
-<span class="sd">in MR images using the N4 algorithm from the Advanced Normalization Tools (ANTs) library.</span>
-<span class="sd">It supports both 3D anatomical images and 4D diffusion-weighted images.</span>
+<span class="sd">Part of the micaflow processing pipeline for neuroimaging data.</span>
 
-<span class="sd">Examples:</span>
-<span class="sd">    # For anatomical (3D) images:</span>
-<span class="sd">    python bias_correction.py --input t1w.nii.gz --output corrected.nii.gz</span>
+<span class="sd">This module corrects intensity non-uniformity (bias field) in MR images using the </span>
+<span class="sd">N4 algorithm from Advanced Normalization Tools (ANTs). Intensity bias appears as a </span>
+<span class="sd">smooth variation of signal intensity across the image and can affect subsequent analysis </span>
+<span class="sd">steps like segmentation or registration. The N4 algorithm estimates this bias field </span>
+<span class="sd">and removes it, producing more uniform intensities across tissues.</span>
 
-<span class="sd">    # For anatomical images with mask:</span>
-<span class="sd">    python bias_correction.py --input t1w.nii.gz --output corrected.nii.gz --mask brain_mask.nii.gz</span>
+<span class="sd">Features:</span>
+<span class="sd">--------</span>
+<span class="sd">- Supports both 3D anatomical images and 4D diffusion-weighted images</span>
+<span class="sd">- Automatic detection of image dimensionality (3D vs 4D)</span>
+<span class="sd">- Optional brain mask input for improved correction accuracy</span>
+<span class="sd">- Volume-by-volume processing for 4D images preserves temporal dynamics</span>
+<span class="sd">- Maintains image header information in the corrected output</span>
 
-<span class="sd">    # For diffusion (4D) images:</span>
-<span class="sd">    python bias_correction.py --input dwi.nii.gz --output corrected.nii.gz --mask brain_mask.nii.gz --mode 4d</span>
+<span class="sd">API Usage:</span>
+<span class="sd">---------</span>
+<span class="sd">micaflow bias_correction </span>
+<span class="sd">    --input &lt;path/to/image.nii.gz&gt;</span>
+<span class="sd">    --output &lt;path/to/corrected.nii.gz&gt;</span>
+<span class="sd">    [--mask &lt;path/to/brain_mask.nii.gz&gt;]</span>
+<span class="sd">    [--mode &lt;3d|4d|auto&gt;]</span>
+
+<span class="sd">Python Usage:</span>
+<span class="sd">-----------</span>
+<span class="sd">&gt;&gt;&gt; from micaflow.scripts.bias_correction import run_bias_field_correction</span>
+<span class="sd">&gt;&gt;&gt; run_bias_field_correction(</span>
+<span class="sd">...     image_path=&quot;t1w.nii.gz&quot;,</span>
+<span class="sd">...     output_path=&quot;corrected_t1w.nii.gz&quot;,</span>
+<span class="sd">...     mask_path=&quot;brain_mask.nii.gz&quot;,  # optional for 3D images</span>
+<span class="sd">...     mode=&quot;auto&quot;  # auto, 3d, or 4d</span>
+<span class="sd">... )</span>
+
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">ants</span>

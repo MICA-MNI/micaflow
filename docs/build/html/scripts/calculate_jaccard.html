@@ -55,6 +55,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../getting_started.html#dependencies">Dependencies</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../examples.html#example-workflows">Example Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
@@ -95,6 +101,47 @@
              
   <section id="calculate-jaccard">
 <h1>Calculate Jaccard<a class="headerlink" href="#calculate-jaccard" title="Link to this heading"></a></h1>
+<p>calculate_jaccard - Segmentation Overlap Measurement Tool</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module calculates the Jaccard similarity index (intersection over union) between
+two segmentation volumes. The Jaccard index is a statistic used for comparing the
+similarity and diversity of sample sets, with values ranging from 0 (no overlap) to
+1 (perfect overlap). It is particularly useful for evaluating the quality of
+segmentations against a ground truth or comparing results from different methods.</p>
+<section id="features">
+<h2>Features:<a class="headerlink" href="#features" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Support for multi-label segmentations with per-ROI analysis</p></li>
+<li><p>Global Jaccard calculation across the entire volume</p></li>
+<li><p>Optional masking to restrict comparison to specific regions</p></li>
+<li><p>Configurable threshold for probabilistic segmentations</p></li>
+<li><p>CSV output format for easy integration with analysis workflows</p></li>
+</ul>
+</section>
+<section id="api-usage">
+<h2>API Usage:<a class="headerlink" href="#api-usage" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>micaflow calculate_jaccard</dt><dd><p>–input &lt;path/to/segmentation.nii.gz&gt;
+–reference &lt;path/to/ground_truth.nii.gz&gt;
+–output &lt;path/to/results.csv&gt;
+[–mask &lt;path/to/mask.nii.gz&gt;]
+[–threshold &lt;value&gt;]</p>
+</dd>
+</dl>
+</section>
+<section id="python-usage">
+<h2>Python Usage:<a class="headerlink" href="#python-usage" title="Link to this heading"></a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.calculate_jaccard</span><span class="w"> </span><span class="kn">import</span> <span class="n">main</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">main</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">image</span><span class="o">=</span><span class="s2">&quot;segmentation.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;ground_truth.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output_file</span><span class="o">=</span><span class="s2">&quot;jaccard_results.csv&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>  <span class="c1"># optional</span>
+<span class="gp">... </span>    <span class="n">mask_path</span><span class="o">=</span><span class="s2">&quot;brain_mask.nii.gz&quot;</span>  <span class="c1"># optional</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <section id="command-line-usage">
 <h2>Command Line Usage<a class="headerlink" href="#command-line-usage" title="Link to this heading"></a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>calculate_jaccard<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
@@ -103,7 +150,7 @@
 </section>
 <section id="source-code">
 <h2>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h2>
-<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow2.0/blob/main/micaflow/scripts/calculate_jaccard.py">GitHub Repository</a></p>
+<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/calculate_jaccard.py">GitHub Repository</a></p>
 </section>
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
@@ -153,6 +200,47 @@ between two segmentation volumes, either globally or for each ROI.
 - A global Jaccard index is calculated across all labels
 </pre></div>
 </div>
+<p>calculate_jaccard - Segmentation Overlap Measurement Tool</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module calculates the Jaccard similarity index (intersection over union) between
+two segmentation volumes. The Jaccard index is a statistic used for comparing the
+similarity and diversity of sample sets, with values ranging from 0 (no overlap) to
+1 (perfect overlap). It is particularly useful for evaluating the quality of
+segmentations against a ground truth or comparing results from different methods.</p>
+<section id="id1">
+<h3>Features:<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Support for multi-label segmentations with per-ROI analysis</p></li>
+<li><p>Global Jaccard calculation across the entire volume</p></li>
+<li><p>Optional masking to restrict comparison to specific regions</p></li>
+<li><p>Configurable threshold for probabilistic segmentations</p></li>
+<li><p>CSV output format for easy integration with analysis workflows</p></li>
+</ul>
+</section>
+<section id="id2">
+<h3>API Usage:<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>micaflow calculate_jaccard</dt><dd><p>–input &lt;path/to/segmentation.nii.gz&gt;
+–reference &lt;path/to/ground_truth.nii.gz&gt;
+–output &lt;path/to/results.csv&gt;
+[–mask &lt;path/to/mask.nii.gz&gt;]
+[–threshold &lt;value&gt;]</p>
+</dd>
+</dl>
+</section>
+<section id="id3">
+<h3>Python Usage:<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.calculate_jaccard</span><span class="w"> </span><span class="kn">import</span> <span class="n">main</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">main</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">image</span><span class="o">=</span><span class="s2">&quot;segmentation.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;ground_truth.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output_file</span><span class="o">=</span><span class="s2">&quot;jaccard_results.csv&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>  <span class="c1"># optional</span>
+<span class="gp">... </span>    <span class="n">mask_path</span><span class="o">=</span><span class="s2">&quot;brain_mask.nii.gz&quot;</span>  <span class="c1"># optional</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <dl class="py function">
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">Overlap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">volume1_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">volume2_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/micaflow/scripts/calculate_jaccard.html#Overlap"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>

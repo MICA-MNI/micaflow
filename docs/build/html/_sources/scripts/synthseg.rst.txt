@@ -1,20 +1,49 @@
 Synthseg
 ========
 
-This script enables to launch predictions with SynthSeg from the terminal.
+synthseg - Neural Network-Based Brain MRI Segmentation
 
-If you use this code, please cite one of the SynthSeg papers:
-https://github.com/BBillot/SynthSeg/blob/master/bibtex.bib
+Part of the micaflow processing pipeline for neuroimaging data.
 
-Copyright 2020 Benjamin Billot
+This module provides an interface to SynthSeg, a deep learning-based tool for automated 
+brain MRI segmentation that works across different MRI contrasts without retraining. 
+SynthSeg segments brain anatomical structures in T1w, T2w, FLAIR, and other MR contrasts, 
+providing both whole-brain segmentation and optional cortical parcellation.
 
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in
-compliance with the License. You may obtain a copy of the License at
-https://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software distributed under the License is
-distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-implied. See the License for the specific language governing permissions and limitations under the
-License.
+Features:
+--------
+- Contrast-agnostic segmentation working across different MRI acquisition types
+- Whole-brain anatomical structure segmentation with 37 labels
+- Optional cortical parcellation (up to 95 additional regions)
+- Multiple execution modes: standard, robust (higher quality), and fast
+- Volumetric analysis with CSV output for region-wise measurements
+- Quality control metrics for assessing segmentation reliability
+- GPU acceleration with optional CPU-only execution
+
+API Usage:
+---------
+micaflow synthseg 
+    --i <path/to/image.nii.gz>
+    --o <path/to/segmentation.nii.gz>
+    [--parc]
+    [--robust]
+    [--fast]
+    [--vol <path/to/volumes.csv>]
+    [--qc <path/to/qc_scores.csv>]
+    [--threads <num_threads>]
+
+Python Usage:
+-----------
+>>> from micaflow.scripts.synthseg import main
+>>> main({
+...     'i': 'input_image.nii.gz',
+...     'o': 'segmentation.nii.gz',
+...     'parc': True,
+...     'robust': False,
+...     'fast': True,
+...     'vol': 'volumes.csv',
+...     'threads': 4
+... })
 
 Command Line Usage
 -----------------
@@ -26,7 +55,7 @@ Command Line Usage
 Source Code
 -----------
 
-View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow2.0/blob/main/micaflow/scripts/synthseg.py>`_
+View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/synthseg.py>`_
 
 Description
 -----------

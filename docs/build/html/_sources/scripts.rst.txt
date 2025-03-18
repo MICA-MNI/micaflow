@@ -38,6 +38,8 @@ Quick Reference
      - Deep learning segmentation with SynthSeg
    * - :doc:`scripts/texture_generation`
      - Generate texture features
+   * - :doc:`scripts/normalize`
+     - Normalize intensity values
 
 .. toctree::
    :maxdepth: 1
@@ -55,3 +57,4 @@ Quick Reference
    scripts/SDC
    scripts/synthseg
    scripts/texture_generation
+   scripts/normalize

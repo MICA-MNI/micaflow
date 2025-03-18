@@ -55,6 +55,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../getting_started.html#dependencies">Dependencies</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../examples.html#example-workflows">Example Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
@@ -95,19 +101,45 @@
              
   <section id="bias-correction">
 <h1>Bias Correction<a class="headerlink" href="#bias-correction" title="Link to this heading"></a></h1>
-<p>N4 Bias Field Correction script for both anatomical and diffusion MR images.</p>
-<p>This script provides functionality to correct intensity non-uniformity (bias field)
-in MR images using the N4 algorithm from the Advanced Normalization Tools (ANTs) library.
-It supports both 3D anatomical images and 4D diffusion-weighted images.</p>
-<dl>
-<dt>Examples:</dt><dd><p># For anatomical (3D) images:
-python bias_correction.py –input t1w.nii.gz –output corrected.nii.gz</p>
-<p># For anatomical images with mask:
-python bias_correction.py –input t1w.nii.gz –output corrected.nii.gz –mask brain_mask.nii.gz</p>
-<p># For diffusion (4D) images:
-python bias_correction.py –input dwi.nii.gz –output corrected.nii.gz –mask brain_mask.nii.gz –mode 4d</p>
+<p>bias_correction - N4 Bias Field Correction for MRI data</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module corrects intensity non-uniformity (bias field) in MR images using the
+N4 algorithm from Advanced Normalization Tools (ANTs). Intensity bias appears as a
+smooth variation of signal intensity across the image and can affect subsequent analysis
+steps like segmentation or registration. The N4 algorithm estimates this bias field
+and removes it, producing more uniform intensities across tissues.</p>
+<section id="features">
+<h2>Features:<a class="headerlink" href="#features" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Supports both 3D anatomical images and 4D diffusion-weighted images</p></li>
+<li><p>Automatic detection of image dimensionality (3D vs 4D)</p></li>
+<li><p>Optional brain mask input for improved correction accuracy</p></li>
+<li><p>Volume-by-volume processing for 4D images preserves temporal dynamics</p></li>
+<li><p>Maintains image header information in the corrected output</p></li>
+</ul>
+</section>
+<section id="api-usage">
+<h2>API Usage:<a class="headerlink" href="#api-usage" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>micaflow bias_correction</dt><dd><p>–input &lt;path/to/image.nii.gz&gt;
+–output &lt;path/to/corrected.nii.gz&gt;
+[–mask &lt;path/to/brain_mask.nii.gz&gt;]
+[–mode &lt;3d|4d|auto&gt;]</p>
 </dd>
 </dl>
+</section>
+<section id="python-usage">
+<h2>Python Usage:<a class="headerlink" href="#python-usage" title="Link to this heading"></a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.bias_correction</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_bias_field_correction</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">run_bias_field_correction</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">image_path</span><span class="o">=</span><span class="s2">&quot;t1w.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output_path</span><span class="o">=</span><span class="s2">&quot;corrected_t1w.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">mask_path</span><span class="o">=</span><span class="s2">&quot;brain_mask.nii.gz&quot;</span><span class="p">,</span>  <span class="c1"># optional for 3D images</span>
+<span class="gp">... </span>    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span>  <span class="c1"># auto, 3d, or 4d</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <section id="command-line-usage">
 <h2>Command Line Usage<a class="headerlink" href="#command-line-usage" title="Link to this heading"></a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>bias_correction<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
@@ -116,7 +148,7 @@ python bias_correction.py –input dwi.nii.gz –output corrected.nii.gz –mask
 </section>
 <section id="source-code">
 <h2>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h2>
-<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow2.0/blob/main/micaflow/scripts/bias_correction.py">GitHub Repository</a></p>
+<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/bias_correction.py">GitHub Repository</a></p>
 </section>
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
@@ -165,17 +197,45 @@ micaflow bias_correction \
 • 4D processing applies the correction to each volume separately
 </pre></div>
 </div>
-<p>N4 Bias Field Correction script for both anatomical and diffusion MR images.</p>
-<p>This script provides functionality to correct intensity non-uniformity (bias field)
-in MR images using the N4 algorithm from the Advanced Normalization Tools (ANTs) library.
-It supports both 3D anatomical images and 4D diffusion-weighted images.</p>
-<p class="rubric">Examples</p>
-<p># For anatomical (3D) images:
-python bias_correction.py –input t1w.nii.gz –output corrected.nii.gz</p>
-<p># For anatomical images with mask:
-python bias_correction.py –input t1w.nii.gz –output corrected.nii.gz –mask brain_mask.nii.gz</p>
-<p># For diffusion (4D) images:
-python bias_correction.py –input dwi.nii.gz –output corrected.nii.gz –mask brain_mask.nii.gz –mode 4d</p>
+<p>bias_correction - N4 Bias Field Correction for MRI data</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module corrects intensity non-uniformity (bias field) in MR images using the
+N4 algorithm from Advanced Normalization Tools (ANTs). Intensity bias appears as a
+smooth variation of signal intensity across the image and can affect subsequent analysis
+steps like segmentation or registration. The N4 algorithm estimates this bias field
+and removes it, producing more uniform intensities across tissues.</p>
+<section id="id1">
+<h3>Features:<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Supports both 3D anatomical images and 4D diffusion-weighted images</p></li>
+<li><p>Automatic detection of image dimensionality (3D vs 4D)</p></li>
+<li><p>Optional brain mask input for improved correction accuracy</p></li>
+<li><p>Volume-by-volume processing for 4D images preserves temporal dynamics</p></li>
+<li><p>Maintains image header information in the corrected output</p></li>
+</ul>
+</section>
+<section id="id2">
+<h3>API Usage:<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>micaflow bias_correction</dt><dd><p>–input &lt;path/to/image.nii.gz&gt;
+–output &lt;path/to/corrected.nii.gz&gt;
+[–mask &lt;path/to/brain_mask.nii.gz&gt;]
+[–mode &lt;3d|4d|auto&gt;]</p>
+</dd>
+</dl>
+</section>
+<section id="id3">
+<h3>Python Usage:<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.bias_correction</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_bias_field_correction</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">run_bias_field_correction</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">image_path</span><span class="o">=</span><span class="s2">&quot;t1w.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output_path</span><span class="o">=</span><span class="s2">&quot;corrected_t1w.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">mask_path</span><span class="o">=</span><span class="s2">&quot;brain_mask.nii.gz&quot;</span><span class="p">,</span>  <span class="c1"># optional for 3D images</span>
+<span class="gp">... </span>    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span>  <span class="c1"># auto, 3d, or 4d</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <dl class="py function">
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">bias_field_correction_3d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/micaflow/scripts/bias_correction.html#bias_field_correction_3d"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>

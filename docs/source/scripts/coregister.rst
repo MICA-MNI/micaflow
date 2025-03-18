@@ -1,6 +1,48 @@
 Coregister
 ==========
 
+coregister - Image Registration for Aligning Neuroimaging Data
+
+Part of the micaflow processing pipeline for neuroimaging data.
+
+This module performs comprehensive image registration between two images using the 
+Advanced Normalization Tools (ANTs) SyNRA algorithm, which combines rigid, affine, 
+and symmetric normalization transformations. It aligns a moving image with a fixed 
+reference space, enabling spatial normalization of neuroimaging data for group analysis, 
+multimodal integration, or atlas-based analyses.
+
+Features:
+--------
+- Combined rigid, affine, and SyN nonlinear registration in one step
+- Bidirectional transformation capability (forward and inverse)
+- Option to save all transformation components for later application
+- Uses ANTs' powerful SyNRA algorithm for optimal accuracy
+- Preserves header information in the registered output images
+
+API Usage:
+---------
+micaflow coregister 
+    --fixed-file <path/to/reference.nii.gz>
+    --moving-file <path/to/source.nii.gz>
+    --output <path/to/registered.nii.gz>
+    [--warp-file <path/to/warp.nii.gz>]
+    [--affine-file <path/to/affine.mat>]
+    [--rev-warp-file <path/to/reverse_warp.nii.gz>]
+    [--rev-affine-file <path/to/reverse_affine.mat>]
+
+Python Usage:
+-----------
+>>> from micaflow.scripts.coregister import ants_linear_nonlinear_registration
+>>> ants_linear_nonlinear_registration(
+...     fixed_file="mni152.nii.gz",
+...     moving_file="subject_t1w.nii.gz",
+...     out_file="registered_t1w.nii.gz",
+...     warp_file="warp.nii.gz",
+...     affine_file="affine.mat",
+...     rev_warp_file="reverse_warp.nii.gz",
+...     rev_affine_file="reverse_affine.mat"
+... )
+
 Command Line Usage
 -----------------
 
@@ -11,7 +53,7 @@ Command Line Usage
 Source Code
 -----------
 
-View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow2.0/blob/main/micaflow/scripts/coregister.py>`_
+View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/coregister.py>`_
 
 Description
 -----------

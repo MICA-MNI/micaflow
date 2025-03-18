@@ -97,112 +97,29 @@ The MICAflow pipeline provides a comprehensive framework for processing structur
 
          micaflow pipeline --config-file config.yaml
 
-      **Example Configuration File (config.yaml):**
+   .. tab:: Texture Generation
 
-      .. code-block:: yaml
+      The texture generation component extracts advanced features from neuroimaging data:
 
-         # Example configuration for micaflow pipeline
-         subject: "sub-01"                             # Subject ID
-         session: "ses-01"                             # Session ID
-         
-         # Input data paths
-         t1w_file: "/data/bids/sub-01/ses-01/anat/sub-01_ses-01_T1w.nii.gz"
-         flair_file: "/data/bids/sub-01/ses-01/anat/sub-01_ses-01_FLAIR.nii.gz"
-         dwi_file: "/data/bids/sub-01/ses-01/dwi/sub-01_ses-01_dir-AP_dwi.nii.gz"
-         bval_file: "/data/bids/sub-01/ses-01/dwi/sub-01_ses-01_dir-AP_dwi.bval"
-         bvec_file: "/data/bids/sub-01/ses-01/dwi/sub-01_ses-01_dir-AP_dwi.bvec"
-         inverse_dwi_file: "/data/bids/sub-01/ses-01/dwi/sub-01_ses-01_dir-PA_dwi.nii.gz"
-         
-         # Output settings
-         output: "/results/micaflow"
-         data_directory: "/data/bids"
-         
-         # Processing options
-         threads: 8               # Number of CPU threads to use
-         cpu: true                # Force CPU processing (set to false for GPU)
-         run_dwi: true            # Whether to process DWI data
-         
-         # Advanced options (optional)
-         dry_run: false           # Just show commands without executing
-         cleanup: true            # Remove temporary files after completion
-
-      This configuration can be adapted for different subjects and datasets by updating
-      the paths and processing parameters accordingly.
-      
-   .. tab:: Data Input Methods
-
-      MICAflow supports two approaches for providing input data to the pipeline:
-
-      **1. BIDS Directory Approach:**
-
-      When using a BIDS-compliant dataset, you can specify the root directory and the pipeline will
-      automatically locate files based on subject and session IDs:
-
-      .. code-block:: bash
-
-         micaflow pipeline \
-           --subject sub-01 \
-           --session ses-01 \
-           --data-directory /path/to/bids/dataset \
-           --output /path/to/output
-
-      In this case, the pipeline will look for files at standard BIDS locations:
-      
       .. code-block:: text
-      
-         /path/to/bids/dataset/
-         └── sub-01/
-             └── ses-01/
-                 ├── anat/
-                 │   ├── sub-01_ses-01_T1w.nii.gz
-                 │   └── sub-01_ses-01_FLAIR.nii.gz
-                 └── dwi/
-                     ├── sub-01_ses-01_dwi.nii.gz
-                     ├── sub-01_ses-01_dwi.bval
-                     └── sub-01_ses-01_dwi.bvec
 
-      **2. Direct File Path Approach:**
+         ╔════════════════════════════════════════════════════════════════╗
+         ║                    TEXTURE FEATURE EXTRACTION                  ║
+         ╚════════════════════════════════════════════════════════════════╝
 
-      For datasets that are not BIDS-compliant or when working with specific files,
-      you can directly specify the path to each input file:
-
-      .. code-block:: bash
-
-         micaflow pipeline \
-           --subject SUB001 \
-           --session SES01 \
-           --t1w-file /path/to/t1w.nii.gz \
-           --flair-file /path/to/flair.nii.gz \
-           --dwi-file /path/to/dwi.nii.gz \
-           --output /path/to/output
-
-      **Advantages of Each Approach:**
-
-      - **BIDS Directory:** 
-        - Simpler command line with fewer parameters
-        - Automatic file discovery based on BIDS naming conventions
-        - Better for batch processing multiple subjects with consistent naming
-        
-      - **Direct File Paths:**
-        - Works with any directory structure
-        - Flexible for non-standard file naming
-        - Allows processing specific files from different locations
-
-      Both approaches can be used in the YAML configuration file as well:
-
-      .. code-block:: yaml
+         This script generates texture feature maps from neuroimaging data using
+         various computational approaches. The features include:
          
-         # BIDS Directory approach
-         subject: "sub-01"
-         session: "ses-01"
-         data_directory: "/path/to/bids/dataset"
-         
-         # OR Direct File Paths approach
-         subject: "SUB001"
-         session: "SES01"
-         t1w_file: "/path/to/t1w.nii.gz"
-         flair_file: "/path/to/flair.nii.gz"
-         dwi_file: "/path/to/dwi.nii.gz"
+         - Gradient magnitude computation for edge and boundary detection
+         - Relative intensity calculation for normalized tissue contrast
+         - Automatic tissue segmentation into gray matter, white matter, and CSF
+         - Masked processing to focus analysis on brain regions only
+
+      **Output Features:**
+
+      - **Gradient Magnitude Maps**: Highlight tissue boundaries and structural transitions
+      - **Relative Intensity Maps**: Normalize intensity patterns across the brain
+      - **Segmentation Maps**: Tissue class probabilities
 
 Implementation Details
 ---------------------

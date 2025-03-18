@@ -55,6 +55,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../getting_started.html#dependencies">Dependencies</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../examples.html#example-workflows">Example Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
@@ -95,6 +101,47 @@
              
   <section id="motion-correction">
 <h1>Motion Correction<a class="headerlink" href="#motion-correction" title="Link to this heading"></a></h1>
+<p>motion_correction - Diffusion MRI Motion Artifact Removal</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module corrects for subject motion in diffusion-weighted images (DWI) by registering
+each volume to the first volume (typically a B0 image). Subject movement during
+acquisition is one of the primary sources of artifacts in diffusion MRI, causing
+misalignment between volumes that can severely impact analysis. This implementation uses
+ANTs’ SyNRA algorithm, which combines rigid, affine, and deformable transformations for
+robust inter-volume alignment.</p>
+<section id="features">
+<h2>Features:<a class="headerlink" href="#features" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Volume-by-volume registration to a reference B0 image</p></li>
+<li><p>Combines rigid, affine, and deformable transformations using ANTs SyNRA</p></li>
+<li><p>Preserves original image header information and coordinates</p></li>
+<li><p>Progress visualization with volume-wise completion tracking</p></li>
+<li><p>Compatible with standard diffusion acquisition protocols</p></li>
+<li><p>No gradient reorientation needed (performed at tensor fitting stage)</p></li>
+</ul>
+</section>
+<section id="api-usage">
+<h2>API Usage:<a class="headerlink" href="#api-usage" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>micaflow motion_correction</dt><dd><p>–denoised &lt;path/to/dwi.nii.gz&gt;
+–bval &lt;path/to/dwi.bval&gt;
+–bvec &lt;path/to/dwi.bvec&gt;
+–output &lt;path/to/motion_corrected_dwi.nii.gz&gt;</p>
+</dd>
+</dl>
+</section>
+<section id="python-usage">
+<h2>Python Usage:<a class="headerlink" href="#python-usage" title="Link to this heading"></a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.motion_correction</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_motion_correction</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">run_motion_correction</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">dwi_path</span><span class="o">=</span><span class="s2">&quot;denoised_dwi.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">bval_path</span><span class="o">=</span><span class="s2">&quot;dwi.bval&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">bvec_path</span><span class="o">=</span><span class="s2">&quot;dwi.bvec&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output</span><span class="o">=</span><span class="s2">&quot;motion_corrected_dwi.nii.gz&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <section id="command-line-usage">
 <h2>Command Line Usage<a class="headerlink" href="#command-line-usage" title="Link to this heading"></a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>motion_correction<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
@@ -103,7 +150,7 @@
 </section>
 <section id="source-code">
 <h2>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h2>
-<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow2.0/blob/main/micaflow/scripts/motion_correction.py">GitHub Repository</a></p>
+<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/motion_correction.py">GitHub Repository</a></p>
 </section>
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
@@ -148,6 +195,47 @@ deformable transformations.
 - Progress is displayed using a progress bar
 </pre></div>
 </div>
+<p>motion_correction - Diffusion MRI Motion Artifact Removal</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module corrects for subject motion in diffusion-weighted images (DWI) by registering
+each volume to the first volume (typically a B0 image). Subject movement during
+acquisition is one of the primary sources of artifacts in diffusion MRI, causing
+misalignment between volumes that can severely impact analysis. This implementation uses
+ANTs’ SyNRA algorithm, which combines rigid, affine, and deformable transformations for
+robust inter-volume alignment.</p>
+<section id="id1">
+<h3>Features:<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Volume-by-volume registration to a reference B0 image</p></li>
+<li><p>Combines rigid, affine, and deformable transformations using ANTs SyNRA</p></li>
+<li><p>Preserves original image header information and coordinates</p></li>
+<li><p>Progress visualization with volume-wise completion tracking</p></li>
+<li><p>Compatible with standard diffusion acquisition protocols</p></li>
+<li><p>No gradient reorientation needed (performed at tensor fitting stage)</p></li>
+</ul>
+</section>
+<section id="id2">
+<h3>API Usage:<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>micaflow motion_correction</dt><dd><p>–denoised &lt;path/to/dwi.nii.gz&gt;
+–bval &lt;path/to/dwi.bval&gt;
+–bvec &lt;path/to/dwi.bvec&gt;
+–output &lt;path/to/motion_corrected_dwi.nii.gz&gt;</p>
+</dd>
+</dl>
+</section>
+<section id="id3">
+<h3>Python Usage:<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.motion_correction</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_motion_correction</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">run_motion_correction</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">dwi_path</span><span class="o">=</span><span class="s2">&quot;denoised_dwi.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">bval_path</span><span class="o">=</span><span class="s2">&quot;dwi.bval&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">bvec_path</span><span class="o">=</span><span class="s2">&quot;dwi.bvec&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output</span><span class="o">=</span><span class="s2">&quot;motion_corrected_dwi.nii.gz&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <dl class="py function">
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">autoreset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">convert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colorama/initialise.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
@@ -274,7 +362,7 @@ or similar in <cite>bar_format</cite>, or specifying <cite>unit_scale</cite>.</p
 <li><p><strong>position</strong> (<em>int</em><em>, </em><em>optional</em>) – Specify the line offset to print this bar (starting from 0)
 Automatic if unspecified.
 Useful to manage multiple bars at once (eg, from threads).</p></li>
-<li><p><strong>postfix</strong> (dict or <a href="#id1"><span class="problematic" id="id2">*</span></a>, optional) – Specify additional stats to display at the end of the bar.
+<li><p><strong>postfix</strong> (dict or <a href="#id4"><span class="problematic" id="id5">*</span></a>, optional) – Specify additional stats to display at the end of the bar.
 Calls <cite>set_postfix(**postfix)</cite> if possible (dict).</p></li>
 <li><p><strong>unit_divisor</strong> (<em>float</em><em>, </em><em>optional</em>) – [default: 1000], ignored unless <cite>unit_scale</cite> is True.</p></li>
 <li><p><strong>write_bytes</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to write bytes. If (default: False) will write unicode.</p></li>
@@ -405,7 +493,7 @@ remaining, remaining_s, eta.</p>
 <p>Note that a trailing “: “ is automatically removed after {desc}
 if the latter is empty.</p>
 </p></li>
-<li><p><strong>postfix</strong> (<a href="#id3"><span class="problematic" id="id4">*</span></a>, optional) – Similar to <cite>prefix</cite>, but placed at the end
+<li><p><strong>postfix</strong> (<a href="#id6"><span class="problematic" id="id7">*</span></a>, optional) – Similar to <cite>prefix</cite>, but placed at the end
 (e.g. for additional stats).
 Note: postfix is usually a string (not a dict) for this method,
 and will if possible be set to postfix = ‘, ‘ + postfix.

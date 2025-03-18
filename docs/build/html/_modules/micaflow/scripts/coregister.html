@@ -52,6 +52,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#dependencies">Dependencies</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../examples.html#example-workflows">Example Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
@@ -90,7 +96,51 @@
            <div itemprop="articleBody">
              
   <h1>Source code for micaflow.scripts.coregister</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">ants</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">coregister - Image Registration for Aligning Neuroimaging Data</span>
+
+<span class="sd">Part of the micaflow processing pipeline for neuroimaging data.</span>
+
+<span class="sd">This module performs comprehensive image registration between two images using the </span>
+<span class="sd">Advanced Normalization Tools (ANTs) SyNRA algorithm, which combines rigid, affine, </span>
+<span class="sd">and symmetric normalization transformations. It aligns a moving image with a fixed </span>
+<span class="sd">reference space, enabling spatial normalization of neuroimaging data for group analysis, </span>
+<span class="sd">multimodal integration, or atlas-based analyses.</span>
+
+<span class="sd">Features:</span>
+<span class="sd">--------</span>
+<span class="sd">- Combined rigid, affine, and SyN nonlinear registration in one step</span>
+<span class="sd">- Bidirectional transformation capability (forward and inverse)</span>
+<span class="sd">- Option to save all transformation components for later application</span>
+<span class="sd">- Uses ANTs&#39; powerful SyNRA algorithm for optimal accuracy</span>
+<span class="sd">- Preserves header information in the registered output images</span>
+
+<span class="sd">API Usage:</span>
+<span class="sd">---------</span>
+<span class="sd">micaflow coregister </span>
+<span class="sd">    --fixed-file &lt;path/to/reference.nii.gz&gt;</span>
+<span class="sd">    --moving-file &lt;path/to/source.nii.gz&gt;</span>
+<span class="sd">    --output &lt;path/to/registered.nii.gz&gt;</span>
+<span class="sd">    [--warp-file &lt;path/to/warp.nii.gz&gt;]</span>
+<span class="sd">    [--affine-file &lt;path/to/affine.mat&gt;]</span>
+<span class="sd">    [--rev-warp-file &lt;path/to/reverse_warp.nii.gz&gt;]</span>
+<span class="sd">    [--rev-affine-file &lt;path/to/reverse_affine.mat&gt;]</span>
+
+<span class="sd">Python Usage:</span>
+<span class="sd">-----------</span>
+<span class="sd">&gt;&gt;&gt; from micaflow.scripts.coregister import ants_linear_nonlinear_registration</span>
+<span class="sd">&gt;&gt;&gt; ants_linear_nonlinear_registration(</span>
+<span class="sd">...     fixed_file=&quot;mni152.nii.gz&quot;,</span>
+<span class="sd">...     moving_file=&quot;subject_t1w.nii.gz&quot;,</span>
+<span class="sd">...     out_file=&quot;registered_t1w.nii.gz&quot;,</span>
+<span class="sd">...     warp_file=&quot;warp.nii.gz&quot;,</span>
+<span class="sd">...     affine_file=&quot;affine.mat&quot;,</span>
+<span class="sd">...     rev_warp_file=&quot;reverse_warp.nii.gz&quot;,</span>
+<span class="sd">...     rev_affine_file=&quot;reverse_affine.mat&quot;</span>
+<span class="sd">... )</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ants</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>

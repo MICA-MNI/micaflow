@@ -52,6 +52,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#dependencies">Dependencies</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../examples.html#example-workflows">Example Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
@@ -90,7 +96,45 @@
            <div itemprop="articleBody">
              
   <h1>Source code for micaflow.scripts.denoise</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">denoise - Diffusion-Weighted Image Noise Reduction</span>
+
+<span class="sd">Part of the micaflow processing pipeline for neuroimaging data.</span>
+
+<span class="sd">This module denoises diffusion-weighted images (DWI) using the Patch2Self algorithm,</span>
+<span class="sd">which leverages redundant information across diffusion gradients to remove noise </span>
+<span class="sd">without requiring additional reference scans. Patch2Self is a self-supervised learning </span>
+<span class="sd">approach that improves image quality and enhances subsequent diffusion analyses by </span>
+<span class="sd">removing random noise while preserving anatomical structures.</span>
+
+<span class="sd">Features:</span>
+<span class="sd">--------</span>
+<span class="sd">- Self-supervised learning approach requiring no separate reference data</span>
+<span class="sd">- Adapts to the unique noise characteristics of each dataset</span>
+<span class="sd">- Preserves anatomical structure while effectively removing noise</span>
+<span class="sd">- Compatible with standard diffusion MRI acquisition protocols</span>
+<span class="sd">- Improves subsequent analyses such as fiber tracking and diffusion metrics</span>
+
+<span class="sd">API Usage:</span>
+<span class="sd">---------</span>
+<span class="sd">micaflow denoise </span>
+<span class="sd">    --input &lt;path/to/dwi.nii.gz&gt;</span>
+<span class="sd">    --bval &lt;path/to/dwi.bval&gt;</span>
+<span class="sd">    --bvec &lt;path/to/dwi.bvec&gt;</span>
+<span class="sd">    --output &lt;path/to/denoised_dwi.nii.gz&gt;</span>
+
+<span class="sd">Python Usage:</span>
+<span class="sd">-----------</span>
+<span class="sd">&gt;&gt;&gt; from micaflow.scripts.denoise import run_denoise</span>
+<span class="sd">&gt;&gt;&gt; run_denoise(</span>
+<span class="sd">...     moving=&quot;raw_dwi.nii.gz&quot;,</span>
+<span class="sd">...     moving_bval=&quot;dwi.bval&quot;, </span>
+<span class="sd">...     moving_bvec=&quot;dwi.bvec&quot;,</span>
+<span class="sd">...     output=&quot;denoised_dwi.nii.gz&quot;</span>
+<span class="sd">... )</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dipy.denoise.patch2self</span><span class="w"> </span><span class="kn">import</span> <span class="n">patch2self</span>

@@ -52,6 +52,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#dependencies">Dependencies</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../examples.html#example-workflows">Example Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
@@ -90,7 +96,47 @@
            <div itemprop="articleBody">
              
   <h1>Source code for micaflow.scripts.motion_correction</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">motion_correction - Diffusion MRI Motion Artifact Removal</span>
+
+<span class="sd">Part of the micaflow processing pipeline for neuroimaging data.</span>
+
+<span class="sd">This module corrects for subject motion in diffusion-weighted images (DWI) by registering</span>
+<span class="sd">each volume to the first volume (typically a B0 image). Subject movement during </span>
+<span class="sd">acquisition is one of the primary sources of artifacts in diffusion MRI, causing </span>
+<span class="sd">misalignment between volumes that can severely impact analysis. This implementation uses</span>
+<span class="sd">ANTs&#39; SyNRA algorithm, which combines rigid, affine, and deformable transformations for </span>
+<span class="sd">robust inter-volume alignment.</span>
+
+<span class="sd">Features:</span>
+<span class="sd">--------</span>
+<span class="sd">- Volume-by-volume registration to a reference B0 image</span>
+<span class="sd">- Combines rigid, affine, and deformable transformations using ANTs SyNRA</span>
+<span class="sd">- Preserves original image header information and coordinates</span>
+<span class="sd">- Progress visualization with volume-wise completion tracking</span>
+<span class="sd">- Compatible with standard diffusion acquisition protocols</span>
+<span class="sd">- No gradient reorientation needed (performed at tensor fitting stage)</span>
+
+<span class="sd">API Usage:</span>
+<span class="sd">---------</span>
+<span class="sd">micaflow motion_correction </span>
+<span class="sd">    --denoised &lt;path/to/dwi.nii.gz&gt;</span>
+<span class="sd">    --bval &lt;path/to/dwi.bval&gt;</span>
+<span class="sd">    --bvec &lt;path/to/dwi.bvec&gt;</span>
+<span class="sd">    --output &lt;path/to/motion_corrected_dwi.nii.gz&gt;</span>
+
+<span class="sd">Python Usage:</span>
+<span class="sd">-----------</span>
+<span class="sd">&gt;&gt;&gt; from micaflow.scripts.motion_correction import run_motion_correction</span>
+<span class="sd">&gt;&gt;&gt; run_motion_correction(</span>
+<span class="sd">...     dwi_path=&quot;denoised_dwi.nii.gz&quot;,</span>
+<span class="sd">...     bval_path=&quot;dwi.bval&quot;,</span>
+<span class="sd">...     bvec_path=&quot;dwi.bvec&quot;, </span>
+<span class="sd">...     output=&quot;motion_corrected_dwi.nii.gz&quot;</span>
+<span class="sd">... )</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">ants</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>

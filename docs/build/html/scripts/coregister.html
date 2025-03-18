@@ -55,6 +55,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../getting_started.html#dependencies">Dependencies</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../examples.html#example-workflows">Example Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
@@ -95,6 +101,51 @@
              
   <section id="coregister">
 <h1>Coregister<a class="headerlink" href="#coregister" title="Link to this heading"></a></h1>
+<p>coregister - Image Registration for Aligning Neuroimaging Data</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module performs comprehensive image registration between two images using the
+Advanced Normalization Tools (ANTs) SyNRA algorithm, which combines rigid, affine,
+and symmetric normalization transformations. It aligns a moving image with a fixed
+reference space, enabling spatial normalization of neuroimaging data for group analysis,
+multimodal integration, or atlas-based analyses.</p>
+<section id="features">
+<h2>Features:<a class="headerlink" href="#features" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Combined rigid, affine, and SyN nonlinear registration in one step</p></li>
+<li><p>Bidirectional transformation capability (forward and inverse)</p></li>
+<li><p>Option to save all transformation components for later application</p></li>
+<li><p>Uses ANTs’ powerful SyNRA algorithm for optimal accuracy</p></li>
+<li><p>Preserves header information in the registered output images</p></li>
+</ul>
+</section>
+<section id="api-usage">
+<h2>API Usage:<a class="headerlink" href="#api-usage" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>micaflow coregister</dt><dd><p>–fixed-file &lt;path/to/reference.nii.gz&gt;
+–moving-file &lt;path/to/source.nii.gz&gt;
+–output &lt;path/to/registered.nii.gz&gt;
+[–warp-file &lt;path/to/warp.nii.gz&gt;]
+[–affine-file &lt;path/to/affine.mat&gt;]
+[–rev-warp-file &lt;path/to/reverse_warp.nii.gz&gt;]
+[–rev-affine-file &lt;path/to/reverse_affine.mat&gt;]</p>
+</dd>
+</dl>
+</section>
+<section id="python-usage">
+<h2>Python Usage:<a class="headerlink" href="#python-usage" title="Link to this heading"></a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.coregister</span><span class="w"> </span><span class="kn">import</span> <span class="n">ants_linear_nonlinear_registration</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ants_linear_nonlinear_registration</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">fixed_file</span><span class="o">=</span><span class="s2">&quot;mni152.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">moving_file</span><span class="o">=</span><span class="s2">&quot;subject_t1w.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">out_file</span><span class="o">=</span><span class="s2">&quot;registered_t1w.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">warp_file</span><span class="o">=</span><span class="s2">&quot;warp.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">affine_file</span><span class="o">=</span><span class="s2">&quot;affine.mat&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">rev_warp_file</span><span class="o">=</span><span class="s2">&quot;reverse_warp.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">rev_affine_file</span><span class="o">=</span><span class="s2">&quot;reverse_affine.mat&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <section id="command-line-usage">
 <h2>Command Line Usage<a class="headerlink" href="#command-line-usage" title="Link to this heading"></a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>coregister<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
@@ -103,7 +154,7 @@
 </section>
 <section id="source-code">
 <h2>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h2>
-<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow2.0/blob/main/micaflow/scripts/coregister.py">GitHub Repository</a></p>
+<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/coregister.py">GitHub Repository</a></p>
 </section>
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
@@ -150,6 +201,51 @@ micaflow coregister --fixed-file mni152.nii.gz --moving-file subject_t1w.nii.gz 
 • The transforms can be applied to other images using apply_warp
 </pre></div>
 </div>
+<p>coregister - Image Registration for Aligning Neuroimaging Data</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module performs comprehensive image registration between two images using the
+Advanced Normalization Tools (ANTs) SyNRA algorithm, which combines rigid, affine,
+and symmetric normalization transformations. It aligns a moving image with a fixed
+reference space, enabling spatial normalization of neuroimaging data for group analysis,
+multimodal integration, or atlas-based analyses.</p>
+<section id="id1">
+<h3>Features:<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Combined rigid, affine, and SyN nonlinear registration in one step</p></li>
+<li><p>Bidirectional transformation capability (forward and inverse)</p></li>
+<li><p>Option to save all transformation components for later application</p></li>
+<li><p>Uses ANTs’ powerful SyNRA algorithm for optimal accuracy</p></li>
+<li><p>Preserves header information in the registered output images</p></li>
+</ul>
+</section>
+<section id="id2">
+<h3>API Usage:<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>micaflow coregister</dt><dd><p>–fixed-file &lt;path/to/reference.nii.gz&gt;
+–moving-file &lt;path/to/source.nii.gz&gt;
+–output &lt;path/to/registered.nii.gz&gt;
+[–warp-file &lt;path/to/warp.nii.gz&gt;]
+[–affine-file &lt;path/to/affine.mat&gt;]
+[–rev-warp-file &lt;path/to/reverse_warp.nii.gz&gt;]
+[–rev-affine-file &lt;path/to/reverse_affine.mat&gt;]</p>
+</dd>
+</dl>
+</section>
+<section id="id3">
+<h3>Python Usage:<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.coregister</span><span class="w"> </span><span class="kn">import</span> <span class="n">ants_linear_nonlinear_registration</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ants_linear_nonlinear_registration</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">fixed_file</span><span class="o">=</span><span class="s2">&quot;mni152.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">moving_file</span><span class="o">=</span><span class="s2">&quot;subject_t1w.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">out_file</span><span class="o">=</span><span class="s2">&quot;registered_t1w.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">warp_file</span><span class="o">=</span><span class="s2">&quot;warp.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">affine_file</span><span class="o">=</span><span class="s2">&quot;affine.mat&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">rev_warp_file</span><span class="o">=</span><span class="s2">&quot;reverse_warp.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">rev_affine_file</span><span class="o">=</span><span class="s2">&quot;reverse_affine.mat&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <dl class="py function">
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">ants_linear_nonlinear_registration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fixed_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">moving_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'registered_image.nii'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warp_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">affine_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rev_warp_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rev_affine_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/micaflow/scripts/coregister.html#ants_linear_nonlinear_registration"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>

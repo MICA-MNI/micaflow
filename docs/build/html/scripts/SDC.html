@@ -55,6 +55,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../getting_started.html#dependencies">Dependencies</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../examples.html#example-workflows">Example Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
@@ -95,6 +101,47 @@
              
   <section id="sdc">
 <h1>Sdc<a class="headerlink" href="#sdc" title="Link to this heading"></a></h1>
+<p>SDC - Susceptibility Distortion Correction for EPI/DWI</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module corrects geometric distortions in echo-planar imaging (EPI) MR images
+caused by magnetic field inhomogeneities. It implements the HYSCO (HYperellastic
+Susceptibility artifact COrrection) algorithm that uses a pair of images acquired
+with opposite phase-encoding directions to estimate and correct these distortions.
+The algorithm estimates a displacement field along the phase-encoding direction
+(typically y-axis) that can be used to unwarp the distorted images.</p>
+<section id="features">
+<h2>Features:<a class="headerlink" href="#features" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>B0 field estimation using phase-encoding reversed image pairs</p></li>
+<li><p>GPU acceleration with PyTorch for faster processing when available</p></li>
+<li><p>Automatic initial alignment using ANTs affine registration</p></li>
+<li><p>Advanced optimization using Alternating Direction Method of Multipliers (ADMM)</p></li>
+<li><p>Outputs both corrected images and estimated displacement fields for further usage</p></li>
+<li><p>Temporary file management for clean processing pipeline</p></li>
+</ul>
+</section>
+<section id="api-usage">
+<h2>API Usage:<a class="headerlink" href="#api-usage" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>micaflow SDC</dt><dd><p>–input &lt;path/to/forward_phase_encoded.nii.gz&gt;
+–reverse-image &lt;path/to/reverse_phase_encoded.nii.gz&gt;
+–output &lt;path/to/corrected_image.nii.gz&gt;
+–output-warp &lt;path/to/displacement_field.nii.gz&gt;</p>
+</dd>
+</dl>
+</section>
+<section id="python-usage">
+<h2>Python Usage:<a class="headerlink" href="#python-usage" title="Link to this heading"></a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.SDC</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">run</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">data_image</span><span class="o">=</span><span class="s2">&quot;forward_phase_encoded.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">reverse_image</span><span class="o">=</span><span class="s2">&quot;reverse_phase_encoded.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output_name</span><span class="o">=</span><span class="s2">&quot;corrected_image.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output_warp</span><span class="o">=</span><span class="s2">&quot;displacement_field.nii.gz&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <section id="command-line-usage">
 <h2>Command Line Usage<a class="headerlink" href="#command-line-usage" title="Link to this heading"></a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>SDC<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
@@ -103,7 +150,7 @@
 </section>
 <section id="source-code">
 <h2>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h2>
-<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow2.0/blob/main/micaflow/scripts/SDC.py">GitHub Repository</a></p>
+<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/SDC.py">GitHub Repository</a></p>
 </section>
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
@@ -149,6 +196,47 @@ directions.
   artifact COrrection) algorithm
 </pre></div>
 </div>
+<p>SDC - Susceptibility Distortion Correction for EPI/DWI</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module corrects geometric distortions in echo-planar imaging (EPI) MR images
+caused by magnetic field inhomogeneities. It implements the HYSCO (HYperellastic
+Susceptibility artifact COrrection) algorithm that uses a pair of images acquired
+with opposite phase-encoding directions to estimate and correct these distortions.
+The algorithm estimates a displacement field along the phase-encoding direction
+(typically y-axis) that can be used to unwarp the distorted images.</p>
+<section id="id1">
+<h3>Features:<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>B0 field estimation using phase-encoding reversed image pairs</p></li>
+<li><p>GPU acceleration with PyTorch for faster processing when available</p></li>
+<li><p>Automatic initial alignment using ANTs affine registration</p></li>
+<li><p>Advanced optimization using Alternating Direction Method of Multipliers (ADMM)</p></li>
+<li><p>Outputs both corrected images and estimated displacement fields for further usage</p></li>
+<li><p>Temporary file management for clean processing pipeline</p></li>
+</ul>
+</section>
+<section id="id2">
+<h3>API Usage:<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>micaflow SDC</dt><dd><p>–input &lt;path/to/forward_phase_encoded.nii.gz&gt;
+–reverse-image &lt;path/to/reverse_phase_encoded.nii.gz&gt;
+–output &lt;path/to/corrected_image.nii.gz&gt;
+–output-warp &lt;path/to/displacement_field.nii.gz&gt;</p>
+</dd>
+</dl>
+</section>
+<section id="id3">
+<h3>Python Usage:<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.SDC</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">run</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">data_image</span><span class="o">=</span><span class="s2">&quot;forward_phase_encoded.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">reverse_image</span><span class="o">=</span><span class="s2">&quot;reverse_phase_encoded.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output_name</span><span class="o">=</span><span class="s2">&quot;corrected_image.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output_warp</span><span class="o">=</span><span class="s2">&quot;displacement_field.nii.gz&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <dl class="py class">
 <dt class="sig sig-object py">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ADMM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">corr_obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter_gn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter_pcg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol_gn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/optimization/ADMM.html#ADMM"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
@@ -848,7 +936,7 @@ Echo-Planar MRI susceptibility artifact distortion correction.</p>
 <blockquote>
 <div><ul class="simple">
 <li><p>phi(x) &gt; 0, for all x</p></li>
-<li><p>phi(<a href="#id1"><span class="problematic" id="id2">|x|</span></a> -&gt; 1) -&gt; infinity</p></li>
+<li><p>phi(<a href="#id4"><span class="problematic" id="id5">|x|</span></a> -&gt; 1) -&gt; infinity</p></li>
 <li><p>phi(0) = 0</p></li>
 <li><p>phi is convex</p></li>
 <li><p>phi(x) = phi(-x)</p></li>

@@ -55,6 +55,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../getting_started.html#dependencies">Dependencies</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../examples.html#example-workflows">Example Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
@@ -95,6 +101,50 @@
              
   <section id="apply-warp">
 <h1>Apply Warp<a class="headerlink" href="#apply-warp" title="Link to this heading"></a></h1>
+<p>apply_warp - Image registration transformation application</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module applies spatial transformations to register images from one space to another
+using both affine and non-linear (warp field) transformations. It’s commonly used to:
+- Transform subject images to a standard space (e.g., MNI152)
+- Register images across modalities (e.g., T1w to FLAIR)
+- Apply previously calculated transformations to derived images (e.g., segmentations)</p>
+<p>The module leverages ANTsPy to apply the transformations in the correct order (warp
+field first, then affine) to achieve accurate spatial registration.</p>
+<section id="api-usage">
+<h2>API Usage:<a class="headerlink" href="#api-usage" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>micaflow apply_warp</dt><dd><p>–moving &lt;path/to/source_image.nii.gz&gt;
+–reference &lt;path/to/target_space.nii.gz&gt;
+–affine &lt;path/to/transform.mat&gt;
+–warp &lt;path/to/warpfield.nii.gz&gt;
+[–output &lt;path/to/registered_image.nii.gz&gt;]</p>
+</dd>
+</dl>
+</section>
+<section id="python-usage">
+<h2>Python Usage:<a class="headerlink" href="#python-usage" title="Link to this heading"></a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">ants</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.apply_warp</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_warp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">moving_img</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">image_read</span><span class="p">(</span><span class="s2">&quot;subject_t1w.nii.gz&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reference_img</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">image_read</span><span class="p">(</span><span class="s2">&quot;mni152.nii.gz&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">apply_warp</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">moving_img</span><span class="o">=</span><span class="n">moving_img</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">reference_img</span><span class="o">=</span><span class="n">reference_img</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">affine_file</span><span class="o">=</span><span class="s2">&quot;transform.mat&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">warp_file</span><span class="o">=</span><span class="s2">&quot;warpfield.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">out_file</span><span class="o">=</span><span class="s2">&quot;registered_t1w.nii.gz&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="references">
+<h2>References:<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Avants BB, Tustison NJ, Song G, et al. A reproducible evaluation of ANTs
+similarity metric performance in brain image registration. NeuroImage.
+2011;54(3):2033-2044. doi:10.1016/j.neuroimage.2010.09.025</p></li>
+</ol>
+</section>
 <section id="command-line-usage">
 <h2>Command Line Usage<a class="headerlink" href="#command-line-usage" title="Link to this heading"></a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>apply_warp<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
@@ -103,7 +153,7 @@
 </section>
 <section id="source-code">
 <h2>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h2>
-<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow2.0/blob/main/micaflow/scripts/apply_warp.py">GitHub Repository</a></p>
+<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/apply_warp.py">GitHub Repository</a></p>
 </section>
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
@@ -142,6 +192,50 @@ micaflow apply_warp --moving subject_t1w.nii.gz --reference mni152.nii.gz \
 • This is the standard order in ANTs for composite transformations.
 </pre></div>
 </div>
+<p>apply_warp - Image registration transformation application</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module applies spatial transformations to register images from one space to another
+using both affine and non-linear (warp field) transformations. It’s commonly used to:
+- Transform subject images to a standard space (e.g., MNI152)
+- Register images across modalities (e.g., T1w to FLAIR)
+- Apply previously calculated transformations to derived images (e.g., segmentations)</p>
+<p>The module leverages ANTsPy to apply the transformations in the correct order (warp
+field first, then affine) to achieve accurate spatial registration.</p>
+<section id="id1">
+<h3>API Usage:<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>micaflow apply_warp</dt><dd><p>–moving &lt;path/to/source_image.nii.gz&gt;
+–reference &lt;path/to/target_space.nii.gz&gt;
+–affine &lt;path/to/transform.mat&gt;
+–warp &lt;path/to/warpfield.nii.gz&gt;
+[–output &lt;path/to/registered_image.nii.gz&gt;]</p>
+</dd>
+</dl>
+</section>
+<section id="id2">
+<h3>Python Usage:<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">ants</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.apply_warp</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_warp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">moving_img</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">image_read</span><span class="p">(</span><span class="s2">&quot;subject_t1w.nii.gz&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reference_img</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">image_read</span><span class="p">(</span><span class="s2">&quot;mni152.nii.gz&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">apply_warp</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">moving_img</span><span class="o">=</span><span class="n">moving_img</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">reference_img</span><span class="o">=</span><span class="n">reference_img</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">affine_file</span><span class="o">=</span><span class="s2">&quot;transform.mat&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">warp_file</span><span class="o">=</span><span class="s2">&quot;warpfield.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">out_file</span><span class="o">=</span><span class="s2">&quot;registered_t1w.nii.gz&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h3>References:<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p>Avants BB, Tustison NJ, Song G, et al. A reproducible evaluation of ANTs
+similarity metric performance in brain image registration. NeuroImage.
+2011;54(3):2033-2044. doi:10.1016/j.neuroimage.2010.09.025</p></li>
+</ol>
+</section>
 <dl class="py function">
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">apply_warp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">moving_img</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_img</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">affine_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warp_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/micaflow/scripts/apply_warp.html#apply_warp"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>

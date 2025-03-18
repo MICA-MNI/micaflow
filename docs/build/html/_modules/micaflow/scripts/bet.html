@@ -52,6 +52,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#dependencies">Dependencies</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../examples.html#example-workflows">Example Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
@@ -90,18 +96,42 @@
            <div itemprop="articleBody">
              
   <h1>Source code for micaflow.scripts.bet</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;HD-BET (High-Definition Brain Extraction Tool) wrapper script.</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">bet - Brain Extraction Tool using HD-BET</span>
 
-<span class="sd">This script provides a simplified command-line interface to the HD-BET brain extraction</span>
-<span class="sd">tool, which performs accurate skull stripping on brain MR images using a deep learning approach.</span>
-<span class="sd">It supports both CPU and GPU execution modes.</span>
+<span class="sd">Part of the micaflow processing pipeline for neuroimaging data.</span>
 
-<span class="sd">The script is a wrapper around the HD-BET entry_point.py script that simplifies the interface</span>
-<span class="sd">and handles path resolution.</span>
+<span class="sd">This module provides brain extraction (skull stripping) functionality using the High-Definition</span>
+<span class="sd">Brain Extraction Tool (HD-BET), a deep learning-based approach that accurately segments the </span>
+<span class="sd">brain from surrounding tissues in MR images. HD-BET offers superior performance over traditional</span>
+<span class="sd">methods, particularly for clinical and non-standard MR images.</span>
 
-<span class="sd">Example:</span>
-<span class="sd">    python hdbet.py --input t1w.nii.gz --output t1w_brain.nii.gz</span>
-<span class="sd">    python hdbet.py --input t1w.nii.gz --output t1w_brain.nii.gz --cpu</span>
+<span class="sd">Features:</span>
+<span class="sd">--------</span>
+<span class="sd">- Deep learning-based brain extraction with state-of-the-art accuracy</span>
+<span class="sd">- Support for both CPU and GPU execution modes</span>
+<span class="sd">- Compatible with various MRI modalities (T1w, T2w, FLAIR)</span>
+<span class="sd">- Produces both skull-stripped images and binary brain masks</span>
+<span class="sd">- Robust to imaging artifacts and pathologies</span>
+
+<span class="sd">API Usage:</span>
+<span class="sd">---------</span>
+<span class="sd">micaflow bet </span>
+<span class="sd">    --input &lt;path/to/image.nii.gz&gt;</span>
+<span class="sd">    --output &lt;path/to/brain.nii.gz&gt;</span>
+<span class="sd">    --output-mask &lt;path/to/brain_mask.nii.gz&gt;</span>
+<span class="sd">    [--cpu]</span>
+
+<span class="sd">Python Usage:</span>
+<span class="sd">-----------</span>
+<span class="sd">&gt;&gt;&gt; import subprocess</span>
+<span class="sd">&gt;&gt;&gt; from micaflow.scripts.bet import run_hdbet</span>
+<span class="sd">&gt;&gt;&gt; run_hdbet(</span>
+<span class="sd">...     input_file=&quot;t1w.nii.gz&quot;,</span>
+<span class="sd">...     output_file=&quot;brain.nii.gz&quot;,</span>
+<span class="sd">...     mask_file=&quot;brain_mask.nii.gz&quot;,</span>
+<span class="sd">...     use_cpu=False</span>
+<span class="sd">... )</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
 

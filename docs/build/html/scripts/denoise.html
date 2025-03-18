@@ -55,6 +55,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../getting_started.html#dependencies">Dependencies</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../examples.html#example-workflows">Example Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
@@ -95,6 +101,45 @@
              
   <section id="denoise">
 <h1>Denoise<a class="headerlink" href="#denoise" title="Link to this heading"></a></h1>
+<p>denoise - Diffusion-Weighted Image Noise Reduction</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module denoises diffusion-weighted images (DWI) using the Patch2Self algorithm,
+which leverages redundant information across diffusion gradients to remove noise
+without requiring additional reference scans. Patch2Self is a self-supervised learning
+approach that improves image quality and enhances subsequent diffusion analyses by
+removing random noise while preserving anatomical structures.</p>
+<section id="features">
+<h2>Features:<a class="headerlink" href="#features" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Self-supervised learning approach requiring no separate reference data</p></li>
+<li><p>Adapts to the unique noise characteristics of each dataset</p></li>
+<li><p>Preserves anatomical structure while effectively removing noise</p></li>
+<li><p>Compatible with standard diffusion MRI acquisition protocols</p></li>
+<li><p>Improves subsequent analyses such as fiber tracking and diffusion metrics</p></li>
+</ul>
+</section>
+<section id="api-usage">
+<h2>API Usage:<a class="headerlink" href="#api-usage" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>micaflow denoise</dt><dd><p>–input &lt;path/to/dwi.nii.gz&gt;
+–bval &lt;path/to/dwi.bval&gt;
+–bvec &lt;path/to/dwi.bvec&gt;
+–output &lt;path/to/denoised_dwi.nii.gz&gt;</p>
+</dd>
+</dl>
+</section>
+<section id="python-usage">
+<h2>Python Usage:<a class="headerlink" href="#python-usage" title="Link to this heading"></a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.denoise</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_denoise</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">run_denoise</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">moving</span><span class="o">=</span><span class="s2">&quot;raw_dwi.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">moving_bval</span><span class="o">=</span><span class="s2">&quot;dwi.bval&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">moving_bvec</span><span class="o">=</span><span class="s2">&quot;dwi.bvec&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output</span><span class="o">=</span><span class="s2">&quot;denoised_dwi.nii.gz&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <section id="command-line-usage">
 <h2>Command Line Usage<a class="headerlink" href="#command-line-usage" title="Link to this heading"></a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>denoise<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
@@ -103,7 +148,7 @@
 </section>
 <section id="source-code">
 <h2>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h2>
-<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow2.0/blob/main/micaflow/scripts/denoise.py">GitHub Repository</a></p>
+<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/denoise.py">GitHub Repository</a></p>
 </section>
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
@@ -146,6 +191,45 @@ to remove noise without requiring additional reference scans.
 - B0 volumes are not denoised separately in this implementation
 </pre></div>
 </div>
+<p>denoise - Diffusion-Weighted Image Noise Reduction</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module denoises diffusion-weighted images (DWI) using the Patch2Self algorithm,
+which leverages redundant information across diffusion gradients to remove noise
+without requiring additional reference scans. Patch2Self is a self-supervised learning
+approach that improves image quality and enhances subsequent diffusion analyses by
+removing random noise while preserving anatomical structures.</p>
+<section id="id1">
+<h3>Features:<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Self-supervised learning approach requiring no separate reference data</p></li>
+<li><p>Adapts to the unique noise characteristics of each dataset</p></li>
+<li><p>Preserves anatomical structure while effectively removing noise</p></li>
+<li><p>Compatible with standard diffusion MRI acquisition protocols</p></li>
+<li><p>Improves subsequent analyses such as fiber tracking and diffusion metrics</p></li>
+</ul>
+</section>
+<section id="id2">
+<h3>API Usage:<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>micaflow denoise</dt><dd><p>–input &lt;path/to/dwi.nii.gz&gt;
+–bval &lt;path/to/dwi.bval&gt;
+–bvec &lt;path/to/dwi.bvec&gt;
+–output &lt;path/to/denoised_dwi.nii.gz&gt;</p>
+</dd>
+</dl>
+</section>
+<section id="id3">
+<h3>Python Usage:<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.denoise</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_denoise</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">run_denoise</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">moving</span><span class="o">=</span><span class="s2">&quot;raw_dwi.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">moving_bval</span><span class="o">=</span><span class="s2">&quot;dwi.bval&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">moving_bvec</span><span class="o">=</span><span class="s2">&quot;dwi.bvec&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output</span><span class="o">=</span><span class="s2">&quot;denoised_dwi.nii.gz&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <dl class="py function">
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">autoreset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">convert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colorama/initialise.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
@@ -155,8 +239,8 @@ to remove noise without requiring additional reference scans.
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">patch2self</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bvals</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_radius</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0,</span> <span class="pre">0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ols'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b0_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b0_denoising</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_negative_vals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift_intensity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmp_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dipy/denoise/patch2self.html#patch2self"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Patch2Self Denoiser.</p>
-<p>See <a href="#id1"><span class="problematic" id="id2">:footcite:p:`Fadnavis2020`</span></a> for further details about the method.
-See <a href="#id3"><span class="problematic" id="id4">:footcite:p:`Fadnavis2024`</span></a> for further details about the new method.</p>
+<p>See <a href="#id4"><span class="problematic" id="id5">:footcite:p:`Fadnavis2020`</span></a> for further details about the method.
+See <a href="#id6"><span class="problematic" id="id7">:footcite:p:`Fadnavis2024`</span></a> for further details about the new method.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

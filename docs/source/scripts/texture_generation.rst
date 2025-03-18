@@ -1,6 +1,41 @@
 Texture Generation
 ==================
 
+texture_generation - MRI Texture Feature Extraction
+
+Part of the micaflow processing pipeline for neuroimaging data.
+
+This module computes advanced texture features from MRI data that can be used for
+tissue characterization, lesion analysis, or radiomics applications. It performs
+automatic tissue segmentation and extracts quantitative imaging features including
+gradient magnitude and relative intensity maps, which capture local intensity variations
+and tissue contrast properties respectively.
+
+Features:
+--------
+- Automatic tissue segmentation into gray matter, white matter, and CSF
+- Gradient magnitude computation for edge and boundary detection
+- Relative intensity calculation for normalized tissue contrast
+- Masked processing to focus analysis on brain regions only
+- Output in standard NIfTI format compatible with other neuroimaging tools
+- Efficient implementation using ANTs image processing functions
+
+API Usage:
+---------
+micaflow texture_generation 
+    --input <path/to/image.nii.gz>
+    --mask <path/to/brain_mask.nii.gz>
+    --output <path/to/output_prefix>
+
+Python Usage:
+-----------
+>>> from micaflow.scripts.texture_generation import run_texture_pipeline
+>>> run_texture_pipeline(
+...     input="preprocessed_t1w.nii.gz",
+...     mask="brain_mask.nii.gz",
+...     output_dir="output_texture_maps"
+... )
+
 Command Line Usage
 -----------------
 
@@ -11,7 +46,7 @@ Command Line Usage
 Source Code
 -----------
 
-View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow2.0/blob/main/micaflow/scripts/texture_generation.py>`_
+View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/texture_generation.py>`_
 
 Description
 -----------

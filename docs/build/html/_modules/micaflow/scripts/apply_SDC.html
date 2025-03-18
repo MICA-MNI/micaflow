@@ -52,6 +52,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#dependencies">Dependencies</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../examples.html#example-workflows">Example Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
@@ -90,7 +96,42 @@
            <div itemprop="articleBody">
              
   <h1>Source code for micaflow.scripts.apply_SDC</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">apply_SDC - Susceptibility Distortion Correction for diffusion MRI</span>
+
+<span class="sd">Part of the micaflow processing pipeline for neuroimaging data.</span>
+
+<span class="sd">This module applies susceptibility distortion correction (SDC) to diffusion MRI images</span>
+<span class="sd">by using a pre-calculated displacement field to unwarp geometric distortions caused by</span>
+<span class="sd">magnetic field inhomogeneities. These distortions typically occur along the phase-encoding</span>
+<span class="sd">direction (usually the y-axis).</span>
+
+<span class="sd">The module works by:</span>
+<span class="sd">1. Loading a distorted diffusion image (typically after motion correction)</span>
+<span class="sd">2. Applying a voxel-wise displacement field to each volume in the 4D image</span>
+<span class="sd">3. Using linear interpolation to resample the image at the corrected coordinates</span>
+<span class="sd">4. Saving the unwarped image with the original affine transformation</span>
+
+<span class="sd">API Usage:</span>
+<span class="sd">---------</span>
+<span class="sd">micaflow apply_SDC </span>
+<span class="sd">    --input &lt;path/to/distorted_image.nii.gz&gt;</span>
+<span class="sd">    --warp &lt;path/to/field_map.nii.gz&gt;</span>
+<span class="sd">    --affine &lt;path/to/reference_image.nii.gz&gt;</span>
+<span class="sd">    --output &lt;path/to/corrected_output.nii.gz&gt;</span>
+
+<span class="sd">Python Usage:</span>
+<span class="sd">-----------</span>
+<span class="sd">&gt;&gt;&gt; from micaflow.scripts.apply_SDC import apply_SD_correction</span>
+<span class="sd">&gt;&gt;&gt; apply_SD_correction(</span>
+<span class="sd">...     motion_corr_path=&quot;distorted_image.nii.gz&quot;,</span>
+<span class="sd">...     warp_field=warp_field_array,</span>
+<span class="sd">...     moving_affine=affine_matrix,</span>
+<span class="sd">...     output=&quot;corrected_output.nii.gz&quot;</span>
+<span class="sd">... )</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>

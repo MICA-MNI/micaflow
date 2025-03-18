@@ -52,6 +52,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#dependencies">Dependencies</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../examples.html#example-workflows">Example Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
@@ -91,20 +97,50 @@
              
   <h1>Source code for micaflow.scripts.synthseg</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">This script enables to launch predictions with SynthSeg from the terminal.</span>
+<span class="sd">synthseg - Neural Network-Based Brain MRI Segmentation</span>
 
-<span class="sd">If you use this code, please cite one of the SynthSeg papers:</span>
-<span class="sd">https://github.com/BBillot/SynthSeg/blob/master/bibtex.bib</span>
+<span class="sd">Part of the micaflow processing pipeline for neuroimaging data.</span>
 
-<span class="sd">Copyright 2020 Benjamin Billot</span>
+<span class="sd">This module provides an interface to SynthSeg, a deep learning-based tool for automated </span>
+<span class="sd">brain MRI segmentation that works across different MRI contrasts without retraining. </span>
+<span class="sd">SynthSeg segments brain anatomical structures in T1w, T2w, FLAIR, and other MR contrasts, </span>
+<span class="sd">providing both whole-brain segmentation and optional cortical parcellation.</span>
 
-<span class="sd">Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except in</span>
-<span class="sd">compliance with the License. You may obtain a copy of the License at</span>
-<span class="sd">https://www.apache.org/licenses/LICENSE-2.0</span>
-<span class="sd">Unless required by applicable law or agreed to in writing, software distributed under the License is</span>
-<span class="sd">distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or</span>
-<span class="sd">implied. See the License for the specific language governing permissions and limitations under the</span>
-<span class="sd">License.</span>
+<span class="sd">Features:</span>
+<span class="sd">--------</span>
+<span class="sd">- Contrast-agnostic segmentation working across different MRI acquisition types</span>
+<span class="sd">- Whole-brain anatomical structure segmentation with 37 labels</span>
+<span class="sd">- Optional cortical parcellation (up to 95 additional regions)</span>
+<span class="sd">- Multiple execution modes: standard, robust (higher quality), and fast</span>
+<span class="sd">- Volumetric analysis with CSV output for region-wise measurements</span>
+<span class="sd">- Quality control metrics for assessing segmentation reliability</span>
+<span class="sd">- GPU acceleration with optional CPU-only execution</span>
+
+<span class="sd">API Usage:</span>
+<span class="sd">---------</span>
+<span class="sd">micaflow synthseg </span>
+<span class="sd">    --i &lt;path/to/image.nii.gz&gt;</span>
+<span class="sd">    --o &lt;path/to/segmentation.nii.gz&gt;</span>
+<span class="sd">    [--parc]</span>
+<span class="sd">    [--robust]</span>
+<span class="sd">    [--fast]</span>
+<span class="sd">    [--vol &lt;path/to/volumes.csv&gt;]</span>
+<span class="sd">    [--qc &lt;path/to/qc_scores.csv&gt;]</span>
+<span class="sd">    [--threads &lt;num_threads&gt;]</span>
+
+<span class="sd">Python Usage:</span>
+<span class="sd">-----------</span>
+<span class="sd">&gt;&gt;&gt; from micaflow.scripts.synthseg import main</span>
+<span class="sd">&gt;&gt;&gt; main({</span>
+<span class="sd">...     &#39;i&#39;: &#39;input_image.nii.gz&#39;,</span>
+<span class="sd">...     &#39;o&#39;: &#39;segmentation.nii.gz&#39;,</span>
+<span class="sd">...     &#39;parc&#39;: True,</span>
+<span class="sd">...     &#39;robust&#39;: False,</span>
+<span class="sd">...     &#39;fast&#39;: True,</span>
+<span class="sd">...     &#39;vol&#39;: &#39;volumes.csv&#39;,</span>
+<span class="sd">...     &#39;threads&#39;: 4</span>
+<span class="sd">... })</span>
+
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="c1"># python imports</span>

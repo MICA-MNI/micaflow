@@ -13,6 +13,7 @@ MicaFlow is a comprehensive pipeline for processing structural and diffusion MRI
    :hidden:
 
    getting_started
+   pipeline
    examples
    scripts
 
@@ -20,6 +21,7 @@ Quick Navigation
 ---------------
 
 * :doc:`getting_started` - Installation and basic usage
+* :doc:`pipeline` - Pipeline overview and workflow details
 * :doc:`examples` - Example workflows and use cases
 * :doc:`scripts` - Command-line tools reference
 

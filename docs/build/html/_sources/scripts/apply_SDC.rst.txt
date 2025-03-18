@@ -1,6 +1,39 @@
 Apply Sdc
 =========
 
+apply_SDC - Susceptibility Distortion Correction for diffusion MRI
+
+Part of the micaflow processing pipeline for neuroimaging data.
+
+This module applies susceptibility distortion correction (SDC) to diffusion MRI images
+by using a pre-calculated displacement field to unwarp geometric distortions caused by
+magnetic field inhomogeneities. These distortions typically occur along the phase-encoding
+direction (usually the y-axis).
+
+The module works by:
+1. Loading a distorted diffusion image (typically after motion correction)
+2. Applying a voxel-wise displacement field to each volume in the 4D image
+3. Using linear interpolation to resample the image at the corrected coordinates
+4. Saving the unwarped image with the original affine transformation
+
+API Usage:
+---------
+micaflow apply_SDC 
+    --input <path/to/distorted_image.nii.gz>
+    --warp <path/to/field_map.nii.gz>
+    --affine <path/to/reference_image.nii.gz>
+    --output <path/to/corrected_output.nii.gz>
+
+Python Usage:
+-----------
+>>> from micaflow.scripts.apply_SDC import apply_SD_correction
+>>> apply_SD_correction(
+...     motion_corr_path="distorted_image.nii.gz",
+...     warp_field=warp_field_array,
+...     moving_affine=affine_matrix,
+...     output="corrected_output.nii.gz"
+... )
+
 Command Line Usage
 -----------------
 
@@ -11,7 +44,7 @@ Command Line Usage
 Source Code
 -----------
 
-View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow2.0/blob/main/micaflow/scripts/apply_SDC.py>`_
+View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/apply_SDC.py>`_
 
 Description
 -----------

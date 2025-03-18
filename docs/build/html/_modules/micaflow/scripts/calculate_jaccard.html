@@ -52,6 +52,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#dependencies">Dependencies</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../examples.html#example-workflows">Example Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
@@ -90,7 +96,47 @@
            <div itemprop="articleBody">
              
   <h1>Source code for micaflow.scripts.calculate_jaccard</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">calculate_jaccard - Segmentation Overlap Measurement Tool</span>
+
+<span class="sd">Part of the micaflow processing pipeline for neuroimaging data.</span>
+
+<span class="sd">This module calculates the Jaccard similarity index (intersection over union) between </span>
+<span class="sd">two segmentation volumes. The Jaccard index is a statistic used for comparing the </span>
+<span class="sd">similarity and diversity of sample sets, with values ranging from 0 (no overlap) to </span>
+<span class="sd">1 (perfect overlap). It is particularly useful for evaluating the quality of </span>
+<span class="sd">segmentations against a ground truth or comparing results from different methods.</span>
+
+<span class="sd">Features:</span>
+<span class="sd">--------</span>
+<span class="sd">- Support for multi-label segmentations with per-ROI analysis</span>
+<span class="sd">- Global Jaccard calculation across the entire volume</span>
+<span class="sd">- Optional masking to restrict comparison to specific regions</span>
+<span class="sd">- Configurable threshold for probabilistic segmentations</span>
+<span class="sd">- CSV output format for easy integration with analysis workflows</span>
+
+<span class="sd">API Usage:</span>
+<span class="sd">---------</span>
+<span class="sd">micaflow calculate_jaccard </span>
+<span class="sd">    --input &lt;path/to/segmentation.nii.gz&gt;</span>
+<span class="sd">    --reference &lt;path/to/ground_truth.nii.gz&gt;</span>
+<span class="sd">    --output &lt;path/to/results.csv&gt;</span>
+<span class="sd">    [--mask &lt;path/to/mask.nii.gz&gt;]</span>
+<span class="sd">    [--threshold &lt;value&gt;]</span>
+
+<span class="sd">Python Usage:</span>
+<span class="sd">-----------</span>
+<span class="sd">&gt;&gt;&gt; from micaflow.scripts.calculate_jaccard import main</span>
+<span class="sd">&gt;&gt;&gt; main(</span>
+<span class="sd">...     image=&quot;segmentation.nii.gz&quot;,</span>
+<span class="sd">...     reference=&quot;ground_truth.nii.gz&quot;,</span>
+<span class="sd">...     output_file=&quot;jaccard_results.csv&quot;,</span>
+<span class="sd">...     threshold=0.5,  # optional</span>
+<span class="sd">...     mask_path=&quot;brain_mask.nii.gz&quot;  # optional</span>
+<span class="sd">... )</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>

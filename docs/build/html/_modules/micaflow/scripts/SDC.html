@@ -52,6 +52,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#dependencies">Dependencies</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../examples.html#example-workflows">Example Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
@@ -90,7 +96,47 @@
            <div itemprop="articleBody">
              
   <h1>Source code for micaflow.scripts.SDC</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">SDC - Susceptibility Distortion Correction for EPI/DWI</span>
+
+<span class="sd">Part of the micaflow processing pipeline for neuroimaging data.</span>
+
+<span class="sd">This module corrects geometric distortions in echo-planar imaging (EPI) MR images </span>
+<span class="sd">caused by magnetic field inhomogeneities. It implements the HYSCO (HYperellastic </span>
+<span class="sd">Susceptibility artifact COrrection) algorithm that uses a pair of images acquired </span>
+<span class="sd">with opposite phase-encoding directions to estimate and correct these distortions. </span>
+<span class="sd">The algorithm estimates a displacement field along the phase-encoding direction </span>
+<span class="sd">(typically y-axis) that can be used to unwarp the distorted images.</span>
+
+<span class="sd">Features:</span>
+<span class="sd">--------</span>
+<span class="sd">- B0 field estimation using phase-encoding reversed image pairs</span>
+<span class="sd">- GPU acceleration with PyTorch for faster processing when available</span>
+<span class="sd">- Automatic initial alignment using ANTs affine registration</span>
+<span class="sd">- Advanced optimization using Alternating Direction Method of Multipliers (ADMM)</span>
+<span class="sd">- Outputs both corrected images and estimated displacement fields for further usage</span>
+<span class="sd">- Temporary file management for clean processing pipeline</span>
+
+<span class="sd">API Usage:</span>
+<span class="sd">---------</span>
+<span class="sd">micaflow SDC </span>
+<span class="sd">    --input &lt;path/to/forward_phase_encoded.nii.gz&gt;</span>
+<span class="sd">    --reverse-image &lt;path/to/reverse_phase_encoded.nii.gz&gt;</span>
+<span class="sd">    --output &lt;path/to/corrected_image.nii.gz&gt;</span>
+<span class="sd">    --output-warp &lt;path/to/displacement_field.nii.gz&gt;</span>
+
+<span class="sd">Python Usage:</span>
+<span class="sd">-----------</span>
+<span class="sd">&gt;&gt;&gt; from micaflow.scripts.SDC import run</span>
+<span class="sd">&gt;&gt;&gt; run(</span>
+<span class="sd">...     data_image=&quot;forward_phase_encoded.nii.gz&quot;,</span>
+<span class="sd">...     reverse_image=&quot;reverse_phase_encoded.nii.gz&quot;,</span>
+<span class="sd">...     output_name=&quot;corrected_image.nii.gz&quot;,</span>
+<span class="sd">...     output_warp=&quot;displacement_field.nii.gz&quot;</span>
+<span class="sd">... )</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nib</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">map_coordinates</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">EPI_MRI.EPIMRIDistortionCorrection</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataObject</span><span class="p">,</span> <span class="n">EPIMRIDistortionCorrection</span>

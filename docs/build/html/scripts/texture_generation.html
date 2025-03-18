@@ -23,6 +23,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Normalize" href="normalize.html" />
     <link rel="prev" title="Synthseg" href="synthseg.html" /> 
 </head>
 
@@ -52,6 +53,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../getting_started.html#installation">Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../getting_started.html#basic-usage">Basic Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#quality-control">Quality Control</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a><ul>
@@ -94,6 +101,44 @@
              
   <section id="texture-generation">
 <h1>Texture Generation<a class="headerlink" href="#texture-generation" title="Link to this heading"></a></h1>
+<p>texture_generation - MRI Texture Feature Extraction</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module computes advanced texture features from MRI data that can be used for
+tissue characterization, lesion analysis, or radiomics applications. It performs
+automatic tissue segmentation and extracts quantitative imaging features including
+gradient magnitude and relative intensity maps, which capture local intensity variations
+and tissue contrast properties respectively.</p>
+<section id="features">
+<h2>Features:<a class="headerlink" href="#features" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Automatic tissue segmentation into gray matter, white matter, and CSF</p></li>
+<li><p>Gradient magnitude computation for edge and boundary detection</p></li>
+<li><p>Relative intensity calculation for normalized tissue contrast</p></li>
+<li><p>Masked processing to focus analysis on brain regions only</p></li>
+<li><p>Output in standard NIfTI format compatible with other neuroimaging tools</p></li>
+<li><p>Efficient implementation using ANTs image processing functions</p></li>
+</ul>
+</section>
+<section id="api-usage">
+<h2>API Usage:<a class="headerlink" href="#api-usage" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>micaflow texture_generation</dt><dd><p>–input &lt;path/to/image.nii.gz&gt;
+–mask &lt;path/to/brain_mask.nii.gz&gt;
+–output &lt;path/to/output_prefix&gt;</p>
+</dd>
+</dl>
+</section>
+<section id="python-usage">
+<h2>Python Usage:<a class="headerlink" href="#python-usage" title="Link to this heading"></a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.texture_generation</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_texture_pipeline</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">run_texture_pipeline</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="nb">input</span><span class="o">=</span><span class="s2">&quot;preprocessed_t1w.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">mask</span><span class="o">=</span><span class="s2">&quot;brain_mask.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;output_texture_maps&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <section id="command-line-usage">
 <h2>Command Line Usage<a class="headerlink" href="#command-line-usage" title="Link to this heading"></a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>texture_generation<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
@@ -102,7 +147,7 @@
 </section>
 <section id="source-code">
 <h2>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h2>
-<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow2.0/blob/main/micaflow/scripts/texture_generation.py">GitHub Repository</a></p>
+<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/texture_generation.py">GitHub Repository</a></p>
 </section>
 <section id="description">
 <h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
@@ -143,6 +188,44 @@ relative intensity, and tissue segmentation.
 - Processing may take several minutes depending on image size
 </pre></div>
 </div>
+<p>texture_generation - MRI Texture Feature Extraction</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module computes advanced texture features from MRI data that can be used for
+tissue characterization, lesion analysis, or radiomics applications. It performs
+automatic tissue segmentation and extracts quantitative imaging features including
+gradient magnitude and relative intensity maps, which capture local intensity variations
+and tissue contrast properties respectively.</p>
+<section id="id1">
+<h3>Features:<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Automatic tissue segmentation into gray matter, white matter, and CSF</p></li>
+<li><p>Gradient magnitude computation for edge and boundary detection</p></li>
+<li><p>Relative intensity calculation for normalized tissue contrast</p></li>
+<li><p>Masked processing to focus analysis on brain regions only</p></li>
+<li><p>Output in standard NIfTI format compatible with other neuroimaging tools</p></li>
+<li><p>Efficient implementation using ANTs image processing functions</p></li>
+</ul>
+</section>
+<section id="id2">
+<h3>API Usage:<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>micaflow texture_generation</dt><dd><p>–input &lt;path/to/image.nii.gz&gt;
+–mask &lt;path/to/brain_mask.nii.gz&gt;
+–output &lt;path/to/output_prefix&gt;</p>
+</dd>
+</dl>
+</section>
+<section id="id3">
+<h3>Python Usage:<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.texture_generation</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_texture_pipeline</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">run_texture_pipeline</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="nb">input</span><span class="o">=</span><span class="s2">&quot;preprocessed_t1w.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">mask</span><span class="o">=</span><span class="s2">&quot;brain_mask.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;output_texture_maps&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <dl class="py class">
 <dt class="sig sig-object py">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Counter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iterable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/collections.html#Counter"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
@@ -361,7 +444,7 @@ and flips the sign on negative counts.</p>
 &gt;&gt;&gt; prime_factors = Counter({2: 2, 3: 3, 17: 1})
 &gt;&gt;&gt; product = 1
 &gt;&gt;&gt; for factor in prime_factors.elements():     # loop over factors
-…     product <a href="#id1"><span class="problematic" id="id2">*</span></a>= factor                       # and multiply them
+…     product <a href="#id4"><span class="problematic" id="id5">*</span></a>= factor                       # and multiply them
 &gt;&gt;&gt; product
 1836</p>
 <p>Note, if an element’s count has been set to zero or is a negative
@@ -535,6 +618,7 @@ feature extraction algorithms specifically designed for neuroimaging data.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="synthseg.html" class="btn btn-neutral float-left" title="Synthseg" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="normalize.html" class="btn btn-neutral float-right" title="Normalize" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
