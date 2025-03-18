@@ -1,3 +1,41 @@
+"""
+denoise - Diffusion-Weighted Image Noise Reduction
+
+Part of the micaflow processing pipeline for neuroimaging data.
+
+This module denoises diffusion-weighted images (DWI) using the Patch2Self algorithm,
+which leverages redundant information across diffusion gradients to remove noise 
+without requiring additional reference scans. Patch2Self is a self-supervised learning 
+approach that improves image quality and enhances subsequent diffusion analyses by 
+removing random noise while preserving anatomical structures.
+
+Features:
+--------
+- Self-supervised learning approach requiring no separate reference data
+- Adapts to the unique noise characteristics of each dataset
+- Preserves anatomical structure while effectively removing noise
+- Compatible with standard diffusion MRI acquisition protocols
+- Improves subsequent analyses such as fiber tracking and diffusion metrics
+
+API Usage:
+---------
+micaflow denoise 
+    --input <path/to/dwi.nii.gz>
+    --bval <path/to/dwi.bval>
+    --bvec <path/to/dwi.bvec>
+    --output <path/to/denoised_dwi.nii.gz>
+
+Python Usage:
+-----------
+>>> from micaflow.scripts.denoise import run_denoise
+>>> run_denoise(
+...     moving="raw_dwi.nii.gz",
+...     moving_bval="dwi.bval", 
+...     moving_bvec="dwi.bvec",
+...     output="denoised_dwi.nii.gz"
+... )
+
+"""
 import argparse
 import nibabel as nib
 import sys

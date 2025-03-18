@@ -17,7 +17,8 @@ COMMANDS = [
     "SDC",
     "apply_SDC",
     "synthseg",
-    "texture_generation"
+    "texture_generation",
+    "normalize"
 ]
 
 @pytest.mark.parametrize("command", COMMANDS)
@@ -59,6 +60,7 @@ def mock_subprocess_run():
     ("calculate_jaccard", ["--segmentation1", "seg1.nii.gz", "--segmentation2", "seg2.nii.gz", "--output", "metrics.csv"]),
     ("compute_fa_md", ["--input", "dwi.nii.gz", "--bval", "dwi.bval", "--bvec", "dwi.bvec", "--output-fa", "fa.nii.gz", "--output-md", "md.nii.gz"]),
     ("texture_generation", ["--input", "img.nii.gz", "--mask", "mask.nii.gz", "--output", "textures/"]),
+    ("normalize", ["--input", "img.nii.gz", "--mask", "mask.nii.gz", "--output", "norm.nii.gz"]),
 ])
 def test_command_with_required_args(command, required_args, mock_subprocess_run):
     """Test that commands execute correctly with the required arguments."""

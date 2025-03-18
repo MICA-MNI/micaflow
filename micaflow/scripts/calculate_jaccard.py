@@ -1,3 +1,43 @@
+"""
+calculate_jaccard - Segmentation Overlap Measurement Tool
+
+Part of the micaflow processing pipeline for neuroimaging data.
+
+This module calculates the Jaccard similarity index (intersection over union) between 
+two segmentation volumes. The Jaccard index is a statistic used for comparing the 
+similarity and diversity of sample sets, with values ranging from 0 (no overlap) to 
+1 (perfect overlap). It is particularly useful for evaluating the quality of 
+segmentations against a ground truth or comparing results from different methods.
+
+Features:
+--------
+- Support for multi-label segmentations with per-ROI analysis
+- Global Jaccard calculation across the entire volume
+- Optional masking to restrict comparison to specific regions
+- Configurable threshold for probabilistic segmentations
+- CSV output format for easy integration with analysis workflows
+
+API Usage:
+---------
+micaflow calculate_jaccard 
+    --input <path/to/segmentation.nii.gz>
+    --reference <path/to/ground_truth.nii.gz>
+    --output <path/to/results.csv>
+    [--mask <path/to/mask.nii.gz>]
+    [--threshold <value>]
+
+Python Usage:
+-----------
+>>> from micaflow.scripts.calculate_jaccard import main
+>>> main(
+...     image="segmentation.nii.gz",
+...     reference="ground_truth.nii.gz",
+...     output_file="jaccard_results.csv",
+...     threshold=0.5,  # optional
+...     mask_path="brain_mask.nii.gz"  # optional
+... )
+
+"""
 import csv
 import nibabel as nib
 import argparse

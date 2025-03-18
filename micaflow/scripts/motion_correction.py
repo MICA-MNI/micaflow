@@ -1,3 +1,43 @@
+"""
+motion_correction - Diffusion MRI Motion Artifact Removal
+
+Part of the micaflow processing pipeline for neuroimaging data.
+
+This module corrects for subject motion in diffusion-weighted images (DWI) by registering
+each volume to the first volume (typically a B0 image). Subject movement during 
+acquisition is one of the primary sources of artifacts in diffusion MRI, causing 
+misalignment between volumes that can severely impact analysis. This implementation uses
+ANTs' SyNRA algorithm, which combines rigid, affine, and deformable transformations for 
+robust inter-volume alignment.
+
+Features:
+--------
+- Volume-by-volume registration to a reference B0 image
+- Combines rigid, affine, and deformable transformations using ANTs SyNRA
+- Preserves original image header information and coordinates
+- Progress visualization with volume-wise completion tracking
+- Compatible with standard diffusion acquisition protocols
+- No gradient reorientation needed (performed at tensor fitting stage)
+
+API Usage:
+---------
+micaflow motion_correction 
+    --denoised <path/to/dwi.nii.gz>
+    --bval <path/to/dwi.bval>
+    --bvec <path/to/dwi.bvec>
+    --output <path/to/motion_corrected_dwi.nii.gz>
+
+Python Usage:
+-----------
+>>> from micaflow.scripts.motion_correction import run_motion_correction
+>>> run_motion_correction(
+...     dwi_path="denoised_dwi.nii.gz",
+...     bval_path="dwi.bval",
+...     bvec_path="dwi.bvec", 
+...     output="motion_corrected_dwi.nii.gz"
+... )
+
+"""
 import argparse
 import ants
 import numpy as np

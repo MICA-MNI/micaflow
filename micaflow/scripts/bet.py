@@ -1,15 +1,39 @@
-"""HD-BET (High-Definition Brain Extraction Tool) wrapper script.
+"""
+bet - Brain Extraction Tool using HD-BET
 
-This script provides a simplified command-line interface to the HD-BET brain extraction
-tool, which performs accurate skull stripping on brain MR images using a deep learning approach.
-It supports both CPU and GPU execution modes.
+Part of the micaflow processing pipeline for neuroimaging data.
 
-The script is a wrapper around the HD-BET entry_point.py script that simplifies the interface
-and handles path resolution.
+This module provides brain extraction (skull stripping) functionality using the High-Definition
+Brain Extraction Tool (HD-BET), a deep learning-based approach that accurately segments the 
+brain from surrounding tissues in MR images. HD-BET offers superior performance over traditional
+methods, particularly for clinical and non-standard MR images.
 
-Example:
-    python hdbet.py --input t1w.nii.gz --output t1w_brain.nii.gz
-    python hdbet.py --input t1w.nii.gz --output t1w_brain.nii.gz --cpu
+Features:
+--------
+- Deep learning-based brain extraction with state-of-the-art accuracy
+- Support for both CPU and GPU execution modes
+- Compatible with various MRI modalities (T1w, T2w, FLAIR)
+- Produces both skull-stripped images and binary brain masks
+- Robust to imaging artifacts and pathologies
+
+API Usage:
+---------
+micaflow bet 
+    --input <path/to/image.nii.gz>
+    --output <path/to/brain.nii.gz>
+    --output-mask <path/to/brain_mask.nii.gz>
+    [--cpu]
+
+Python Usage:
+-----------
+>>> import subprocess
+>>> from micaflow.scripts.bet import run_hdbet
+>>> run_hdbet(
+...     input_file="t1w.nii.gz",
+...     output_file="brain.nii.gz",
+...     mask_file="brain_mask.nii.gz",
+...     use_cpu=False
+... )
 
 """
 

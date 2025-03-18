@@ -86,6 +86,19 @@ Requires-Dist: nipype==1.9.2
 Requires-Dist: nnunetv2==2.6.0
 Requires-Dist: numexpr==2.10.2
 Requires-Dist: numpy==2.0.1
+Requires-Dist: nvidia-cublas-cu12==12.4.5.8
+Requires-Dist: nvidia-cuda-cupti-cu12==12.4.127
+Requires-Dist: nvidia-cuda-nvrtc-cu12==12.4.127
+Requires-Dist: nvidia-cuda-runtime-cu12==12.4.127
+Requires-Dist: nvidia-cudnn-cu12==9.1.0.70
+Requires-Dist: nvidia-cufft-cu12==11.2.1.3
+Requires-Dist: nvidia-curand-cu12==10.3.5.147
+Requires-Dist: nvidia-cusolver-cu12==11.6.1.9
+Requires-Dist: nvidia-cusparse-cu12==12.3.1.170
+Requires-Dist: nvidia-cusparselt-cu12==0.6.2
+Requires-Dist: nvidia-nccl-cu12==2.21.5
+Requires-Dist: nvidia-nvjitlink-cu12==12.4.127
+Requires-Dist: nvidia-nvtx-cu12==12.4.127
 Requires-Dist: opt_einsum==3.4.0
 Requires-Dist: optree==0.14.1
 Requires-Dist: orderly-set==5.3.0
@@ -135,6 +148,7 @@ Requires-Dist: tabulate==0.9.0
 Requires-Dist: tensorboard==2.18.0
 Requires-Dist: tensorboard-data-server==0.7.2
 Requires-Dist: tensorflow==2.18.0
+Requires-Dist: tensorflow-io-gcs-filesystem==0.37.1
 Requires-Dist: termcolor==2.5.0
 Requires-Dist: threadpoolctl==3.5.0
 Requires-Dist: throttler==1.2.2
@@ -146,6 +160,7 @@ Requires-Dist: tqdm==4.67.1
 Requires-Dist: traceback2==1.4.0
 Requires-Dist: traitlets==5.14.3
 Requires-Dist: traits==7.0.2
+Requires-Dist: triton==3.2.0
 Requires-Dist: trx-python==0.3
 Requires-Dist: typing_extensions==4.12.2
 Requires-Dist: tzdata==2025.1

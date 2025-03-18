@@ -5,3 +5,4 @@ docs/_templates/*
 work/*
 .snakemake/*
 /.snakemake/
+/.vscode/

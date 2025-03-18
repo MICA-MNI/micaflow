@@ -134,7 +134,7 @@ def create_script_rst_file(module_name, help_content):
         # Add source code links
         f.write("Source Code\n")
         f.write("-----------\n\n")
-        f.write(f"View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow2.0/blob/main/micaflow/scripts/{module_name}.py>`_\n\n")
+        f.write(f"View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/{module_name}.py>`_\n\n")
         
         # If we have help content, add it
         if help_content:
@@ -288,7 +288,8 @@ def get_short_description(script_name):
         "compute_fa_md": "Compute DTI metrics (FA, MD)",
         "denoise": "Denoise diffusion-weighted images",
         "motion_correction": "Motion correction for DWI",
-        "texture_generation": "Generate texture features"
+        "texture_generation": "Generate texture features",
+        "normalize": "Intensity normalization and clamping",
     }
     return descriptions.get(script_name, "MicaFlow utility")
 

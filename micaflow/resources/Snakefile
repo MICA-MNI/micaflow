@@ -40,12 +40,20 @@ def get_final_output():
     outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_textures-T1w_relative-intensity.nii")
     outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_T1w-to-MNI152-space_jaccard.csv")
     outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_space-T1w_T1w.nii.gz"))
+    
+    # Add normalized T1w images
+    outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_space-T1w_T1w_normalized.nii.gz"))
+    outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_space-MNI152_T1w_normalized.nii.gz"))
 
     if FLAIR_FILE:
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_FLAIR-to-T1w-space_jaccard.csv")
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_textures-FLAIR_gradient-magnitude.nii")
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_textures-FLAIR_relative-intensity.nii")
         outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_space-T1w_FLAIR.nii.gz"))
+        
+        # Add normalized FLAIR images
+        outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_space-T1w_FLAIR_normalized.nii.gz"))
+        outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_space-MNI152_FLAIR_normalized.nii.gz"))
 
     if RUN_DWI:
         outputs.extend([
@@ -53,9 +61,12 @@ def get_final_output():
             f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_MD.nii.gz"
         ])
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_DWI-to-T1w-space_jaccard.csv")
+        
+        # Add normalized FA and MD maps
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_FA_normalized.nii.gz")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_MD_normalized.nii.gz")
 
     return outputs
-
 
 
 rule all:
@@ -154,6 +165,8 @@ rule apply_warp_flair_to_t1w:
         reference = rules.bias_field_correction.output.corrected
     output:
         warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_space-T1w_{{modality}}.nii.gz"
+    wildcard_constraints:
+        modality="T1w|FLAIR"
     shell:
         """
         micaflow apply_warp \
@@ -172,6 +185,8 @@ rule apply_warp_to_mni:
         reference = ATLAS
     output:
         warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_space-MNI152_{{modality}}.nii.gz"
+    wildcard_constraints:
+        modality="T1w|FLAIR"
     shell:
         """
         micaflow apply_warp \
@@ -224,7 +239,38 @@ rule calculate_metrics_FLAIR:
             --reference {input.atlas} \
             --output {output.metrics}
         """
+rule normalize_anatomical:
+    input:
+        image = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_space-{wildcards.space}_{wildcards.modality}.nii.gz"
+    output:
+        normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_space-{{space}}_{{modality}}_normalized.nii.gz"
+    shell:
+        """
+        micaflow normalize \
+            --input {input.image} \
+            --output {output.normalized} \
+            --lower-percentile 1.0 \
+            --upper-percentile 99.0 \
+            --min-value 0 \
+            --max-value 100
+        """
+
 if RUN_DWI:
+    rule normalize_dwi_metrics:
+        input:
+            image = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_{wildcards.metric}.nii.gz"
+        output:
+            normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_{{metric}}_normalized.nii.gz"
+        shell:
+            """
+            micaflow normalize \
+                --input {input.image} \
+                --output {output.normalized} \
+                --lower-percentile 1.0 \
+                --upper-percentile 99.0 \
+                --min-value 0 \
+                --max-value 100
+            """
     rule dwi_denoise:
         input:
             moving = DWI_FILE,
