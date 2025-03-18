@@ -1,0 +1,13 @@
+# Default configuration for micaflow pipeline
+subject: "sub-HC131"  # Subject ID (e.g., sub-01, sub-02, etc.)
+session: "ses-01"   # Session ID (e.g., ses-01, ses-02, etc.)
+flair_file: "/home/ian/GitHub/data/sub-HC131/ses-01/anat/sub-HC131_ses-01_FLAIR.nii.gz"  # Path to FLAIR image
+t1w_file: "/home/ian/GitHub/data/sub-HC131/ses-01/anat/sub-HC131_ses-01_run-1_T1w.nii.gz"  # Path to T1w image
+dwi_file: "/home/ian/GitHub/data/sub-HC131/ses-01/dwi/sub-HC131_ses-01_acq-b700-41_dir-AP_dwi.nii.gz"  # Path to DWI image
+bval_file: "/home/ian/GitHub/data/sub-HC131/ses-01/dwi/sub-HC131_ses-01_acq-b700-41_dir-AP_dwi.bval"  # Path to bval file
+bvec_file: "/home/ian/GitHub/data/sub-HC131/ses-01/dwi/sub-HC131_ses-01_acq-b700-41_dir-AP_dwi.bvec"  # Path to bvec file
+inverse_dwi_file: "/home/ian/GitHub/data/sub-HC131/ses-01/dwi/sub-HC131_ses-01_dir-PA_dwi.nii.gz"  # Path to inverse DWI image
+out_dir: "outputs"  # Output directory where results will be stored
+threads: 4         # Number of CPU threads to use
+run_dwi: true       # Whether to run DWI processing
+cpu: true

@@ -1,0 +1,93 @@
+/* Landing page styling */
+.landing-page {
+    margin-bottom: 2rem;
+}
+
+.landing-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.landing-logo {
+    max-width: 200px;
+    margin: 0 auto 1.5rem;
+    display: block;
+}
+
+.landing-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.landing-button {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    background: #2980b9;
+    color: white !important;
+    border-radius: 4px;
+    font-weight: bold;
+    text-decoration: none !important;
+    transition: background 0.3s;
+}
+
+.landing-button:hover {
+    background: #3091d1;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.feature-card {
+    border: 1px solid #e1e4e5;
+    border-radius: 4px;
+    padding: 1.5rem;
+    background: #f8f9fa;
+}
+
+.feature-card h3 {
+    margin-top: 0;
+    border-bottom: none !important;
+}
+
+/* Improved code blocks */
+pre {
+    border-radius: 4px;
+}
+
+/* Adjust logo in sidebar */
+.wy-side-nav-search > a img.logo {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 150px;
+    margin: 0.5rem auto;
+}
+
+/* Improve tab styling */
+.wy-menu-vertical li.toctree-l1 {
+    font-size: 100%;
+    font-weight: bold;
+}
+
+.wy-menu-vertical li.toctree-l2 {
+    font-size: 95%;
+}
+
+.wy-menu-vertical li.toctree-l3 {
+    font-size: 90%;
+}
+
+/* Style for the top-level tabs */
+.wy-menu-vertical p.caption {
+    color: #55a5d9;
+    font-size: 110%;
+    margin: 12px 0 4px;
+    padding: 0 1.618em;
+}

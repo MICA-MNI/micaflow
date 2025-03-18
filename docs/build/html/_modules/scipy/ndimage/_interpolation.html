@@ -1,0 +1,1128 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>scipy.ndimage._interpolation &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scripts.html">Scripts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">scipy.ndimage._interpolation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for scipy.ndimage._interpolation</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (C) 2003-2005 Peter J. Verveer</span>
+<span class="c1">#</span>
+<span class="c1"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c1"># modification, are permitted provided that the following conditions</span>
+<span class="c1"># are met:</span>
+<span class="c1">#</span>
+<span class="c1"># 1. Redistributions of source code must retain the above copyright</span>
+<span class="c1">#    notice, this list of conditions and the following disclaimer.</span>
+<span class="c1">#</span>
+<span class="c1"># 2. Redistributions in binary form must reproduce the above</span>
+<span class="c1">#    copyright notice, this list of conditions and the following</span>
+<span class="c1">#    disclaimer in the documentation and/or other materials provided</span>
+<span class="c1">#    with the distribution.</span>
+<span class="c1">#</span>
+<span class="c1"># 3. The name of the author may not be used to endorse or promote</span>
+<span class="c1">#    products derived from this software without specific prior</span>
+<span class="c1">#    written permission.</span>
+<span class="c1">#</span>
+<span class="c1"># THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS&#39;&#39; AND ANY EXPRESS</span>
+<span class="c1"># OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED</span>
+<span class="c1"># WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE</span>
+<span class="c1"># ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY</span>
+<span class="c1"># DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL</span>
+<span class="c1"># DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE</span>
+<span class="c1"># GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS</span>
+<span class="c1"># INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,</span>
+<span class="c1"># WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING</span>
+<span class="c1"># NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS</span>
+<span class="c1"># SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy._lib._util</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalize_axis_index</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">special</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">_ni_support</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">_nd_image</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._ni_docstrings</span><span class="w"> </span><span class="kn">import</span> <span class="n">docfiller</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;spline_filter1d&#39;</span><span class="p">,</span> <span class="s1">&#39;spline_filter&#39;</span><span class="p">,</span> <span class="s1">&#39;geometric_transform&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;map_coordinates&#39;</span><span class="p">,</span> <span class="s1">&#39;affine_transform&#39;</span><span class="p">,</span> <span class="s1">&#39;shift&#39;</span><span class="p">,</span> <span class="s1">&#39;zoom&#39;</span><span class="p">,</span> <span class="s1">&#39;rotate&#39;</span><span class="p">]</span>
+
+
+<span class="nd">@docfiller</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">spline_filter1d</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
+                    <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mirror&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate a 1-D spline filter along the given axis.</span>
+
+<span class="sd">    The lines of the array along the given axis are filtered by a</span>
+<span class="sd">    spline filter. The order of the spline must be &gt;= 2 and &lt;= 5.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    %(input)s</span>
+<span class="sd">    order : int, optional</span>
+<span class="sd">        The order of the spline, default is 3.</span>
+<span class="sd">    axis : int, optional</span>
+<span class="sd">        The axis along which the spline filter is applied. Default is the last</span>
+<span class="sd">        axis.</span>
+<span class="sd">    output : ndarray or dtype, optional</span>
+<span class="sd">        The array in which to place the output, or the dtype of the returned</span>
+<span class="sd">        array. Default is ``numpy.float64``.</span>
+<span class="sd">    %(mode_interp_mirror)s</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    spline_filter1d : ndarray</span>
+<span class="sd">        The filtered input.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    spline_filter : Multidimensional spline filter.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    All of the interpolation functions in `ndimage` do spline interpolation of</span>
+<span class="sd">    the input image. If using B-splines of `order &gt; 1`, the input image</span>
+<span class="sd">    values have to be converted to B-spline coefficients first, which is</span>
+<span class="sd">    done by applying this 1-D filter sequentially along all</span>
+<span class="sd">    axes of the input. All functions that require B-spline coefficients</span>
+<span class="sd">    will automatically filter their inputs, a behavior controllable with</span>
+<span class="sd">    the `prefilter` keyword argument. For functions that accept a `mode`</span>
+<span class="sd">    parameter, the result will only be correct if it matches the `mode`</span>
+<span class="sd">    used when filtering.</span>
+
+<span class="sd">    For complex-valued `input`, this function processes the real and imaginary</span>
+<span class="sd">    components independently.</span>
+
+<span class="sd">    .. versionadded:: 1.6.0</span>
+<span class="sd">        Complex-valued support added.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    We can filter an image using 1-D spline along the given axis:</span>
+
+<span class="sd">    &gt;&gt;&gt; from scipy.ndimage import spline_filter1d</span>
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; import matplotlib.pyplot as plt</span>
+<span class="sd">    &gt;&gt;&gt; orig_img = np.eye(20)  # create an image</span>
+<span class="sd">    &gt;&gt;&gt; orig_img[10, :] = 1.0</span>
+<span class="sd">    &gt;&gt;&gt; sp_filter_axis_0 = spline_filter1d(orig_img, axis=0)</span>
+<span class="sd">    &gt;&gt;&gt; sp_filter_axis_1 = spline_filter1d(orig_img, axis=1)</span>
+<span class="sd">    &gt;&gt;&gt; f, ax = plt.subplots(1, 3, sharex=True)</span>
+<span class="sd">    &gt;&gt;&gt; for ind, data in enumerate([[orig_img, &quot;original image&quot;],</span>
+<span class="sd">    ...             [sp_filter_axis_0, &quot;spline filter (axis=0)&quot;],</span>
+<span class="sd">    ...             [sp_filter_axis_1, &quot;spline filter (axis=1)&quot;]]):</span>
+<span class="sd">    ...     ax[ind].imshow(data[0], cmap=&#39;gray_r&#39;)</span>
+<span class="sd">    ...     ax[ind].set_title(data[1])</span>
+<span class="sd">    &gt;&gt;&gt; plt.tight_layout()</span>
+<span class="sd">    &gt;&gt;&gt; plt.show()</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">order</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">order</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;spline order not supported&#39;</span><span class="p">)</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+    <span class="n">complex_output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">iscomplexobj</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">_ni_support</span><span class="o">.</span><span class="n">_get_output</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span>
+                                     <span class="n">complex_output</span><span class="o">=</span><span class="n">complex_output</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">complex_output</span><span class="p">:</span>
+        <span class="n">spline_filter1d</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">output</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+        <span class="n">spline_filter1d</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">imag</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">output</span><span class="o">.</span><span class="n">imag</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">output</span>
+    <span class="k">if</span> <span class="n">order</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]:</span>
+        <span class="n">output</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="n">_ni_support</span><span class="o">.</span><span class="n">_extend_mode_to_code</span><span class="p">(</span><span class="n">mode</span><span class="p">)</span>
+        <span class="n">axis</span> <span class="o">=</span> <span class="n">normalize_axis_index</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="nb">input</span><span class="o">.</span><span class="n">ndim</span><span class="p">)</span>
+        <span class="n">_nd_image</span><span class="o">.</span><span class="n">spline_filter1d</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">output</span>
+
+<span class="nd">@docfiller</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">spline_filter</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mirror&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Multidimensional spline filter.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    %(input)s</span>
+<span class="sd">    order : int, optional</span>
+<span class="sd">        The order of the spline, default is 3.</span>
+<span class="sd">    output : ndarray or dtype, optional</span>
+<span class="sd">        The array in which to place the output, or the dtype of the returned</span>
+<span class="sd">        array. Default is ``numpy.float64``.</span>
+<span class="sd">    %(mode_interp_mirror)s</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    spline_filter : ndarray</span>
+<span class="sd">        Filtered array. Has the same shape as `input`.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    spline_filter1d : Calculate a 1-D spline filter along the given axis.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The multidimensional filter is implemented as a sequence of</span>
+<span class="sd">    1-D spline filters. The intermediate arrays are stored</span>
+<span class="sd">    in the same data type as the output. Therefore, for output types</span>
+<span class="sd">    with a limited precision, the results may be imprecise because</span>
+<span class="sd">    intermediate results may be stored with insufficient precision.</span>
+
+<span class="sd">    For complex-valued `input`, this function processes the real and imaginary</span>
+<span class="sd">    components independently.</span>
+
+<span class="sd">    .. versionadded:: 1.6.0</span>
+<span class="sd">        Complex-valued support added.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    We can filter an image using multidimensional splines:</span>
+
+<span class="sd">    &gt;&gt;&gt; from scipy.ndimage import spline_filter</span>
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; import matplotlib.pyplot as plt</span>
+<span class="sd">    &gt;&gt;&gt; orig_img = np.eye(20)  # create an image</span>
+<span class="sd">    &gt;&gt;&gt; orig_img[10, :] = 1.0</span>
+<span class="sd">    &gt;&gt;&gt; sp_filter = spline_filter(orig_img, order=3)</span>
+<span class="sd">    &gt;&gt;&gt; f, ax = plt.subplots(1, 2, sharex=True)</span>
+<span class="sd">    &gt;&gt;&gt; for ind, data in enumerate([[orig_img, &quot;original image&quot;],</span>
+<span class="sd">    ...                             [sp_filter, &quot;spline filter&quot;]]):</span>
+<span class="sd">    ...     ax[ind].imshow(data[0], cmap=&#39;gray_r&#39;)</span>
+<span class="sd">    ...     ax[ind].set_title(data[1])</span>
+<span class="sd">    &gt;&gt;&gt; plt.tight_layout()</span>
+<span class="sd">    &gt;&gt;&gt; plt.show()</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">order</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">order</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;spline order not supported&#39;</span><span class="p">)</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+    <span class="n">complex_output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">iscomplexobj</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">_ni_support</span><span class="o">.</span><span class="n">_get_output</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span>
+                                     <span class="n">complex_output</span><span class="o">=</span><span class="n">complex_output</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">complex_output</span><span class="p">:</span>
+        <span class="n">spline_filter</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">output</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+        <span class="n">spline_filter</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">imag</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">output</span><span class="o">.</span><span class="n">imag</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">output</span>
+    <span class="k">if</span> <span class="n">order</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="nb">input</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">ndim</span><span class="p">):</span>
+            <span class="n">spline_filter1d</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">output</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+            <span class="nb">input</span> <span class="o">=</span> <span class="n">output</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">output</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="nb">input</span><span class="p">[</span><span class="o">...</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">output</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_prepad_for_spline_filter</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">cval</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;nearest&#39;</span><span class="p">,</span> <span class="s1">&#39;grid-constant&#39;</span><span class="p">]:</span>
+        <span class="n">npad</span> <span class="o">=</span> <span class="mi">12</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;grid-constant&#39;</span><span class="p">:</span>
+            <span class="n">padded</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">npad</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;constant&#39;</span><span class="p">,</span>
+                               <span class="n">constant_values</span><span class="o">=</span><span class="n">cval</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;nearest&#39;</span><span class="p">:</span>
+            <span class="n">padded</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">npad</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;edge&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># other modes have exact boundary conditions implemented so</span>
+        <span class="c1"># no prepadding is needed</span>
+        <span class="n">npad</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">padded</span> <span class="o">=</span> <span class="nb">input</span>
+    <span class="k">return</span> <span class="n">padded</span><span class="p">,</span> <span class="n">npad</span>
+
+
+<span class="nd">@docfiller</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">geometric_transform</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">mapping</span><span class="p">,</span> <span class="n">output_shape</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                        <span class="n">output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                        <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;constant&#39;</span><span class="p">,</span> <span class="n">cval</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">prefilter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                        <span class="n">extra_arguments</span><span class="o">=</span><span class="p">(),</span> <span class="n">extra_keywords</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Apply an arbitrary geometric transform.</span>
+
+<span class="sd">    The given mapping function is used to find, for each point in the</span>
+<span class="sd">    output, the corresponding coordinates in the input. The value of the</span>
+<span class="sd">    input at those coordinates is determined by spline interpolation of</span>
+<span class="sd">    the requested order.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    %(input)s</span>
+<span class="sd">    mapping : {callable, scipy.LowLevelCallable}</span>
+<span class="sd">        A callable object that accepts a tuple of length equal to the output</span>
+<span class="sd">        array rank, and returns the corresponding input coordinates as a tuple</span>
+<span class="sd">        of length equal to the input array rank.</span>
+<span class="sd">    output_shape : tuple of ints, optional</span>
+<span class="sd">        Shape tuple.</span>
+<span class="sd">    %(output)s</span>
+<span class="sd">    order : int, optional</span>
+<span class="sd">        The order of the spline interpolation, default is 3.</span>
+<span class="sd">        The order has to be in the range 0-5.</span>
+<span class="sd">    %(mode_interp_constant)s</span>
+<span class="sd">    %(cval)s</span>
+<span class="sd">    %(prefilter)s</span>
+<span class="sd">    extra_arguments : tuple, optional</span>
+<span class="sd">        Extra arguments passed to `mapping`.</span>
+<span class="sd">    extra_keywords : dict, optional</span>
+<span class="sd">        Extra keywords passed to `mapping`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    output : ndarray</span>
+<span class="sd">        The filtered input.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    map_coordinates, affine_transform, spline_filter1d</span>
+
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    This function also accepts low-level callback functions with one</span>
+<span class="sd">    the following signatures and wrapped in `scipy.LowLevelCallable`:</span>
+
+<span class="sd">    .. code:: c</span>
+
+<span class="sd">       int mapping(npy_intp *output_coordinates, double *input_coordinates,</span>
+<span class="sd">                   int output_rank, int input_rank, void *user_data)</span>
+<span class="sd">       int mapping(intptr_t *output_coordinates, double *input_coordinates,</span>
+<span class="sd">                   int output_rank, int input_rank, void *user_data)</span>
+
+<span class="sd">    The calling function iterates over the elements of the output array,</span>
+<span class="sd">    calling the callback function at each element. The coordinates of the</span>
+<span class="sd">    current output element are passed through ``output_coordinates``. The</span>
+<span class="sd">    callback function must return the coordinates at which the input must</span>
+<span class="sd">    be interpolated in ``input_coordinates``. The rank of the input and</span>
+<span class="sd">    output arrays are given by ``input_rank`` and ``output_rank``</span>
+<span class="sd">    respectively. ``user_data`` is the data pointer provided</span>
+<span class="sd">    to `scipy.LowLevelCallable` as-is.</span>
+
+<span class="sd">    The callback function must return an integer error status that is zero</span>
+<span class="sd">    if something went wrong and one otherwise. If an error occurs, you should</span>
+<span class="sd">    normally set the Python error status with an informative message</span>
+<span class="sd">    before returning, otherwise a default error message is set by the</span>
+<span class="sd">    calling function.</span>
+
+<span class="sd">    In addition, some other low-level function pointer specifications</span>
+<span class="sd">    are accepted, but these are for backward compatibility only and should</span>
+<span class="sd">    not be used in new code.</span>
+
+<span class="sd">    For complex-valued `input`, this function transforms the real and imaginary</span>
+<span class="sd">    components independently.</span>
+
+<span class="sd">    .. versionadded:: 1.6.0</span>
+<span class="sd">        Complex-valued support added.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; from scipy.ndimage import geometric_transform</span>
+<span class="sd">    &gt;&gt;&gt; a = np.arange(12.).reshape((4, 3))</span>
+<span class="sd">    &gt;&gt;&gt; def shift_func(output_coords):</span>
+<span class="sd">    ...     return (output_coords[0] - 0.5, output_coords[1] - 0.5)</span>
+<span class="sd">    ...</span>
+<span class="sd">    &gt;&gt;&gt; geometric_transform(a, shift_func)</span>
+<span class="sd">    array([[ 0.   ,  0.   ,  0.   ],</span>
+<span class="sd">           [ 0.   ,  1.362,  2.738],</span>
+<span class="sd">           [ 0.   ,  4.812,  6.187],</span>
+<span class="sd">           [ 0.   ,  8.263,  9.637]])</span>
+
+<span class="sd">    &gt;&gt;&gt; b = [1, 2, 3, 4, 5]</span>
+<span class="sd">    &gt;&gt;&gt; def shift_func(output_coords):</span>
+<span class="sd">    ...     return (output_coords[0] - 3,)</span>
+<span class="sd">    ...</span>
+<span class="sd">    &gt;&gt;&gt; geometric_transform(b, shift_func, mode=&#39;constant&#39;)</span>
+<span class="sd">    array([0, 0, 0, 1, 2])</span>
+<span class="sd">    &gt;&gt;&gt; geometric_transform(b, shift_func, mode=&#39;nearest&#39;)</span>
+<span class="sd">    array([1, 1, 1, 1, 2])</span>
+<span class="sd">    &gt;&gt;&gt; geometric_transform(b, shift_func, mode=&#39;reflect&#39;)</span>
+<span class="sd">    array([3, 2, 1, 1, 2])</span>
+<span class="sd">    &gt;&gt;&gt; geometric_transform(b, shift_func, mode=&#39;wrap&#39;)</span>
+<span class="sd">    array([2, 3, 4, 1, 2])</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">extra_keywords</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">extra_keywords</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">order</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">order</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;spline order not supported&#39;</span><span class="p">)</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">output_shape</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">output_shape</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">if</span> <span class="nb">input</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_shape</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;input and output rank must be &gt; 0&#39;</span><span class="p">)</span>
+    <span class="n">complex_output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">iscomplexobj</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">_ni_support</span><span class="o">.</span><span class="n">_get_output</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">output_shape</span><span class="p">,</span>
+                                     <span class="n">complex_output</span><span class="o">=</span><span class="n">complex_output</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">complex_output</span><span class="p">:</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">prefilter</span><span class="o">=</span><span class="n">prefilter</span><span class="p">,</span>
+                      <span class="n">output_shape</span><span class="o">=</span><span class="n">output_shape</span><span class="p">,</span>
+                      <span class="n">extra_arguments</span><span class="o">=</span><span class="n">extra_arguments</span><span class="p">,</span>
+                      <span class="n">extra_keywords</span><span class="o">=</span><span class="n">extra_keywords</span><span class="p">)</span>
+        <span class="n">geometric_transform</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">mapping</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">output</span><span class="o">.</span><span class="n">real</span><span class="p">,</span>
+                            <span class="n">cval</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">cval</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">geometric_transform</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">imag</span><span class="p">,</span> <span class="n">mapping</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">output</span><span class="o">.</span><span class="n">imag</span><span class="p">,</span>
+                            <span class="n">cval</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">cval</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">output</span>
+
+    <span class="k">if</span> <span class="n">prefilter</span> <span class="ow">and</span> <span class="n">order</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">padded</span><span class="p">,</span> <span class="n">npad</span> <span class="o">=</span> <span class="n">_prepad_for_spline_filter</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">cval</span><span class="p">)</span>
+        <span class="n">filtered</span> <span class="o">=</span> <span class="n">spline_filter</span><span class="p">(</span><span class="n">padded</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
+                                 <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">npad</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">filtered</span> <span class="o">=</span> <span class="nb">input</span>
+    <span class="n">mode</span> <span class="o">=</span> <span class="n">_ni_support</span><span class="o">.</span><span class="n">_extend_mode_to_code</span><span class="p">(</span><span class="n">mode</span><span class="p">)</span>
+    <span class="n">_nd_image</span><span class="o">.</span><span class="n">geometric_transform</span><span class="p">(</span><span class="n">filtered</span><span class="p">,</span> <span class="n">mapping</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span>
+                                  <span class="n">order</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">cval</span><span class="p">,</span> <span class="n">npad</span><span class="p">,</span> <span class="n">extra_arguments</span><span class="p">,</span>
+                                  <span class="n">extra_keywords</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">output</span>
+
+
+<div class="viewcode-block" id="map_coordinates">
+<a class="viewcode-back" href="../../../scripts/apply_SDC.html#micaflow.scripts.SDC.map_coordinates">[docs]</a>
+<span class="nd">@docfiller</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">map_coordinates</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">coordinates</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                    <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;constant&#39;</span><span class="p">,</span> <span class="n">cval</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">prefilter</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Map the input array to new coordinates by interpolation.</span>
+
+<span class="sd">    The array of coordinates is used to find, for each point in the output,</span>
+<span class="sd">    the corresponding coordinates in the input. The value of the input at</span>
+<span class="sd">    those coordinates is determined by spline interpolation of the</span>
+<span class="sd">    requested order.</span>
+
+<span class="sd">    The shape of the output is derived from that of the coordinate</span>
+<span class="sd">    array by dropping the first axis. The values of the array along</span>
+<span class="sd">    the first axis are the coordinates in the input array at which the</span>
+<span class="sd">    output value is found.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    %(input)s</span>
+<span class="sd">    coordinates : array_like</span>
+<span class="sd">        The coordinates at which `input` is evaluated.</span>
+<span class="sd">    %(output)s</span>
+<span class="sd">    order : int, optional</span>
+<span class="sd">        The order of the spline interpolation, default is 3.</span>
+<span class="sd">        The order has to be in the range 0-5.</span>
+<span class="sd">    %(mode_interp_constant)s</span>
+<span class="sd">    %(cval)s</span>
+<span class="sd">    %(prefilter)s</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    map_coordinates : ndarray</span>
+<span class="sd">        The result of transforming the input. The shape of the output is</span>
+<span class="sd">        derived from that of `coordinates` by dropping the first axis.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    spline_filter, geometric_transform, scipy.interpolate</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    For complex-valued `input`, this function maps the real and imaginary</span>
+<span class="sd">    components independently.</span>
+
+<span class="sd">    .. versionadded:: 1.6.0</span>
+<span class="sd">        Complex-valued support added.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; from scipy import ndimage</span>
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; a = np.arange(12.).reshape((4, 3))</span>
+<span class="sd">    &gt;&gt;&gt; a</span>
+<span class="sd">    array([[  0.,   1.,   2.],</span>
+<span class="sd">           [  3.,   4.,   5.],</span>
+<span class="sd">           [  6.,   7.,   8.],</span>
+<span class="sd">           [  9.,  10.,  11.]])</span>
+<span class="sd">    &gt;&gt;&gt; ndimage.map_coordinates(a, [[0.5, 2], [0.5, 1]], order=1)</span>
+<span class="sd">    array([ 2.,  7.])</span>
+
+<span class="sd">    Above, the interpolated value of a[0.5, 0.5] gives output[0], while</span>
+<span class="sd">    a[2, 1] is output[1].</span>
+
+<span class="sd">    &gt;&gt;&gt; inds = np.array([[0.5, 2], [0.5, 4]])</span>
+<span class="sd">    &gt;&gt;&gt; ndimage.map_coordinates(a, inds, order=1, cval=-33.3)</span>
+<span class="sd">    array([  2. , -33.3])</span>
+<span class="sd">    &gt;&gt;&gt; ndimage.map_coordinates(a, inds, order=1, mode=&#39;nearest&#39;)</span>
+<span class="sd">    array([ 2.,  8.])</span>
+<span class="sd">    &gt;&gt;&gt; ndimage.map_coordinates(a, inds, order=1, cval=0, output=bool)</span>
+<span class="sd">    array([ True, False], dtype=bool)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">order</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">order</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;spline order not supported&#39;</span><span class="p">)</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+    <span class="n">coordinates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">coordinates</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">iscomplexobj</span><span class="p">(</span><span class="n">coordinates</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Complex type not supported&#39;</span><span class="p">)</span>
+    <span class="n">output_shape</span> <span class="o">=</span> <span class="n">coordinates</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">if</span> <span class="nb">input</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_shape</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;input and output rank must be &gt; 0&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">coordinates</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">input</span><span class="o">.</span><span class="n">ndim</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;invalid shape for coordinate array&#39;</span><span class="p">)</span>
+    <span class="n">complex_output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">iscomplexobj</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">_ni_support</span><span class="o">.</span><span class="n">_get_output</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">output_shape</span><span class="p">,</span>
+                                     <span class="n">complex_output</span><span class="o">=</span><span class="n">complex_output</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">complex_output</span><span class="p">:</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">prefilter</span><span class="o">=</span><span class="n">prefilter</span><span class="p">)</span>
+        <span class="n">map_coordinates</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">coordinates</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">output</span><span class="o">.</span><span class="n">real</span><span class="p">,</span>
+                        <span class="n">cval</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">cval</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">map_coordinates</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">imag</span><span class="p">,</span> <span class="n">coordinates</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">output</span><span class="o">.</span><span class="n">imag</span><span class="p">,</span>
+                        <span class="n">cval</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">cval</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">output</span>
+    <span class="k">if</span> <span class="n">prefilter</span> <span class="ow">and</span> <span class="n">order</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">padded</span><span class="p">,</span> <span class="n">npad</span> <span class="o">=</span> <span class="n">_prepad_for_spline_filter</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">cval</span><span class="p">)</span>
+        <span class="n">filtered</span> <span class="o">=</span> <span class="n">spline_filter</span><span class="p">(</span><span class="n">padded</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">npad</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">filtered</span> <span class="o">=</span> <span class="nb">input</span>
+    <span class="n">mode</span> <span class="o">=</span> <span class="n">_ni_support</span><span class="o">.</span><span class="n">_extend_mode_to_code</span><span class="p">(</span><span class="n">mode</span><span class="p">)</span>
+    <span class="n">_nd_image</span><span class="o">.</span><span class="n">geometric_transform</span><span class="p">(</span><span class="n">filtered</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">coordinates</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span>
+                                  <span class="n">output</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">cval</span><span class="p">,</span> <span class="n">npad</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">output</span></div>
+
+
+
+<span class="nd">@docfiller</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">affine_transform</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">output_shape</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                     <span class="n">output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                     <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;constant&#39;</span><span class="p">,</span> <span class="n">cval</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">prefilter</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Apply an affine transformation.</span>
+
+<span class="sd">    Given an output image pixel index vector ``o``, the pixel value</span>
+<span class="sd">    is determined from the input image at position</span>
+<span class="sd">    ``np.dot(matrix, o) + offset``.</span>
+
+<span class="sd">    This does &#39;pull&#39; (or &#39;backward&#39;) resampling, transforming the output space</span>
+<span class="sd">    to the input to locate data. Affine transformations are often described in</span>
+<span class="sd">    the &#39;push&#39; (or &#39;forward&#39;) direction, transforming input to output. If you</span>
+<span class="sd">    have a matrix for the &#39;push&#39; transformation, use its inverse</span>
+<span class="sd">    (:func:`numpy.linalg.inv`) in this function.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    %(input)s</span>
+<span class="sd">    matrix : ndarray</span>
+<span class="sd">        The inverse coordinate transformation matrix, mapping output</span>
+<span class="sd">        coordinates to input coordinates. If ``ndim`` is the number of</span>
+<span class="sd">        dimensions of ``input``, the given matrix must have one of the</span>
+<span class="sd">        following shapes:</span>
+
+<span class="sd">            - ``(ndim, ndim)``: the linear transformation matrix for each</span>
+<span class="sd">              output coordinate.</span>
+<span class="sd">            - ``(ndim,)``: assume that the 2-D transformation matrix is</span>
+<span class="sd">              diagonal, with the diagonal specified by the given value. A more</span>
+<span class="sd">              efficient algorithm is then used that exploits the separability</span>
+<span class="sd">              of the problem.</span>
+<span class="sd">            - ``(ndim + 1, ndim + 1)``: assume that the transformation is</span>
+<span class="sd">              specified using homogeneous coordinates [1]_. In this case, any</span>
+<span class="sd">              value passed to ``offset`` is ignored.</span>
+<span class="sd">            - ``(ndim, ndim + 1)``: as above, but the bottom row of a</span>
+<span class="sd">              homogeneous transformation matrix is always ``[0, 0, ..., 1]``,</span>
+<span class="sd">              and may be omitted.</span>
+
+<span class="sd">    offset : float or sequence, optional</span>
+<span class="sd">        The offset into the array where the transform is applied. If a float,</span>
+<span class="sd">        `offset` is the same for each axis. If a sequence, `offset` should</span>
+<span class="sd">        contain one value for each axis.</span>
+<span class="sd">    output_shape : tuple of ints, optional</span>
+<span class="sd">        Shape tuple.</span>
+<span class="sd">    %(output)s</span>
+<span class="sd">    order : int, optional</span>
+<span class="sd">        The order of the spline interpolation, default is 3.</span>
+<span class="sd">        The order has to be in the range 0-5.</span>
+<span class="sd">    %(mode_interp_constant)s</span>
+<span class="sd">    %(cval)s</span>
+<span class="sd">    %(prefilter)s</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    affine_transform : ndarray</span>
+<span class="sd">        The transformed input.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The given matrix and offset are used to find for each point in the</span>
+<span class="sd">    output the corresponding coordinates in the input by an affine</span>
+<span class="sd">    transformation. The value of the input at those coordinates is</span>
+<span class="sd">    determined by spline interpolation of the requested order. Points</span>
+<span class="sd">    outside the boundaries of the input are filled according to the given</span>
+<span class="sd">    mode.</span>
+
+<span class="sd">    .. versionchanged:: 0.18.0</span>
+<span class="sd">        Previously, the exact interpretation of the affine transformation</span>
+<span class="sd">        depended on whether the matrix was supplied as a 1-D or a</span>
+<span class="sd">        2-D array. If a 1-D array was supplied</span>
+<span class="sd">        to the matrix parameter, the output pixel value at index ``o``</span>
+<span class="sd">        was determined from the input image at position</span>
+<span class="sd">        ``matrix * (o + offset)``.</span>
+
+<span class="sd">    For complex-valued `input`, this function transforms the real and imaginary</span>
+<span class="sd">    components independently.</span>
+
+<span class="sd">    .. versionadded:: 1.6.0</span>
+<span class="sd">        Complex-valued support added.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    .. [1] https://en.wikipedia.org/wiki/Homogeneous_coordinates</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">order</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">order</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;spline order not supported&#39;</span><span class="p">)</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">output_shape</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">output_shape</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">output_shape</span> <span class="o">=</span> <span class="nb">input</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">if</span> <span class="nb">input</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_shape</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;input and output rank must be &gt; 0&#39;</span><span class="p">)</span>
+    <span class="n">complex_output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">iscomplexobj</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">_ni_support</span><span class="o">.</span><span class="n">_get_output</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">output_shape</span><span class="p">,</span>
+                                     <span class="n">complex_output</span><span class="o">=</span><span class="n">complex_output</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">complex_output</span><span class="p">:</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span> <span class="n">output_shape</span><span class="o">=</span><span class="n">output_shape</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span>
+                      <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">prefilter</span><span class="o">=</span><span class="n">prefilter</span><span class="p">)</span>
+        <span class="n">affine_transform</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">output</span><span class="o">.</span><span class="n">real</span><span class="p">,</span>
+                         <span class="n">cval</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">cval</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">affine_transform</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">imag</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">output</span><span class="o">.</span><span class="n">imag</span><span class="p">,</span>
+                         <span class="n">cval</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">cval</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">output</span>
+    <span class="k">if</span> <span class="n">prefilter</span> <span class="ow">and</span> <span class="n">order</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">padded</span><span class="p">,</span> <span class="n">npad</span> <span class="o">=</span> <span class="n">_prepad_for_spline_filter</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">cval</span><span class="p">)</span>
+        <span class="n">filtered</span> <span class="o">=</span> <span class="n">spline_filter</span><span class="p">(</span><span class="n">padded</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">npad</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">filtered</span> <span class="o">=</span> <span class="nb">input</span>
+    <span class="n">mode</span> <span class="o">=</span> <span class="n">_ni_support</span><span class="o">.</span><span class="n">_extend_mode_to_code</span><span class="p">(</span><span class="n">mode</span><span class="p">)</span>
+    <span class="n">matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">matrix</span><span class="o">.</span><span class="n">ndim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="ow">or</span> <span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;no proper affine matrix provided&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="nb">input</span><span class="o">.</span><span class="n">ndim</span> <span class="o">+</span> <span class="mi">1</span> <span class="ow">and</span>
+            <span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">input</span><span class="o">.</span><span class="n">ndim</span><span class="p">,</span> <span class="nb">input</span><span class="o">.</span><span class="n">ndim</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])):</span>
+        <span class="k">if</span> <span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="nb">input</span><span class="o">.</span><span class="n">ndim</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">exptd</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">input</span><span class="o">.</span><span class="n">ndim</span> <span class="o">+</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">matrix</span><span class="p">[</span><span class="nb">input</span><span class="o">.</span><span class="n">ndim</span><span class="p">]</span> <span class="o">==</span> <span class="n">exptd</span><span class="p">):</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Expected homogeneous transformation matrix with &#39;</span>
+                       <span class="sa">f</span><span class="s1">&#39;shape </span><span class="si">{</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s1"> for image shape </span><span class="si">{</span><span class="nb">input</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s1">, &#39;</span>
+                       <span class="sa">f</span><span class="s1">&#39;but bottom row was not equal to </span><span class="si">{</span><span class="n">exptd</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="c1"># assume input is homogeneous coordinate transformation matrix</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">[:</span><span class="nb">input</span><span class="o">.</span><span class="n">ndim</span><span class="p">,</span> <span class="nb">input</span><span class="o">.</span><span class="n">ndim</span><span class="p">]</span>
+        <span class="n">matrix</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">[:</span><span class="nb">input</span><span class="o">.</span><span class="n">ndim</span><span class="p">,</span> <span class="p">:</span><span class="nb">input</span><span class="o">.</span><span class="n">ndim</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">input</span><span class="o">.</span><span class="n">ndim</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;affine matrix has wrong number of rows&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">matrix</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">output</span><span class="o">.</span><span class="n">ndim</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;affine matrix has wrong number of columns&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">matrix</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">contiguous</span><span class="p">:</span>
+        <span class="n">matrix</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="n">_ni_support</span><span class="o">.</span><span class="n">_normalize_sequence</span><span class="p">(</span><span class="n">offset</span><span class="p">,</span> <span class="nb">input</span><span class="o">.</span><span class="n">ndim</span><span class="p">)</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">offset</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">offset</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">offset</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;no proper offset provided&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">offset</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">contiguous</span><span class="p">:</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="n">offset</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">matrix</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">&quot;The behavior of affine_transform with a 1-D &quot;</span>
+            <span class="s2">&quot;array supplied for the matrix parameter has changed in &quot;</span>
+            <span class="s2">&quot;SciPy 0.18.0.&quot;</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span>
+        <span class="p">)</span>
+        <span class="n">_nd_image</span><span class="o">.</span><span class="n">zoom_shift</span><span class="p">(</span><span class="n">filtered</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">offset</span><span class="o">/</span><span class="n">matrix</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span>
+                             <span class="n">mode</span><span class="p">,</span> <span class="n">cval</span><span class="p">,</span> <span class="n">npad</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_nd_image</span><span class="o">.</span><span class="n">geometric_transform</span><span class="p">(</span><span class="n">filtered</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span>
+                                      <span class="n">output</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">cval</span><span class="p">,</span> <span class="n">npad</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span>
+                                      <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">output</span>
+
+
+<span class="nd">@docfiller</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">shift</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">shift</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;constant&#39;</span><span class="p">,</span> <span class="n">cval</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+          <span class="n">prefilter</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Shift an array.</span>
+
+<span class="sd">    The array is shifted using spline interpolation of the requested order.</span>
+<span class="sd">    Points outside the boundaries of the input are filled according to the</span>
+<span class="sd">    given mode.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    %(input)s</span>
+<span class="sd">    shift : float or sequence</span>
+<span class="sd">        The shift along the axes. If a float, `shift` is the same for each</span>
+<span class="sd">        axis. If a sequence, `shift` should contain one value for each axis.</span>
+<span class="sd">    %(output)s</span>
+<span class="sd">    order : int, optional</span>
+<span class="sd">        The order of the spline interpolation, default is 3.</span>
+<span class="sd">        The order has to be in the range 0-5.</span>
+<span class="sd">    %(mode_interp_constant)s</span>
+<span class="sd">    %(cval)s</span>
+<span class="sd">    %(prefilter)s</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    shift : ndarray</span>
+<span class="sd">        The shifted input.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    affine_transform : Affine transformations</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    For complex-valued `input`, this function shifts the real and imaginary</span>
+<span class="sd">    components independently.</span>
+
+<span class="sd">    .. versionadded:: 1.6.0</span>
+<span class="sd">        Complex-valued support added.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Import the necessary modules and an exemplary image.</span>
+
+<span class="sd">    &gt;&gt;&gt; from scipy.ndimage import shift</span>
+<span class="sd">    &gt;&gt;&gt; import matplotlib.pyplot as plt</span>
+<span class="sd">    &gt;&gt;&gt; from scipy import datasets</span>
+<span class="sd">    &gt;&gt;&gt; image = datasets.ascent()</span>
+
+<span class="sd">    Shift the image vertically by 20 pixels.</span>
+
+<span class="sd">    &gt;&gt;&gt; image_shifted_vertically = shift(image, (20, 0))</span>
+
+<span class="sd">    Shift the image vertically by -200 pixels and horizontally by 100 pixels.</span>
+
+<span class="sd">    &gt;&gt;&gt; image_shifted_both_directions = shift(image, (-200, 100))</span>
+
+<span class="sd">    Plot the original and the shifted images.</span>
+
+<span class="sd">    &gt;&gt;&gt; fig, axes = plt.subplots(3, 1, figsize=(4, 12))</span>
+<span class="sd">    &gt;&gt;&gt; plt.gray()  # show the filtered result in grayscale</span>
+<span class="sd">    &gt;&gt;&gt; top, middle, bottom = axes</span>
+<span class="sd">    &gt;&gt;&gt; for ax in axes:</span>
+<span class="sd">    ...     ax.set_axis_off()  # remove coordinate system</span>
+<span class="sd">    &gt;&gt;&gt; top.imshow(image)</span>
+<span class="sd">    &gt;&gt;&gt; top.set_title(&quot;Original image&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; middle.imshow(image_shifted_vertically)</span>
+<span class="sd">    &gt;&gt;&gt; middle.set_title(&quot;Vertically shifted image&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; bottom.imshow(image_shifted_both_directions)</span>
+<span class="sd">    &gt;&gt;&gt; bottom.set_title(&quot;Image shifted in both directions&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; fig.tight_layout()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">order</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">order</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;spline order not supported&#39;</span><span class="p">)</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">input</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;input and output rank must be &gt; 0&#39;</span><span class="p">)</span>
+    <span class="n">complex_output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">iscomplexobj</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">_ni_support</span><span class="o">.</span><span class="n">_get_output</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">complex_output</span><span class="o">=</span><span class="n">complex_output</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">complex_output</span><span class="p">:</span>
+        <span class="c1"># import under different name to avoid confusion with shift parameter</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage._interpolation</span><span class="w"> </span><span class="kn">import</span> <span class="n">shift</span> <span class="k">as</span> <span class="n">_shift</span>
+
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">prefilter</span><span class="o">=</span><span class="n">prefilter</span><span class="p">)</span>
+        <span class="n">_shift</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">shift</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">output</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">cval</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">cval</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">_shift</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">imag</span><span class="p">,</span> <span class="n">shift</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">output</span><span class="o">.</span><span class="n">imag</span><span class="p">,</span> <span class="n">cval</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">cval</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">output</span>
+    <span class="k">if</span> <span class="n">prefilter</span> <span class="ow">and</span> <span class="n">order</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">padded</span><span class="p">,</span> <span class="n">npad</span> <span class="o">=</span> <span class="n">_prepad_for_spline_filter</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">cval</span><span class="p">)</span>
+        <span class="n">filtered</span> <span class="o">=</span> <span class="n">spline_filter</span><span class="p">(</span><span class="n">padded</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">npad</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">filtered</span> <span class="o">=</span> <span class="nb">input</span>
+    <span class="n">mode</span> <span class="o">=</span> <span class="n">_ni_support</span><span class="o">.</span><span class="n">_extend_mode_to_code</span><span class="p">(</span><span class="n">mode</span><span class="p">)</span>
+    <span class="n">shift</span> <span class="o">=</span> <span class="n">_ni_support</span><span class="o">.</span><span class="n">_normalize_sequence</span><span class="p">(</span><span class="n">shift</span><span class="p">,</span> <span class="nb">input</span><span class="o">.</span><span class="n">ndim</span><span class="p">)</span>
+    <span class="n">shift</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="n">ii</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">shift</span><span class="p">]</span>
+    <span class="n">shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">shift</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">shift</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">contiguous</span><span class="p">:</span>
+        <span class="n">shift</span> <span class="o">=</span> <span class="n">shift</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">_nd_image</span><span class="o">.</span><span class="n">zoom_shift</span><span class="p">(</span><span class="n">filtered</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shift</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">cval</span><span class="p">,</span>
+                         <span class="n">npad</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">output</span>
+
+
+<span class="nd">@docfiller</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">zoom</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">zoom</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;constant&#39;</span><span class="p">,</span> <span class="n">cval</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+         <span class="n">prefilter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">grid_mode</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Zoom an array.</span>
+
+<span class="sd">    The array is zoomed using spline interpolation of the requested order.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    %(input)s</span>
+<span class="sd">    zoom : float or sequence</span>
+<span class="sd">        The zoom factor along the axes. If a float, `zoom` is the same for each</span>
+<span class="sd">        axis. If a sequence, `zoom` should contain one value for each axis.</span>
+<span class="sd">    %(output)s</span>
+<span class="sd">    order : int, optional</span>
+<span class="sd">        The order of the spline interpolation, default is 3.</span>
+<span class="sd">        The order has to be in the range 0-5.</span>
+<span class="sd">    %(mode_interp_constant)s</span>
+<span class="sd">    %(cval)s</span>
+<span class="sd">    %(prefilter)s</span>
+<span class="sd">    grid_mode : bool, optional</span>
+<span class="sd">        If False, the distance from the pixel centers is zoomed. Otherwise, the</span>
+<span class="sd">        distance including the full pixel extent is used. For example, a 1d</span>
+<span class="sd">        signal of length 5 is considered to have length 4 when `grid_mode` is</span>
+<span class="sd">        False, but length 5 when `grid_mode` is True. See the following</span>
+<span class="sd">        visual illustration:</span>
+
+<span class="sd">        .. code-block:: text</span>
+
+<span class="sd">                | pixel 1 | pixel 2 | pixel 3 | pixel 4 | pixel 5 |</span>
+<span class="sd">                     |&lt;--------------------------------------&gt;|</span>
+<span class="sd">                                        vs.</span>
+<span class="sd">                |&lt;-----------------------------------------------&gt;|</span>
+
+<span class="sd">        The starting point of the arrow in the diagram above corresponds to</span>
+<span class="sd">        coordinate location 0 in each mode.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    zoom : ndarray</span>
+<span class="sd">        The zoomed input.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    For complex-valued `input`, this function zooms the real and imaginary</span>
+<span class="sd">    components independently.</span>
+
+<span class="sd">    .. versionadded:: 1.6.0</span>
+<span class="sd">        Complex-valued support added.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; from scipy import ndimage, datasets</span>
+<span class="sd">    &gt;&gt;&gt; import matplotlib.pyplot as plt</span>
+
+<span class="sd">    &gt;&gt;&gt; fig = plt.figure()</span>
+<span class="sd">    &gt;&gt;&gt; ax1 = fig.add_subplot(121)  # left side</span>
+<span class="sd">    &gt;&gt;&gt; ax2 = fig.add_subplot(122)  # right side</span>
+<span class="sd">    &gt;&gt;&gt; ascent = datasets.ascent()</span>
+<span class="sd">    &gt;&gt;&gt; result = ndimage.zoom(ascent, 3.0)</span>
+<span class="sd">    &gt;&gt;&gt; ax1.imshow(ascent, vmin=0, vmax=255)</span>
+<span class="sd">    &gt;&gt;&gt; ax2.imshow(result, vmin=0, vmax=255)</span>
+<span class="sd">    &gt;&gt;&gt; plt.show()</span>
+
+<span class="sd">    &gt;&gt;&gt; print(ascent.shape)</span>
+<span class="sd">    (512, 512)</span>
+
+<span class="sd">    &gt;&gt;&gt; print(result.shape)</span>
+<span class="sd">    (1536, 1536)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">order</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">order</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;spline order not supported&#39;</span><span class="p">)</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">input</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;input and output rank must be &gt; 0&#39;</span><span class="p">)</span>
+    <span class="n">zoom</span> <span class="o">=</span> <span class="n">_ni_support</span><span class="o">.</span><span class="n">_normalize_sequence</span><span class="p">(</span><span class="n">zoom</span><span class="p">,</span> <span class="nb">input</span><span class="o">.</span><span class="n">ndim</span><span class="p">)</span>
+    <span class="n">output_shape</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+            <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">ii</span> <span class="o">*</span> <span class="n">jj</span><span class="p">))</span> <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">zoom</span><span class="p">)])</span>
+    <span class="n">complex_output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">iscomplexobj</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">_ni_support</span><span class="o">.</span><span class="n">_get_output</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">output_shape</span><span class="p">,</span>
+                                     <span class="n">complex_output</span><span class="o">=</span><span class="n">complex_output</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">complex_output</span><span class="p">:</span>
+        <span class="c1"># import under different name to avoid confusion with zoom parameter</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage._interpolation</span><span class="w"> </span><span class="kn">import</span> <span class="n">zoom</span> <span class="k">as</span> <span class="n">_zoom</span>
+
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">prefilter</span><span class="o">=</span><span class="n">prefilter</span><span class="p">)</span>
+        <span class="n">_zoom</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">zoom</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">output</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">cval</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">cval</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">_zoom</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">imag</span><span class="p">,</span> <span class="n">zoom</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">output</span><span class="o">.</span><span class="n">imag</span><span class="p">,</span> <span class="n">cval</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">cval</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">output</span>
+    <span class="k">if</span> <span class="n">prefilter</span> <span class="ow">and</span> <span class="n">order</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">padded</span><span class="p">,</span> <span class="n">npad</span> <span class="o">=</span> <span class="n">_prepad_for_spline_filter</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">cval</span><span class="p">)</span>
+        <span class="n">filtered</span> <span class="o">=</span> <span class="n">spline_filter</span><span class="p">(</span><span class="n">padded</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">npad</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">filtered</span> <span class="o">=</span> <span class="nb">input</span>
+    <span class="k">if</span> <span class="n">grid_mode</span><span class="p">:</span>
+        <span class="c1"># warn about modes that may have surprising behavior</span>
+        <span class="n">suggest_mode</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;constant&#39;</span><span class="p">:</span>
+            <span class="n">suggest_mode</span> <span class="o">=</span> <span class="s1">&#39;grid-constant&#39;</span>
+        <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;wrap&#39;</span><span class="p">:</span>
+            <span class="n">suggest_mode</span> <span class="o">=</span> <span class="s1">&#39;grid-wrap&#39;</span>
+        <span class="k">if</span> <span class="n">suggest_mode</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;It is recommended to use mode = </span><span class="si">{</span><span class="n">suggest_mode</span><span class="si">}</span><span class="s2"> instead of </span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2"> &quot;</span>
+                 <span class="sa">f</span><span class="s2">&quot;when grid_mode is True.&quot;</span><span class="p">),</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span>
+            <span class="p">)</span>
+    <span class="n">mode</span> <span class="o">=</span> <span class="n">_ni_support</span><span class="o">.</span><span class="n">_extend_mode_to_code</span><span class="p">(</span><span class="n">mode</span><span class="p">)</span>
+
+    <span class="n">zoom_div</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">output_shape</span><span class="p">)</span>
+    <span class="n">zoom_nominator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">grid_mode</span><span class="p">:</span>
+        <span class="n">zoom_div</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="n">zoom_nominator</span> <span class="o">-=</span> <span class="mi">1</span>
+
+    <span class="c1"># Zooming to infinite values is unpredictable, so just choose</span>
+    <span class="c1"># zoom factor 1 instead</span>
+    <span class="n">zoom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">zoom_nominator</span><span class="p">,</span> <span class="n">zoom_div</span><span class="p">,</span>
+                     <span class="n">out</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span>
+                     <span class="n">where</span><span class="o">=</span><span class="n">zoom_div</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">zoom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ascontiguousarray</span><span class="p">(</span><span class="n">zoom</span><span class="p">)</span>
+    <span class="n">_nd_image</span><span class="o">.</span><span class="n">zoom_shift</span><span class="p">(</span><span class="n">filtered</span><span class="p">,</span> <span class="n">zoom</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">cval</span><span class="p">,</span> <span class="n">npad</span><span class="p">,</span>
+                         <span class="n">grid_mode</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">output</span>
+
+
+<span class="nd">@docfiller</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">rotate</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">angle</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">reshape</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+           <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;constant&#39;</span><span class="p">,</span> <span class="n">cval</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">prefilter</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Rotate an array.</span>
+
+<span class="sd">    The array is rotated in the plane defined by the two axes given by the</span>
+<span class="sd">    `axes` parameter using spline interpolation of the requested order.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    %(input)s</span>
+<span class="sd">    angle : float</span>
+<span class="sd">        The rotation angle in degrees.</span>
+<span class="sd">    axes : tuple of 2 ints, optional</span>
+<span class="sd">        The two axes that define the plane of rotation. Default is the first</span>
+<span class="sd">        two axes.</span>
+<span class="sd">    reshape : bool, optional</span>
+<span class="sd">        If `reshape` is true, the output shape is adapted so that the input</span>
+<span class="sd">        array is contained completely in the output. Default is True.</span>
+<span class="sd">    %(output)s</span>
+<span class="sd">    order : int, optional</span>
+<span class="sd">        The order of the spline interpolation, default is 3.</span>
+<span class="sd">        The order has to be in the range 0-5.</span>
+<span class="sd">    %(mode_interp_constant)s</span>
+<span class="sd">    %(cval)s</span>
+<span class="sd">    %(prefilter)s</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    rotate : ndarray</span>
+<span class="sd">        The rotated input.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    For complex-valued `input`, this function rotates the real and imaginary</span>
+<span class="sd">    components independently.</span>
+
+<span class="sd">    .. versionadded:: 1.6.0</span>
+<span class="sd">        Complex-valued support added.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; from scipy import ndimage, datasets</span>
+<span class="sd">    &gt;&gt;&gt; import matplotlib.pyplot as plt</span>
+<span class="sd">    &gt;&gt;&gt; fig = plt.figure(figsize=(10, 3))</span>
+<span class="sd">    &gt;&gt;&gt; ax1, ax2, ax3 = fig.subplots(1, 3)</span>
+<span class="sd">    &gt;&gt;&gt; img = datasets.ascent()</span>
+<span class="sd">    &gt;&gt;&gt; img_45 = ndimage.rotate(img, 45, reshape=False)</span>
+<span class="sd">    &gt;&gt;&gt; full_img_45 = ndimage.rotate(img, 45, reshape=True)</span>
+<span class="sd">    &gt;&gt;&gt; ax1.imshow(img, cmap=&#39;gray&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; ax1.set_axis_off()</span>
+<span class="sd">    &gt;&gt;&gt; ax2.imshow(img_45, cmap=&#39;gray&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; ax2.set_axis_off()</span>
+<span class="sd">    &gt;&gt;&gt; ax3.imshow(full_img_45, cmap=&#39;gray&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; ax3.set_axis_off()</span>
+<span class="sd">    &gt;&gt;&gt; fig.set_layout_engine(&#39;tight&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; plt.show()</span>
+<span class="sd">    &gt;&gt;&gt; print(img.shape)</span>
+<span class="sd">    (512, 512)</span>
+<span class="sd">    &gt;&gt;&gt; print(img_45.shape)</span>
+<span class="sd">    (512, 512)</span>
+<span class="sd">    &gt;&gt;&gt; print(full_img_45.shape)</span>
+<span class="sd">    (724, 724)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">input_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+    <span class="n">ndim</span> <span class="o">=</span> <span class="n">input_arr</span><span class="o">.</span><span class="n">ndim</span>
+
+    <span class="k">if</span> <span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;input array should be at least 2D&#39;</span><span class="p">)</span>
+
+    <span class="n">axes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">axes</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">axes</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;axes should contain exactly two values&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span><span class="o">.</span><span class="n">is_integer</span><span class="p">()</span> <span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">axes</span><span class="p">]):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;axes should contain only integer values&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="n">ndim</span>
+    <span class="k">if</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">ndim</span>
+    <span class="k">if</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">ndim</span> <span class="ow">or</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">ndim</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;invalid rotation plane specified&#39;</span><span class="p">)</span>
+
+    <span class="n">axes</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+
+    <span class="n">c</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">special</span><span class="o">.</span><span class="n">cosdg</span><span class="p">(</span><span class="n">angle</span><span class="p">),</span> <span class="n">special</span><span class="o">.</span><span class="n">sindg</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span>
+
+    <span class="n">rot_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">c</span><span class="p">,</span> <span class="n">s</span><span class="p">],</span>
+                           <span class="p">[</span><span class="o">-</span><span class="n">s</span><span class="p">,</span> <span class="n">c</span><span class="p">]])</span>
+
+    <span class="n">img_shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">input_arr</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">in_plane_shape</span> <span class="o">=</span> <span class="n">img_shape</span><span class="p">[</span><span class="n">axes</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">reshape</span><span class="p">:</span>
+        <span class="c1"># Compute transformed input bounds</span>
+        <span class="n">iy</span><span class="p">,</span> <span class="n">ix</span> <span class="o">=</span> <span class="n">in_plane_shape</span>
+        <span class="n">out_bounds</span> <span class="o">=</span> <span class="n">rot_matrix</span> <span class="o">@</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">iy</span><span class="p">,</span> <span class="n">iy</span><span class="p">],</span>
+                                   <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">ix</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">ix</span><span class="p">]]</span>
+        <span class="c1"># Compute the shape of the transformed input plane</span>
+        <span class="n">out_plane_shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ptp</span><span class="p">(</span><span class="n">out_bounds</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">out_plane_shape</span> <span class="o">=</span> <span class="n">img_shape</span><span class="p">[</span><span class="n">axes</span><span class="p">]</span>
+
+    <span class="n">out_center</span> <span class="o">=</span> <span class="n">rot_matrix</span> <span class="o">@</span> <span class="p">((</span><span class="n">out_plane_shape</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">in_center</span> <span class="o">=</span> <span class="p">(</span><span class="n">in_plane_shape</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="n">in_center</span> <span class="o">-</span> <span class="n">out_center</span>
+
+    <span class="n">output_shape</span> <span class="o">=</span> <span class="n">img_shape</span>
+    <span class="n">output_shape</span><span class="p">[</span><span class="n">axes</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_plane_shape</span>
+    <span class="n">output_shape</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">output_shape</span><span class="p">)</span>
+
+    <span class="n">complex_output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">iscomplexobj</span><span class="p">(</span><span class="n">input_arr</span><span class="p">)</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">_ni_support</span><span class="o">.</span><span class="n">_get_output</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">input_arr</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">output_shape</span><span class="p">,</span>
+                                     <span class="n">complex_output</span><span class="o">=</span><span class="n">complex_output</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">ndim</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">affine_transform</span><span class="p">(</span><span class="n">input_arr</span><span class="p">,</span> <span class="n">rot_matrix</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">output_shape</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span>
+                         <span class="n">order</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">cval</span><span class="p">,</span> <span class="n">prefilter</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># If ndim &gt; 2, the rotation is applied over all the planes</span>
+        <span class="c1"># parallel to axes</span>
+        <span class="n">planes_coord</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span>
+            <span class="o">*</span><span class="p">[[</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)]</span> <span class="k">if</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">axes</span> <span class="k">else</span> <span class="nb">range</span><span class="p">(</span><span class="n">img_shape</span><span class="p">[</span><span class="n">ax</span><span class="p">])</span>
+              <span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndim</span><span class="p">)])</span>
+
+        <span class="n">out_plane_shape</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">out_plane_shape</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">coordinates</span> <span class="ow">in</span> <span class="n">planes_coord</span><span class="p">:</span>
+            <span class="n">ia</span> <span class="o">=</span> <span class="n">input_arr</span><span class="p">[</span><span class="n">coordinates</span><span class="p">]</span>
+            <span class="n">oa</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="n">coordinates</span><span class="p">]</span>
+            <span class="n">affine_transform</span><span class="p">(</span><span class="n">ia</span><span class="p">,</span> <span class="n">rot_matrix</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">out_plane_shape</span><span class="p">,</span>
+                             <span class="n">oa</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">cval</span><span class="p">,</span> <span class="n">prefilter</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">output</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

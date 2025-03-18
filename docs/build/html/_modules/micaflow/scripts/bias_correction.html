@@ -1,0 +1,330 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>micaflow.scripts.bias_correction &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scripts.html">Scripts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">micaflow.scripts.bias_correction</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for micaflow.scripts.bias_correction</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;N4 Bias Field Correction script for both anatomical and diffusion MR images.</span>
+
+<span class="sd">This script provides functionality to correct intensity non-uniformity (bias field)</span>
+<span class="sd">in MR images using the N4 algorithm from the Advanced Normalization Tools (ANTs) library.</span>
+<span class="sd">It supports both 3D anatomical images and 4D diffusion-weighted images.</span>
+
+<span class="sd">Examples:</span>
+<span class="sd">    # For anatomical (3D) images:</span>
+<span class="sd">    python bias_correction.py --input t1w.nii.gz --output corrected.nii.gz</span>
+
+<span class="sd">    # For anatomical images with mask:</span>
+<span class="sd">    python bias_correction.py --input t1w.nii.gz --output corrected.nii.gz --mask brain_mask.nii.gz</span>
+
+<span class="sd">    # For diffusion (4D) images:</span>
+<span class="sd">    python bias_correction.py --input dwi.nii.gz --output corrected.nii.gz --mask brain_mask.nii.gz --mode 4d</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">ants</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">colorama</span><span class="w"> </span><span class="kn">import</span> <span class="n">init</span><span class="p">,</span> <span class="n">Fore</span><span class="p">,</span> <span class="n">Style</span>
+
+<span class="n">init</span><span class="p">()</span>
+
+<div class="viewcode-block" id="print_help_message">
+<a class="viewcode-back" href="../../../scripts/bias_correction.html#micaflow.scripts.bias_correction.print_help_message">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">print_help_message</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Print an extended help message with examples.&quot;&quot;&quot;</span>
+    <span class="c1"># ANSI color codes</span>
+    <span class="n">CYAN</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">CYAN</span>
+    <span class="n">GREEN</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">GREEN</span>
+    <span class="n">YELLOW</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">YELLOW</span>
+    <span class="n">BLUE</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">BLUE</span>
+    <span class="n">MAGENTA</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">MAGENTA</span>
+    <span class="n">BOLD</span> <span class="o">=</span> <span class="n">Style</span><span class="o">.</span><span class="n">BRIGHT</span>
+    <span class="n">RESET</span> <span class="o">=</span> <span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span>
+    
+    <span class="n">help_text</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">╔════════════════════════════════════════════════════════════════╗</span>
+<span class="s2">    ║                    N4 BIAS FIELD CORRECTION                    ║</span>
+<span class="s2">    ╚════════════════════════════════════════════════════════════════╝</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    </span>
+<span class="s2">    This script corrects intensity non-uniformity (bias field) in MR images </span>
+<span class="s2">    using the N4 algorithm from ANTs. It supports both 3D anatomical images </span>
+<span class="s2">    and 4D diffusion-weighted images.</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">──────────────────── REQUIRED ARGUMENTS ────────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--input</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">-i</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">    : Path to the input image (.nii.gz)</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--output</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">-o</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">   : Path for the output bias-corrected image (.nii.gz)</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">──────────────────── OPTIONAL ARGUMENTS ────────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--mask</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">-m</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">     : Path to a brain mask image (required for 4D images)</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--mode</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">         : Processing mode: 3d, 4d, or auto (default: auto)</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">──────────────────── EXAMPLE USAGE ────────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">BLUE</span><span class="si">}</span><span class="s2"># For anatomical (3D) images:</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    micaflow bias_correction </span><span class="se">\\</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--input</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> t1w.nii.gz </span><span class="se">\\</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--output</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> corrected_t1w.nii.gz</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">BLUE</span><span class="si">}</span><span class="s2"># For diffusion (4D) images with mask:</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    micaflow bias_correction </span><span class="se">\\</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--input</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> dwi.nii.gz </span><span class="se">\\</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--output</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> corrected_dwi.nii.gz </span><span class="se">\\</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--mask</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> brain_mask.nii.gz </span><span class="se">\\</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--mode</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> 4d</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">────────────────────────── NOTES ───────────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    </span><span class="si">{</span><span class="n">MAGENTA</span><span class="si">}</span><span class="s2">•</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> In &#39;auto&#39; mode, the script detects whether the input is 3D or 4D</span>
+<span class="s2">    </span><span class="si">{</span><span class="n">MAGENTA</span><span class="si">}</span><span class="s2">•</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> For 3D images, a mask is optional (one will be generated if not provided)</span>
+<span class="s2">    </span><span class="si">{</span><span class="n">MAGENTA</span><span class="si">}</span><span class="s2">•</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> For 4D images, a mask is required</span>
+<span class="s2">    </span><span class="si">{</span><span class="n">MAGENTA</span><span class="si">}</span><span class="s2">•</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> 4D processing applies the correction to each volume separately</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">help_text</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="bias_field_correction_3d">
+<a class="viewcode-back" href="../../../scripts/bias_correction.html#micaflow.scripts.bias_correction.bias_field_correction_3d">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">bias_field_correction_3d</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="n">output_path</span><span class="p">,</span> <span class="n">mask_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Perform N4 bias field correction on a 3D medical image.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        image_path (str): Path to the input image file.</span>
+<span class="sd">        output_path (str): Path where the bias-corrected image will be saved.</span>
+<span class="sd">        mask_path (str, optional): Path to a brain mask image file. If not provided,</span>
+<span class="sd">            a mask will be automatically generated.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        str: Path to the output corrected image.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">image_read</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
+    <span class="n">mask_img</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">image_read</span><span class="p">(</span><span class="n">mask_path</span><span class="p">)</span> <span class="k">if</span> <span class="n">mask_path</span> <span class="k">else</span> <span class="n">ants</span><span class="o">.</span><span class="n">get_mask</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+    <span class="n">corrected_img</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">n4_bias_field_correction</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask_img</span><span class="p">)</span>
+    <span class="n">ants</span><span class="o">.</span><span class="n">image_write</span><span class="p">(</span><span class="n">corrected_img</span><span class="p">,</span> <span class="n">output_path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">output_path</span></div>
+
+
+
+<div class="viewcode-block" id="bias_field_correction_4d">
+<a class="viewcode-back" href="../../../scripts/bias_correction.html#micaflow.scripts.bias_correction.bias_field_correction_4d">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">bias_field_correction_4d</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="n">mask_path</span><span class="p">,</span> <span class="n">output_path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply N4 bias field correction to each 3D volume of a 4D image.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        image_path (str): Path to the input 4D image.</span>
+<span class="sd">        mask_path (str): Path to the mask image (must be 3D).</span>
+<span class="sd">        output_path (str): Path for the output bias-corrected image.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: Path to the output corrected image.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">image_read</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
+    <span class="n">mask_ants</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">image_read</span><span class="p">(</span><span class="n">mask_path</span><span class="p">)</span>
+    <span class="n">img_data</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+    <span class="n">corrected_vols</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">img_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">vol</span> <span class="o">=</span> <span class="n">img_data</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+        <span class="n">vol_ants</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span>
+            <span class="n">vol</span><span class="p">,</span>
+            <span class="n">spacing</span><span class="o">=</span><span class="n">img</span><span class="o">.</span><span class="n">spacing</span><span class="p">[:</span><span class="mi">3</span><span class="p">],</span>
+            <span class="n">origin</span><span class="o">=</span><span class="n">img</span><span class="o">.</span><span class="n">origin</span><span class="p">[:</span><span class="mi">3</span><span class="p">],</span>
+            <span class="n">direction</span><span class="o">=</span><span class="n">img</span><span class="o">.</span><span class="n">direction</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">corrected_vol_ants</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">n4_bias_field_correction</span><span class="p">(</span><span class="n">vol_ants</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask_ants</span><span class="p">)</span>
+        <span class="n">corrected_vols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">corrected_vol_ants</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+    
+    <span class="n">corrected_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">corrected_vols</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">corrected_img</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span>
+        <span class="n">corrected_array</span><span class="p">,</span> <span class="n">spacing</span><span class="o">=</span><span class="n">img</span><span class="o">.</span><span class="n">spacing</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="n">img</span><span class="o">.</span><span class="n">origin</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">img</span><span class="o">.</span><span class="n">direction</span>
+    <span class="p">)</span>
+
+    <span class="n">ants</span><span class="o">.</span><span class="n">image_write</span><span class="p">(</span><span class="n">corrected_img</span><span class="p">,</span> <span class="n">output_path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">output_path</span></div>
+
+
+
+<div class="viewcode-block" id="run_bias_field_correction">
+<a class="viewcode-back" href="../../../scripts/bias_correction.html#micaflow.scripts.bias_correction.run_bias_field_correction">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_bias_field_correction</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="n">output_path</span><span class="p">,</span> <span class="n">mask_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run bias field correction on an image, automatically detecting dimensionality.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters:</span>
+<span class="sd">        image_path (str): Path to the input image.</span>
+<span class="sd">        output_path (str): Path for the output bias-corrected image.</span>
+<span class="sd">        mask_path (str, optional): Path to mask (required for 4D images).</span>
+<span class="sd">        mode (str): Processing mode: &quot;3d&quot;, &quot;4d&quot;, or &quot;auto&quot; (detect automatically).</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        str: Path to the output corrected image.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># If auto mode, determine if image is 3D or 4D</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">image_read</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
+        <span class="n">dims</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="s2">&quot;4d&quot;</span> <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dims</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">dims</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;3d&quot;</span>
+    
+    <span class="c1"># Process according to mode</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;4d&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">mask_path</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;4D images require a mask. Please provide a mask with --mask.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bias_field_correction_4d</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="n">mask_path</span><span class="p">,</span> <span class="n">output_path</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># 3d</span>
+        <span class="k">return</span> <span class="n">bias_field_correction_3d</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="n">output_path</span><span class="p">,</span> <span class="n">mask_path</span><span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># Check if no arguments provided or help requested</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="s2">&quot;-h&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="ow">or</span> <span class="s2">&quot;--help&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">:</span>
+        <span class="n">print_help_message</span><span class="p">()</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;N4 Bias Field Correction for 3D anatomical and 4D diffusion MR images&quot;</span><span class="p">,</span>
+        <span class="n">formatter_class</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">RawDescriptionHelpFormatter</span>
+    <span class="p">)</span>
+    
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--input&quot;</span><span class="p">,</span> <span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to the input image (NIfTI file).&quot;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--output&quot;</span><span class="p">,</span> <span class="s2">&quot;-o&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Output path for the bias-corrected image.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--mask&quot;</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to a mask image (required for 4D images, optional for 3D).&quot;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--mode&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;3d&quot;</span><span class="p">,</span> <span class="s2">&quot;4d&quot;</span><span class="p">,</span> <span class="s2">&quot;auto&quot;</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Processing mode: 3d=anatomical, 4d=diffusion, auto=detect (default)&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    
+    <span class="n">out_path</span> <span class="o">=</span> <span class="n">run_bias_field_correction</span><span class="p">(</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> 
+        <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> 
+        <span class="n">args</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> 
+        <span class="n">args</span><span class="o">.</span><span class="n">mode</span>
+    <span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Bias-corrected image saved as: </span><span class="si">{</span><span class="n">out_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

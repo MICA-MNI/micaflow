@@ -1,0 +1,7 @@
+docs/_build/*
+docs/_build/html/_static/*
+docs/_static/*
+docs/_templates/*
+work/*
+.snakemake/*
+/.snakemake/

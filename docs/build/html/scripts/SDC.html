@@ -1,0 +1,1231 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sdc &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Synthseg" href="synthseg.html" />
+    <link rel="prev" title="Motion Correction" href="motion_correction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../scripts.html">Scripts</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../scripts.html">Scripts</a></li>
+      <li class="breadcrumb-item active">Sdc</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/scripts/SDC.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="sdc">
+<h1>Sdc<a class="headerlink" href="#sdc" title="Link to this heading"></a></h1>
+<section id="command-line-usage">
+<h2>Command Line Usage<a class="headerlink" href="#command-line-usage" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>SDC<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="source-code">
+<h2>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h2>
+<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow2.0/blob/main/micaflow/scripts/SDC.py">GitHub Repository</a></p>
+</section>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>This script corrects geometric distortions in echo-planar imaging (EPI)</dt><dd><p>MR images caused by magnetic field inhomogeneities. It uses the HYSCO
+algorithm with a pair of images acquired with opposite phase-encoding
+directions.</p>
+</dd>
+</dl>
+</section>
+<section id="full-help">
+<h2>Full Help<a class="headerlink" href="#full-help" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>╔════════════════════════════════════════════════════════════════╗
+║               SUSCEPTIBILITY DISTORTION CORRECTION             ║
+╚════════════════════════════════════════════════════════════════╝
+
+This script corrects geometric distortions in echo-planar imaging (EPI)
+MR images caused by magnetic field inhomogeneities. It uses the HYSCO
+algorithm with a pair of images acquired with opposite phase-encoding
+directions.
+
+────────────────────────── USAGE ──────────────────────────
+  micaflow SDC [options]
+
+─────────────────── REQUIRED ARGUMENTS ───────────────────
+  --input         : Path to the main EPI image (.nii.gz)
+  --reverse-image : Path to the reverse phase-encoded image (.nii.gz)
+  --output        : Output path for the corrected image (.nii.gz)
+  --output-warp   : Output path for the estimated warp field (.nii.gz)
+
+──────────────────────── EXAMPLE USAGE ───────────────────────
+  micaflow SDC \
+    --input main_epi.nii.gz \
+    --reverse-image reverse_epi.nii.gz \
+    --output corrected_epi.nii.gz \
+    --output-warp warp_field.nii.gz
+
+────────────────────────── NOTES ─────────────────────────
+- The algorithm extracts the first volume from 4D input images
+- GPU acceleration is used if available (recommended)
+- The correction estimates a displacement field along the y-axis
+- This implementation uses the HYSCO (HYperellastic Susceptibility
+  artifact COrrection) algorithm
+</pre></div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ADMM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">corr_obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter_gn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter_pcg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol_gn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/optimization/ADMM.html#ADMM"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">EPIOptimize</span></code></p>
+<p>Alternating Direction Method of Multipliers (ADMM) for EPI-MRI Distortion Correction.</p>
+<p>Solves min over b,z of D(b) + alpha S1(b) + beta P(b) + alpha S2(z) subject to b=z.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>b is used for all separable parts and solved using GN PCG</p></li>
+<li><p>z is for the smoothness in non-distortion directions and solved using a proximal solve.</p></li>
+</ul>
+</div></blockquote>
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">corr_obj</span></span></dt>
+<dd><p>Contains optimization problem objective function, data, and parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>EPIMRIDistortionCorrection</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">max_iter</span></span></dt>
+<dd><p>Maximum number of ADMM iterations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">rho_min</span></span></dt>
+<dd><p>Minimum value of the Lagrangian constant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">rho_max</span></span></dt>
+<dd><p>Maximum value of the Lagrangian constant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">verbose</span></span></dt>
+<dd><p>Flag to print details of the optimization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>boolean</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">path</span></span></dt>
+<dd><p>Filepath for log file, results, and saved images.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">g</span></span></dt>
+<dd><p>optimizer for z term</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><cite>Regulariers.QuadRegularizer</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">opt</span></span></dt>
+<dd><p>optimizer for b term</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><cite>GaussNewton.GaussNewton</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">b</span></span></dt>
+<dd><p>current value of b</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">z</span></span></dt>
+<dd><p>current value of z</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">u</span></span></dt>
+<dd><p>current value of u</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">B0</span></span></dt>
+<dd><p>initial guess for field map</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">Bc</span></span></dt>
+<dd><p>optimal field map</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">log</span></span></dt>
+<dd><p>class logging optimization information and metrics</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><cite>OptimizationLogger</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>corr_obj</strong> (<em>EPIMRIDistortionCorrection</em>) – Contains optimization problem objective function, data, and parameters.</p></li>
+<li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of ADMM iterations (default is 10).</p></li>
+<li><p><strong>rho_min</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum value of the Lagrangian constant (default is 100).</p></li>
+<li><p><strong>rho_max</strong> (<em>float</em><em>, </em><em>optional</em>) – Maximum value of the Lagrangian constant (default is 100).</p></li>
+<li><p><strong>max_iter_gn</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of Gauss-Newton (GN) iterations (outer iterations) (default is 3).</p></li>
+<li><p><strong>max_iter_pcg</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of Preconditioned Conjugate Gradient (PCG) iterations (inner iterations) (default is 20).</p></li>
+<li><p><strong>tol_gn</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance for the GN optimization (default is 0.1).</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – Flag to print details of the optimization (default is False).</p></li>
+<li><p><strong>path</strong> (<em>str</em><em>, </em><em>optional</em>) – Filepath for log file, results, and saved images (default is ‘’).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">eval_Lagrangian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/optimization/ADMM.html#ADMM.eval_Lagrangian"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Evaluate the Lagrangian function for ADMM.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>b</strong> (<em>torch.Tensor</em>) – Current estimate for the field map.</p></li>
+<li><p><strong>z</strong> (<em>torch.Tensor</em>) – Dual variable for ADMM.</p></li>
+<li><p><strong>u</strong> (<em>torch.Tensor</em>) – Proximal variable for ADMM.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>Lc</strong> (<em>torch.Tensor</em>) – Value of the Lagrangian function.</p></li>
+<li><p><strong>Jc</strong> (<em>torch.Tensor</em>) – Value of objective function for b</p></li>
+<li><p><strong>Dc</strong> (<em>torch.Tensor</em>) – Distance term value</p></li>
+<li><p><strong>Sc</strong> (<em>torch.Tensor</em>) – Smoothness term value</p></li>
+<li><p><strong>Pc</strong> (<em>torch.Tensor</em>) – Intensity modulation term value</p></li>
+<li><p><strong>Qc</strong> (<em>torch.Tensor</em>) – Proximal term value</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">run_correction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">B0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/optimization/ADMM.html#ADMM.run_correction"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Perform the ADMM optimization for EPI-MRI distortion correction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>B0</strong> (<em>torch.Tensor</em><em> (</em><em>size mplus</em><em>(</em><em>m</em><em>)</em><em>)</em>) – Initial guess for the field map.</p></li>
+<li><p><strong>debug</strong> (<em>Boolean</em><em>, </em><em>optional</em>) – flag to compute and show Langrangian (default is False)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None, sets self.Bc to optimal field map</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DataObject</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img2=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase_encoding_direction=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_model=&lt;class</span> <span class="pre">'EPI_MRI.ImageModels.Interp1D'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_normalize=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=torch.float64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device='cpu'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/EPI_MRI/EPIMRIDistortionCorrection.html#DataObject"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Defines an object to store input images, interpolation models, and domain information.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">I1</span></span></dt>
+<dd><p>interpolating image model for the first input image; has the opposite phase encoding direction as I2</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ImageModels.ImageModel</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">I2</span></span></dt>
+<dd><p>interpolating image model for the second input image; has the opposite phase encoding direction as I1</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ImageModels.ImageModel</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">omega</span></span></dt>
+<dd><p>image domain</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor (size # of dimensions x 2)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">m</span></span></dt>
+<dd><p>discretization size</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor (size # of dimensions)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">h</span></span></dt>
+<dd><p>cell size</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor (size # of dimensions)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">p</span></span></dt>
+<dd><p>order to permute dimensions to return the image to input orientation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list (size # of dimensions)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">im1</span></span></dt>
+<dd><p>original image 1 without normalization</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">im2</span></span></dt>
+<dd><p>original image 2 without normalization</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">device</span></span></dt>
+<dd><p>device on which to compute operations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">dtype</span></span></dt>
+<dd><p>data type for all data tensors</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.dtype</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>img1</strong> (<em>str</em>) – file path of [first] input image or stacked images if in the same file</p></li>
+<li><p><strong>img2</strong> (<em>str</em><em>, </em><em>optional</em>) – file path of the second input image if images are separate files (default is None)</p></li>
+<li><p><strong>phase_encoding_direction</strong> (<em>int</em><em>, </em><em>optional</em>) – gives which dimension of img1 and img2 is the phase encoding dimension (i.e. 1 for the first, 2 for the second, etc.) (default is 1)</p></li>
+<li><p><strong>image_model</strong> (<em>Class</em><em> (</em><em>subclass</em><em> of </em><em>ImagesModels.ImageModel</em><em>)</em><em>, </em><em>optional</em>) – class to use for the image interpolation model (default is ImageModels.Interp1D)</p></li>
+<li><p><strong>do_normalize</strong> (<em>boolean</em><em>, </em><em>optional</em>) – flag to normalize image intensities (default is True)</p></li>
+<li><p><strong>device</strong> (<em>string</em><em>, </em><em>optional</em>) – device on which to compute operations (default is ‘cpu’)</p></li>
+<li><p><strong>dtype</strong> (<em>torch.dtype</em><em>, </em><em>optional</em>) – data type for all data tensors (default is torch.float64)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">EPIMRIDistortionCorrection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">averaging_operator=&lt;function</span> <span class="pre">myAvg1D&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derivative_operator=&lt;function</span> <span class="pre">myDiff1D&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularizer=&lt;function</span> <span class="pre">myLaplacian3D&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho=0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initialization=&lt;class</span> <span class="pre">'EPI_MRI.InitializationMethods.InitializeOT'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">PC=&lt;class</span> <span class="pre">'EPI_MRI.Preconditioners.JacobiCG'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/EPI_MRI/EPIMRIDistortionCorrection.html#EPIMRIDistortionCorrection"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Objective function and Jacobian correction for EPI-MRI.</p>
+<p>Defines and implements a distortion correction model and optimization problem for
+Echo-Planar MRI susceptibility artifact distortion correction.</p>
+<p>Find b that minimizes:</p>
+<p>J(b) = D(I1(b), I2(b)) + alpha S(b) + beta P(b) + rho Q(b)</p>
+<ul class="simple">
+<li><p>D gives distance between corrected images I1(b) and I2(b)</p></li>
+<li><p>S penalizes non-smooth field maps</p></li>
+<li><p>P penalizes field maps violating intensity modulation constraint</p></li>
+<li><p>Q is a proximal term used on some optimization schemes</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_obj</strong> (<cite>DataObject</cite>) – object containing interpolation models for input images along with domain size and details</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – regularization parameter for the smoothness regularizer</p></li>
+<li><p><strong>beta</strong> (<em>float</em>) – regularization parameter for the intensity regularizer</p></li>
+<li><p><strong>averaging_operator</strong> (Class (subclass of <code class="xref py py-obj docutils literal notranslate"><span class="pre">LinearOperators.LinearOperator</span></code>), optional) – class to use for the averaging operator (default is <cite>LinearOperators.myAvg1D</cite>)</p></li>
+<li><p><strong>derivative_operator</strong> (Class (subclass of <cite>LinearOperators.LinearOperator</cite>), optional) – class to use for the derivative operator (default is <cite>LinearOperators.myDiff1D</cite>)</p></li>
+<li><p><strong>regularizer</strong> (Class (subclass of <cite>.LinearOperators.LinearOperator</cite>), optional) – class to use for the regularizer (default is <cite>LinearOperators.myLaplacian3D</cite>)</p></li>
+<li><p><strong>rho</strong> (<em>float</em><em>, </em><em>optional</em>) – augmentation parameter for proximal term (default is 0.0)</p></li>
+<li><p><strong>initialization</strong> (Class (subclass of <cite>InitializationMethods.InitializationMethod</cite>), optional) – class to use for the initialization of the field map (default is <cite>InitializationMethods.InitializeOT</cite>)</p></li>
+<li><p><strong>PC</strong> (Class (subclass of <cite>Preconditioners.Preconditioner</cite>), optional) – preconditioner (default is <cite>Preconditioners.JacobiCG</cite>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">dataObj</span></span></dt>
+<dd><p>object containing interpolation models for input images along with domain size and details</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><cite>DataObject</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">A</span></span></dt>
+<dd><p>averaging operator</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><cite>LinearOperators.LinearOperator</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">D</span></span></dt>
+<dd><p>partial derivative operator in the phase encoding dimension</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><cite>LinearOperators.LinearOperator</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">xc</span></span></dt>
+<dd><p>cell-centered grid in the phase encoding dimension</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor (size prod(m))</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">S</span></span></dt>
+<dd><p>defines the smoothness regularizer</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><cite>Regularizers.QuadRegularizer</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">Q</span></span></dt>
+<dd><p>defines the proximal term, if used</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><cite>Regularizers.TikRegularizer</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">PC</span></span></dt>
+<dd><p>preconditioner object, if used</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><cite>Preconditioners.Preconditioner</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">initialization</span></span></dt>
+<dd><p>initialization object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><cite>InitializationMethods.InitializationMethod</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">alpha</span></span></dt>
+<dd><p>regularization parameter for the smoothness regularizer</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">beta</span></span></dt>
+<dd><p>regularization parameter for the intensity regularizer</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">rho</span></span></dt>
+<dd><p>parameter for the proximal term augmentation parameter, if used</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">device</span></span></dt>
+<dd><p>device on which to compute operations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">dtype</span></span></dt>
+<dd><p>data type for all data tensors</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.dtype</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">Dc</span></span></dt>
+<dd><p>most recent data fit term value</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">Sc</span></span></dt>
+<dd><p>most recent smoothness regularization term value</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">Pc</span></span></dt>
+<dd><p>most recent intensity regularization term value</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">Qc</span></span></dt>
+<dd><p>most recent proximal term value, if used</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">corr1</span></span></dt>
+<dd><p>most recent corrected image from dataObj.I1</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor (size m)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">corr2</span></span></dt>
+<dd><p>most recent corrected image from dataObj.I2</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor (size m)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">distance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Tc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Rc</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/EPI_MRI/EPIMRIDistortionCorrection.html#EPIMRIDistortionCorrection.distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Computes the sum of squared difference metric and derivatives for two images.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Tc</strong> (<em>torch.Tensor</em><em> (</em><em>size m</em><em>)</em>) – first image</p></li>
+<li><p><strong>Rc</strong> (<em>torch.Tensor</em><em> (</em><em>size m</em><em>)</em>) – second image</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>Dc</strong> (<em>torch.Tensor (size 1)</em>) – distance value = 1/2 * hd * rc.T * rc</p></li>
+<li><p><strong>dD</strong> (<em>torch.Tensor (size m)</em>) – distance derivative = hd * dr</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">yc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yref</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_derivative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calc_hessian</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/EPI_MRI/EPIMRIDistortionCorrection.html#EPIMRIDistortionCorrection.eval"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Evaluates the objective function given the field map yc.</p>
+<p>J(yc) = D(I1(yc),I2(yc)) + alpha S(yc) + beta P(yc) + rho Q(yc, yref)</p>
+<p>If do_derivative is True, returns the gradient as well.</p>
+<p>If calc_hessian is True, returns the Hessian and PC as well.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>yc</strong> (<em>torch.Tensor</em><em> (</em><em>size m_plus</em><em>(</em><em>m</em><em>)</em><em>)</em>) – a field inhomogeneity map</p></li>
+<li><p><strong>yref</strong> (<em>torch.Tensor</em><em> (</em><em>size m_plus</em><em>(</em><em>m</em><em>)</em><em>)</em><em>, </em><em>optional</em>) – reference image used in proximal term, default is None</p></li>
+<li><p><strong>do_derivative</strong> (<em>boolean</em><em>, </em><em>optional</em>) – flag to compute and return the gradient, default is False</p></li>
+<li><p><strong>calc_hessian</strong> (<em>boolean</em><em>, </em><em>optional</em>) – flag to construct and return Hessian mat-vec, default is False</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>J(yc)</strong> (<em>torch.Tensor (size 1)</em>) – objective function value</p></li>
+<li><p><strong>dJ(yc)</strong> (<em>torch.Tensor (size m_plus(m))</em>) – gradient of the objective function, only returned when do_derivative=True</p></li>
+<li><p><strong>H</strong> (<em>Callable</em>) – callable matrix-vector product with (approximate) Hessian, only returned when calc_hessian=True</p></li>
+<li><p><strong>PC</strong> (<em>Callable</em>) – callable solver to apply preconditioner, only returned when calc_hessian=True</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">initialize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/EPI_MRI/EPIMRIDistortionCorrection.html#EPIMRIDistortionCorrection.initialize"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Calls the initialization scheme.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> (<em>Any</em>) – arguments and keyword arguments as needed for the initialization scheme</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – arguments and keyword arguments as needed for the initialization scheme</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>B0</strong> – initial guess for the field map</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor (size m_plus(m))</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">mp_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">I</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_derivative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/EPI_MRI/EPIMRIDistortionCorrection.html#EPIMRIDistortionCorrection.mp_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Applies the distortion correction model.</p>
+<p>TI(xc) = I(xc + bc) * (1 + dbc)</p>
+<p>If do_derivative is True, computes gradient information as well.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>I</strong> (<em>ImageModels.ImageModel</em>) – interpolating image model</p></li>
+<li><p><strong>b</strong> (<em>torch.Tensor</em><em> (</em><em>size m_plus</em><em>(</em><em>m</em><em>)</em><em>)</em>) – a field inhomogeneity map</p></li>
+<li><p><strong>do_derivative</strong> (<em>boolean</em><em>, </em><em>optional</em>) – flag to compute and return the gradient, default is False</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>TI</strong> (<em>torch.Tensor (size m)</em>) – result of applying the correction model to image I using the field map b</p></li>
+<li><p><strong>Jac</strong> (<em>torch.Tensor (size m)</em>) – mass preserving factor 1 + dbc</p></li>
+<li><p><strong>FI</strong> (<em>torch.Tensor (size m)</em>) – result of I interpolated on xc + bc</p></li>
+<li><p><strong>dFI</strong> (<em>torch.Tensor (size m)</em>) – derivative of applying image model interpolation, None when do_derivative=False</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">phi_EPI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_derivative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calc_hessian</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/EPI_MRI/EPIMRIDistortionCorrection.html#EPIMRIDistortionCorrection.phi_EPI"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Barrier function for the intensity regularization term, applied element-wise.</p>
+<p>phi(x) = -x^4 / ((x^2 - 1))</p>
+<p>phi satisfies these important conditions:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>phi(x) &gt; 0, for all x</p></li>
+<li><p>phi(<a href="#id1"><span class="problematic" id="id2">|x|</span></a> -&gt; 1) -&gt; infinity</p></li>
+<li><p>phi(0) = 0</p></li>
+<li><p>phi is convex</p></li>
+<li><p>phi(x) = phi(-x)</p></li>
+</ul>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>torch.Tensor</em><em> (</em><em>size m</em><em>)</em>) – partial derivative of the field map</p></li>
+<li><p><strong>do_derivative</strong> (<em>boolean</em><em>, </em><em>optional</em>) – flag to compute the first derivative (default is False)</p></li>
+<li><p><strong>calc_hessian</strong> (<em>boolean</em><em>, </em><em>optional</em>) – flag to compute the second derivative (default is False)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>G</strong> (<em>torch.Tensor (size m)</em>) – function value</p></li>
+<li><p><strong>dG</strong> (<em>torch.Tensor (size m)</em>) – first derivative of the function, None if do_derivative=False</p></li>
+<li><p><strong>d2G</strong> (<em>torch.Tensor (size m)</em>) – second derivative of the function, None if calc_hessian=False</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">JacobiCG</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/EPI_MRI/Preconditioners.html#JacobiCG"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Preconditioner</span></code></p>
+<p>Defines Jacobi preconditioner.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">dataObj</span></span></dt>
+<dd><p>image data</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><cite>EPIMRIDistortionCorrection.DataObject</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>DataObject</em>) – DataObject containing information about the original image data.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/EPI_MRI/Preconditioners.html#JacobiCG.eval"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Applies the Jacobi preconditioner to the input tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>torch.Tensor</em>) – Tensor on which to apply the preconditioner.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Mx</strong> – preconditioned tensor</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">getM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">geom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intensity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d2G</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">S</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/EPI_MRI/Preconditioners.html#JacobiCG.getM"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Computes and stores the preconditioner matrix as callable matrix-vector product.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>geom</strong> (<em>torch.Tensor</em>) – Geometric modulation component of the correction model.</p></li>
+<li><p><strong>intensity</strong> (<em>torch.Tensor</em>) – Intensity modulation component of the correction model.</p></li>
+<li><p><strong>hd</strong> (<em>torch.Tensor</em>) – product of cell sizes in image</p></li>
+<li><p><strong>d2G</strong> (<em>torch.Tensor</em>) – Second derivative of the intensity modulation regularization term.</p></li>
+<li><p><strong>D</strong> (<cite>LinearOperators.LinearOperator</cite>) – Derivative operator.</p></li>
+<li><p><strong>A</strong> (<cite>LinearOperators.LinearOperator</cite>) – Averaging operator.</p></li>
+<li><p><strong>S</strong> (<cite>LinearOperators.LinearOperator</cite>) – Smoothness Laplacian operator.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – Coefficient for smoothness regularizer.</p></li>
+<li><p><strong>beta</strong> (<em>float</em>) – Coefficient for the intensity modulation term.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>Sets self.M to the preconditioner for use in PCG.</em></p></li>
+<li><p><strong>diagD</strong> (<em>torch.Tensor</em>) – PC component corresponding to distance term</p></li>
+<li><p><strong>diagS</strong> (<em>torch.Tensor</em>) – PC component corresponding to smoothness regularizer</p></li>
+<li><p><strong>diagP</strong> (<em>torch.Tensor</em>) – PC component corresponding to intensity regularizer</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">apply_warpfield_y</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warpfield</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/micaflow/scripts/SDC.html#apply_warpfield_y"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Apply a warpfield to an image along the second dimension (y-axis).</p>
+<p>This function deforms an input image according to the provided warpfield,
+with displacements applied specifically along the y-axis. The function uses
+coordinate interpolation to resample the image at the warped grid positions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> (<em>numpy.ndarray</em>) – The input 3D image to be warped.</p></li>
+<li><p><strong>warpfield</strong> (<em>numpy.ndarray</em>) – The displacement field specifying pixel shifts along the y-axis.
+Must have the same spatial dimensions as the input image.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>warped_image</strong> – The warped image after applying the displacements.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function uses nearest-neighbor interpolation at boundaries and
+linear interpolation elsewhere for resampling the image.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">autoreset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">convert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colorama/initialise.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">map_coordinates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coordinates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'constant'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefilter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/scipy/ndimage/_interpolation.html#map_coordinates"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Map the input array to new coordinates by interpolation.</p>
+<p>The array of coordinates is used to find, for each point in the output,
+the corresponding coordinates in the input. The value of the input at
+those coordinates is determined by spline interpolation of the
+requested order.</p>
+<p>The shape of the output is derived from that of the coordinate
+array by dropping the first axis. The values of the array along
+the first axis are the coordinates in the input array at which the
+output value is found.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input</strong> (<em>array_like</em>) – The input array.</p></li>
+<li><p><strong>coordinates</strong> (<em>array_like</em>) – The coordinates at which <cite>input</cite> is evaluated.</p></li>
+<li><p><strong>output</strong> (<em>array</em><em> or </em><em>dtype</em><em>, </em><em>optional</em>) – The array in which to place the output, or the dtype of the
+returned array. By default an array of the same dtype as input
+will be created.</p></li>
+<li><p><strong>order</strong> (<em>int</em><em>, </em><em>optional</em>) – The order of the spline interpolation, default is 3.
+The order has to be in the range 0-5.</p></li>
+<li><p><strong>mode</strong> (<em>{'reflect'</em><em>, </em><em>'grid-mirror'</em><em>, </em><em>'constant'</em><em>, </em><em>'grid-constant'</em><em>, </em><em>'nearest'</em><em>, </em><em>'mirror'</em><em>, </em><em>'grid-wrap'</em><em>, </em><em>'wrap'}</em><em>, </em><em>optional</em>) – <p>The <cite>mode</cite> parameter determines how the input array is extended
+beyond its boundaries. Default is ‘constant’. Behavior for each valid
+value is as follows (see additional plots and details on
+<span class="xref std std-ref">boundary modes</span>):</p>
+<dl class="simple">
+<dt>’reflect’ (<cite>d c b a | a b c d | d c b a</cite>)</dt><dd><p>The input is extended by reflecting about the edge of the last
+pixel. This mode is also sometimes referred to as half-sample
+symmetric.</p>
+</dd>
+<dt>’grid-mirror’</dt><dd><p>This is a synonym for ‘reflect’.</p>
+</dd>
+<dt>’constant’ (<cite>k k k k | a b c d | k k k k</cite>)</dt><dd><p>The input is extended by filling all values beyond the edge with
+the same constant value, defined by the <cite>cval</cite> parameter. No
+interpolation is performed beyond the edges of the input.</p>
+</dd>
+<dt>’grid-constant’ (<cite>k k k k | a b c d | k k k k</cite>)</dt><dd><p>The input is extended by filling all values beyond the edge with
+the same constant value, defined by the <cite>cval</cite> parameter. Interpolation
+occurs for samples outside the input’s extent  as well.</p>
+</dd>
+<dt>’nearest’ (<cite>a a a a | a b c d | d d d d</cite>)</dt><dd><p>The input is extended by replicating the last pixel.</p>
+</dd>
+<dt>’mirror’ (<cite>d c b | a b c d | c b a</cite>)</dt><dd><p>The input is extended by reflecting about the center of the last
+pixel. This mode is also sometimes referred to as whole-sample
+symmetric.</p>
+</dd>
+<dt>’grid-wrap’ (<cite>a b c d | a b c d | a b c d</cite>)</dt><dd><p>The input is extended by wrapping around to the opposite edge.</p>
+</dd>
+<dt>’wrap’ (<cite>d b c d | a b c d | b c a b</cite>)</dt><dd><p>The input is extended by wrapping around to the opposite edge, but in a
+way such that the last point and initial point exactly overlap. In this
+case it is not well defined which sample will be chosen at the point of
+overlap.</p>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>cval</strong> (<em>scalar</em><em>, </em><em>optional</em>) – Value to fill past edges of input if <cite>mode</cite> is ‘constant’. Default
+is 0.0.</p></li>
+<li><p><strong>prefilter</strong> (<em>bool</em><em>, </em><em>optional</em>) – Determines if the input array is prefiltered with <cite>spline_filter</cite>
+before interpolation. The default is True, which will create a
+temporary <cite>float64</cite> array of filtered values if <code class="docutils literal notranslate"><span class="pre">order</span> <span class="pre">&gt;</span> <span class="pre">1</span></code>. If
+setting this to False, the output will be slightly blurred if
+<code class="docutils literal notranslate"><span class="pre">order</span> <span class="pre">&gt;</span> <span class="pre">1</span></code>, unless the input is prefiltered, i.e. it is the result
+of calling <cite>spline_filter</cite> on the original input.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>map_coordinates</strong> – The result of transforming the input. The shape of the output is
+derived from that of <cite>coordinates</cite> by dropping the first axis.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">spline_filter</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">geometric_transform</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scipy.interpolate</span></code></p>
+</div>
+<p class="rubric">Notes</p>
+<p>For complex-valued <cite>input</cite>, this function maps the real and imaginary
+components independently.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">Added in version 1.6.0: </span>Complex-valued support added.</p>
+</div>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">ndimage</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">12.</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span>
+<span class="go">array([[  0.,   1.,   2.],</span>
+<span class="go">       [  3.,   4.,   5.],</span>
+<span class="go">       [  6.,   7.,   8.],</span>
+<span class="go">       [  9.,  10.,  11.]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ndimage</span><span class="o">.</span><span class="n">map_coordinates</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="p">[[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">]],</span> <span class="n">order</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">array([ 2.,  7.])</span>
+</pre></div>
+</div>
+<p>Above, the interpolated value of a[0.5, 0.5] gives output[0], while
+a[2, 1] is output[1].</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">4</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ndimage</span><span class="o">.</span><span class="n">map_coordinates</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">inds</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">cval</span><span class="o">=-</span><span class="mf">33.3</span><span class="p">)</span>
+<span class="go">array([  2. , -33.3])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ndimage</span><span class="o">.</span><span class="n">map_coordinates</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">inds</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">)</span>
+<span class="go">array([ 2.,  8.])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ndimage</span><span class="o">.</span><span class="n">map_coordinates</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">inds</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">cval</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+<span class="go">array([ True, False], dtype=bool)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">myAvg1D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">omega</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/EPI_MRI/LinearOperators.html#myAvg1D"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Builds and returns averaging operator as <cite>Conv1D</cite> object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>omega</strong> (<em>torch.Tensor</em>) – image domain</p></li>
+<li><p><strong>m</strong> (<em>torch.Tensor</em>) – image size</p></li>
+<li><p><strong>dtype</strong> (<em>torch.dtype</em>) – data type</p></li>
+<li><p><strong>device</strong> (<em>String</em>) – compute device</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>A</strong> – averaging operator object</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><cite>Conv1D</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">myDiff1D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">omega</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/EPI_MRI/LinearOperators.html#myDiff1D"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Builds and returns derivative operator as <cite>Conv1D</cite> object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>omega</strong> (<em>torch.Tensor</em>) – image domain</p></li>
+<li><p><strong>m</strong> (<em>torch.Tensor</em>) – image size</p></li>
+<li><p><strong>dtype</strong> (<em>torch.dtype</em>) – data type</p></li>
+<li><p><strong>device</strong> (<em>String</em>) – compute device</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>D</strong> – derivative operator object</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><cite>Conv1D</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">myLaplacian1D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">omega</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/EPI_MRI/LinearOperators.html#myLaplacian1D"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Builds and returns 1D Laplacian as <cite>Conv1D</cite> object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>omega</strong> (<em>torch.Tensor</em>) – image domain</p></li>
+<li><p><strong>m</strong> (<em>torch.Tensor</em>) – image size</p></li>
+<li><p><strong>dtype</strong> (<em>torch.dtype</em>) – data type</p></li>
+<li><p><strong>device</strong> (<em>String</em>) – compute device</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>L</strong> – 1D Laplacian operator object</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><cite>Conv1D</cite></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">print_help_message</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/micaflow/scripts/SDC.html#print_help_message"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Print a help message with formatted text.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reverse_image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_warp</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/micaflow/scripts/SDC.html#run"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Perform EPI distortion correction using phase-encoding reversed images.</p>
+<p>This function implements the HYSCO (HYperellastic Susceptibility artifact COrrection)
+algorithm for correcting geometric distortions in echo-planar imaging (EPI) MRI data.
+It uses a pair of images acquired with opposite phase-encoding directions to estimate
+and correct susceptibility-induced distortions.</p>
+<p>The workflow includes:
+1. Initial affine registration of the reversed phase-encoding image to the main image
+2. Setting up the EPI distortion correction optimization problem
+3. Solving for the optimal field map using an ADMM optimizer
+4. Applying the field map to correct the distortions in the main image</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_image</strong> (<em>str</em>) – Path to the main EPI image (NIfTI file).</p></li>
+<li><p><strong>reverse_image</strong> (<em>str</em>) – Path to the reverse phase-encoded EPI image (NIfTI file).</p></li>
+<li><p><strong>output_name</strong> (<em>str</em>) – Path where the distortion-corrected image will be saved.</p></li>
+<li><p><strong>output_warp</strong> (<em>str</em>) – Path where the estimated field map will be saved.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The function saves the corrected image and field map to the specified output paths.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function extracts the first volume (3D) from the input 4D images.
+GPU acceleration is used if available; otherwise, CPU is used.
+Intermediate files are saved in a temporary directory that is cleaned up after processing.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="motion_correction.html" class="btn btn-neutral float-left" title="Motion Correction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="synthseg.html" class="btn btn-neutral float-right" title="Synthseg" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

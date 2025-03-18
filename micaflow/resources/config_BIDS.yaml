@@ -1,0 +1,13 @@
+# Default configuration for micaflow pipeline
+subject: "sub-HC131"  # Subject ID (e.g., sub-01, sub-02, etc.)
+session: "ses-01"   # Session ID (e.g., ses-01, ses-02, etc.)
+flair_file: "sub-HC131_ses-01_FLAIR.nii.gz"  # Path to FLAIR image
+t1w_file: "sub-HC131_ses-01_run-1_T1w.nii.gz"  # Path to T1w image
+dwi_file: "sub-HC131_ses-01_acq-b700-41_dir-AP_dwi.nii.gz"  # Path to DWI image
+bval_file: "sub-HC131_ses-01_acq-b700-41_dir-AP_dwi.bval"  # Path to bval file
+bvec_file: "sub-HC131_ses-01_acq-b700-41_dir-AP_dwi.bvec"  # Path to bvec file
+inverse_dwi_file: "sub-HC131_ses-01_dir-PA_dwi.nii.gz"  # Path to inverse DWI image
+output: "outputs"  # Output directory where results will be stored
+data_directory: "/data/mica3/BIDS_MICs/rawdata"  # Path to your BIDS-compatible data directory
+cleanup: true       # Whether to clean up work directory 
+cpu: true

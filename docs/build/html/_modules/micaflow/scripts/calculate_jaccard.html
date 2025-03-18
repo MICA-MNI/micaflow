@@ -1,0 +1,297 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>micaflow.scripts.calculate_jaccard &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scripts.html">Scripts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">micaflow.scripts.calculate_jaccard</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for micaflow.scripts.calculate_jaccard</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">colorama</span><span class="w"> </span><span class="kn">import</span> <span class="n">init</span><span class="p">,</span> <span class="n">Fore</span><span class="p">,</span> <span class="n">Style</span>
+
+<span class="n">init</span><span class="p">()</span>
+
+<div class="viewcode-block" id="print_help_message">
+<a class="viewcode-back" href="../../../scripts/calculate_jaccard.html#micaflow.scripts.calculate_jaccard.print_help_message">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">print_help_message</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Print a help message with formatted text.&quot;&quot;&quot;</span>
+    <span class="c1"># ANSI color codes</span>
+    <span class="n">CYAN</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">CYAN</span>
+    <span class="n">GREEN</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">GREEN</span>
+    <span class="n">YELLOW</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">YELLOW</span>
+    <span class="n">BLUE</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">BLUE</span>
+    <span class="n">MAGENTA</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">MAGENTA</span>
+    <span class="n">BOLD</span> <span class="o">=</span> <span class="n">Style</span><span class="o">.</span><span class="n">BRIGHT</span>
+    <span class="n">RESET</span> <span class="o">=</span> <span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span>
+    
+    <span class="n">help_text</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">╔════════════════════════════════════════════════════════════════╗</span>
+<span class="s2">    ║                    JACCARD INDEX CALCULATOR                    ║</span>
+<span class="s2">    ╚════════════════════════════════════════════════════════════════╝</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    </span>
+<span class="s2">    This script calculates the Jaccard similarity index (intersection over union)</span>
+<span class="s2">    between two segmentation volumes, either globally or for each ROI.</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">────────────────────────── USAGE ──────────────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">      micaflow calculate_jaccard </span><span class="si">{</span><span class="n">GREEN</span><span class="si">}</span><span class="s2">[options]</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">─────────────────── REQUIRED ARGUMENTS ───────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--input</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">-i</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">     : Path to the first input segmentation volume (.nii.gz)</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--reference</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">-r</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> : Path to the reference segmentation volume (.nii.gz)</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--output</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">-o</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">    : Output path for the CSV file with Jaccard indices</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">─────────────────── OPTIONAL ARGUMENTS ───────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--mask</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">-m</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">      : Optional mask to restrict comparison to a specific region</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--threshold</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">-t</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> : Threshold value for probabilistic segmentations (default: 0.5)</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">──────────────────── EXAMPLE USAGE ──────────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">      micaflow calculate_jaccard </span><span class="se">\\</span>
+<span class="s2">        </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--input</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> segmentation1.nii.gz </span><span class="se">\\</span>
+<span class="s2">        </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--reference</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> ground_truth.nii.gz </span><span class="se">\\</span>
+<span class="s2">        </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--output</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> jaccard_metrics.csv</span>
+<span class="s2">      </span>
+<span class="s2">      </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2"># With mask and custom threshold:</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">      micaflow calculate_jaccard </span><span class="se">\\</span>
+<span class="s2">        </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--input</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> segmentation1.nii.gz </span><span class="se">\\</span>
+<span class="s2">        </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--reference</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> ground_truth.nii.gz </span><span class="se">\\</span>
+<span class="s2">        </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--output</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> jaccard_metrics.csv </span><span class="se">\\</span>
+<span class="s2">        </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--mask</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> brain_mask.nii.gz </span><span class="se">\\</span>
+<span class="s2">        </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--threshold</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> 0.75</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">────────────────────────── NOTES ─────────────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    - For multi-label segmentations, the Jaccard index is computed for each label</span>
+<span class="s2">    - Values range from 0 (no overlap) to 1 (perfect overlap)</span>
+<span class="s2">    - A global Jaccard index is calculated across all labels</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">help_text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Overlap">
+<a class="viewcode-back" href="../../../scripts/calculate_jaccard.html#micaflow.scripts.calculate_jaccard.Overlap">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">Overlap</span><span class="p">(</span><span class="n">volume1_path</span><span class="p">,</span> <span class="n">volume2_path</span><span class="p">,</span> <span class="n">mask_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate Jaccard index between two segmented volumes.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        volume1_path (str): Path to first volume</span>
+<span class="sd">        volume2_path (str): Path to second volume</span>
+<span class="sd">        mask_path (str, optional): Path to mask volume</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Dictionary containing ROI-wise Jaccard indices</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+    
+    <span class="c1"># Load volumes</span>
+    <span class="n">vol1_img</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">volume1_path</span><span class="p">)</span>
+    <span class="n">vol2_img</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">volume2_path</span><span class="p">)</span>
+    
+    <span class="n">vol1_data</span> <span class="o">=</span> <span class="n">vol1_img</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">()</span>
+    <span class="n">vol2_data</span> <span class="o">=</span> <span class="n">vol2_img</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">()</span>
+    
+    <span class="c1"># Apply mask if provided</span>
+    <span class="k">if</span> <span class="n">mask_path</span><span class="p">:</span>
+        <span class="n">mask_img</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">mask_path</span><span class="p">)</span>
+        <span class="n">mask_data</span> <span class="o">=</span> <span class="n">mask_img</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="n">vol1_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">vol1_data</span><span class="p">,</span> <span class="n">mask_data</span><span class="p">)</span>
+        <span class="n">vol2_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">vol2_data</span><span class="p">,</span> <span class="n">mask_data</span><span class="p">)</span>
+    
+    <span class="c1"># Get unique ROIs (assuming ROIs are represented by integer values)</span>
+    <span class="n">roi_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">vol1_data</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">vol1_data</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">roi_values</span> <span class="o">=</span> <span class="n">roi_values</span><span class="p">[</span><span class="n">roi_values</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># Remove background (0)</span>
+    
+    <span class="c1"># Calculate Jaccard for each ROI</span>
+    <span class="n">roi_ji</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">roi_values</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">roi</span> <span class="ow">in</span> <span class="n">roi_values</span><span class="p">:</span>
+            <span class="n">roi1</span> <span class="o">=</span> <span class="n">vol1_data</span> <span class="o">==</span> <span class="n">roi</span>
+            <span class="n">roi2</span> <span class="o">=</span> <span class="n">vol2_data</span> <span class="o">==</span> <span class="n">roi</span>
+            
+            <span class="n">intersection</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">roi1</span><span class="p">,</span> <span class="n">roi2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+            <span class="n">union</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="n">roi1</span><span class="p">,</span> <span class="n">roi2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+            
+            <span class="c1"># Calculate Jaccard index</span>
+            <span class="n">jaccard</span> <span class="o">=</span> <span class="n">intersection</span> <span class="o">/</span> <span class="n">union</span> <span class="k">if</span> <span class="n">union</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+            <span class="n">roi_ji</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">jaccard</span><span class="p">)</span>
+        <span class="c1"># Calculate global Jaccard if no ROIs found</span>
+        <span class="n">intersection</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">vol1_data</span><span class="p">,</span> <span class="n">vol2_data</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">union</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="n">vol1_data</span><span class="p">,</span> <span class="n">vol2_data</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">jaccard</span> <span class="o">=</span> <span class="n">intersection</span> <span class="o">/</span> <span class="n">union</span> <span class="k">if</span> <span class="n">union</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">roi_ji</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">jaccard</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Calculate global Jaccard if no ROIs found</span>
+        <span class="n">intersection</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">vol1_data</span><span class="p">,</span> <span class="n">vol2_data</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">union</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="n">vol1_data</span><span class="p">,</span> <span class="n">vol2_data</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">jaccard</span> <span class="o">=</span> <span class="n">intersection</span> <span class="o">/</span> <span class="n">union</span> <span class="k">if</span> <span class="n">union</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">roi_ji</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">jaccard</span><span class="p">)</span>
+    
+    <span class="c1"># Create a results object similar to nipype&#39;s Overlap</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Results</span><span class="p">:</span>
+        <span class="k">class</span><span class="w"> </span><span class="nc">Outputs</span><span class="p">:</span>
+            <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">roi_ji</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">roi_ji</span> <span class="o">=</span> <span class="n">roi_ji</span>
+        
+        <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">roi_ji</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Outputs</span><span class="p">(</span><span class="n">roi_ji</span><span class="p">)</span>
+            
+    <span class="k">return</span> <span class="n">Results</span><span class="p">(</span><span class="n">roi_ji</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../../scripts/calculate_jaccard.html#micaflow.scripts.calculate_jaccard.main">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">mask_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="c1"># Apply threshold and use the new file paths</span>
+
+    <span class="c1"># Use our custom Overlap function instead of nipype</span>
+    <span class="k">if</span> <span class="n">mask_path</span><span class="p">:</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">Overlap</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">mask_path</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">Overlap</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">reference</span><span class="p">)</span>
+
+    <span class="c1"># Print the number of ROIs</span>
+    <span class="n">num_rois</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">roi_ji</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of ROIs:&quot;</span><span class="p">,</span> <span class="n">num_rois</span><span class="p">)</span>
+
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+        <span class="n">csvwriter</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="n">csvwriter</span><span class="o">.</span><span class="n">writerow</span><span class="p">([</span><span class="s2">&quot;ROI&quot;</span><span class="p">,</span> <span class="s2">&quot;Jaccard Index&quot;</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ji</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">roi_ji</span><span class="p">):</span>
+            <span class="n">csvwriter</span><span class="o">.</span><span class="n">writerow</span><span class="p">([</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ji</span><span class="p">])</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># Check if no arguments were provided or help was requested</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="s2">&quot;-h&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="ow">or</span> <span class="s2">&quot;--help&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">:</span>
+        <span class="n">print_help_message</span><span class="p">()</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Calculate overlap metrics between two volumes&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--input&quot;</span><span class="p">,</span> <span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;First input volume&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--reference&quot;</span><span class="p">,</span> <span class="s2">&quot;-r&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Reference volume to compare against&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--output&quot;</span><span class="p">,</span> <span class="s2">&quot;-o&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Output CSV file path&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--mask&quot;</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Optional mask volume&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--threshold&quot;</span><span class="p">,</span> <span class="s2">&quot;-t&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Threshold value (default: 0.5)&quot;</span><span class="p">)</span>
+    
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    
+    <span class="n">main</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">threshold</span><span class="p">,</span> <span class="n">mask_path</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">mask</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,294 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Denoise &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Motion Correction" href="motion_correction.html" />
+    <link rel="prev" title="Coregister" href="coregister.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../scripts.html">Scripts</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../scripts.html">Scripts</a></li>
+      <li class="breadcrumb-item active">Denoise</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/scripts/denoise.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="denoise">
+<h1>Denoise<a class="headerlink" href="#denoise" title="Link to this heading"></a></h1>
+<section id="command-line-usage">
+<h2>Command Line Usage<a class="headerlink" href="#command-line-usage" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>denoise<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="source-code">
+<h2>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h2>
+<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow2.0/blob/main/micaflow/scripts/denoise.py">GitHub Repository</a></p>
+</section>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>This script denoises diffusion-weighted images (DWI) using the Patch2Self</dt><dd><p>algorithm, which leverages redundant information across diffusion gradients
+to remove noise without requiring additional reference scans.</p>
+</dd>
+</dl>
+</section>
+<section id="full-help">
+<h2>Full Help<a class="headerlink" href="#full-help" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>╔════════════════════════════════════════════════════════════════╗
+║                     DWI IMAGE DENOISING                        ║
+╚════════════════════════════════════════════════════════════════╝
+
+This script denoises diffusion-weighted images (DWI) using the Patch2Self
+algorithm, which leverages redundant information across diffusion gradients
+to remove noise without requiring additional reference scans.
+
+────────────────────────── USAGE ──────────────────────────
+  micaflow denoise [options]
+
+─────────────────── REQUIRED ARGUMENTS ───────────────────
+  --input     : Path to the input DWI image (.nii.gz)
+  --bval      : Path to the b-values file (.bval)
+  --bvec      : Path to the b-vectors file (.bvec)
+  --output    : Output path for the denoised image (.nii.gz)
+
+─────────────────── EXAMPLE USAGE ───────────────────
+  micaflow denoise \
+    --input raw_dwi.nii.gz \
+    --bval dwi.bval \
+    --bvec dwi.bvec \
+    --output denoised_dwi.nii.gz
+
+────────────────────────── NOTES ─────────────────────────
+- Patch2Self is a self-supervised learning method for denoising
+- Processing preserves anatomical structure while removing noise
+- The implementation uses OLS regression with b0 threshold of 50 s/mm²
+- B0 volumes are not denoised separately in this implementation
+</pre></div>
+</div>
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">autoreset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">convert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colorama/initialise.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">patch2self</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bvals</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_radius</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0,</span> <span class="pre">0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ols'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b0_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b0_denoising</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_negative_vals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift_intensity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmp_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dipy/denoise/patch2self.html#patch2self"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Patch2Self Denoiser.</p>
+<p>See <a href="#id1"><span class="problematic" id="id2">:footcite:p:`Fadnavis2020`</span></a> for further details about the method.
+See <a href="#id3"><span class="problematic" id="id4">:footcite:p:`Fadnavis2024`</span></a> for further details about the new method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>ndarray</em>) – The 4D noisy DWI data to be denoised.</p></li>
+<li><p><strong>bvals</strong> (<em>array</em><em> of </em><em>shape</em><em> (</em><em>N</em><em>,</em><em>)</em>) – Array of the bvals from the DWI acquisition</p></li>
+<li><p><strong>patch_radius</strong> (<em>int</em><em> or </em><em>array</em><em> of </em><em>shape</em><em> (</em><em>3</em><em>,</em><em>)</em><em>, </em><em>optional</em>) – The radius of the local patch to be taken around each voxel (in
+voxels). Default: 0 (denoise in blocks of 1x1x1 voxels).</p></li>
+<li><p><strong>model</strong> (<em>string</em><em>, or </em><em>sklearn.base.RegressorMixin</em>) – This will determine the algorithm used to solve the set of linear
+equations underlying this model. If it is a string it needs to be
+one of the following: {‘ols’, ‘ridge’, ‘lasso’}. Otherwise,
+it can be an object that inherits from
+<cite>dipy.optimize.SKLearnLinearSolver</cite> or an object with a similar
+interface from Scikit-Learn:
+<cite>sklearn.linear_model.LinearRegression</cite>,
+<cite>sklearn.linear_model.Lasso</cite> or <cite>sklearn.linear_model.Ridge</cite>
+and other objects that inherit from <cite>sklearn.base.RegressorMixin</cite>.</p></li>
+<li><p><strong>b0_threshold</strong> (<em>int</em><em>, </em><em>optional</em>) – Threshold for considering volumes as b0.</p></li>
+<li><p><strong>out_dtype</strong> (<em>str</em><em> or </em><em>dtype</em><em>, </em><em>optional</em>) – The dtype for the output array. Default: output has the same dtype as
+the input.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em><em>, </em><em>optional</em>) – Regularization parameter only for ridge regression model.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Show progress of Patch2Self and time taken.</p></li>
+<li><p><strong>b0_denoising</strong> (<em>bool</em><em>, </em><em>optional</em>) – Skips denoising b0 volumes if set to False.</p></li>
+<li><p><strong>clip_negative_vals</strong> (<em>bool</em><em>, </em><em>optional</em>) – Sets negative values after denoising to 0 using <cite>np.clip</cite>.</p></li>
+<li><p><strong>shift_intensity</strong> (<em>bool</em><em>, </em><em>optional</em>) – Shifts the distribution of intensities per volume to give
+non-negative values.</p></li>
+<li><p><strong>tmp_dir</strong> (<em>str</em><em>, </em><em>optional</em>) – The directory to save the temporary files. If None, the temporary
+files are saved in the system’s default temporary directory. Default: None.</p></li>
+<li><p><strong>version</strong> (<em>int</em><em>, </em><em>optional</em>) – Version 1 or 3 of Patch2Self to use. Default: 3</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>denoised array</strong> – This is the denoised array of the same size as that of the input data,
+clipped to non-negative values.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">print_help_message</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/micaflow/scripts/denoise.html#print_help_message"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Print a help message with formatted text.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">read_bvals_bvecs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fbvals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fbvecs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dipy/io/gradients.html#read_bvals_bvecs"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Read b-values and b-vectors from disk.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fbvals</strong> (<em>str</em>) – Full path to file with b-values. None to not read bvals.</p></li>
+<li><p><strong>fbvecs</strong> (<em>str</em>) – Full path of file with b-vectors. None to not read bvecs.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>bvals</strong> (<em>array, (N,) or None</em>)</p></li>
+<li><p><strong>bvecs</strong> (<em>array, (N, 3) or None</em>)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Files can be either ‘.bvals’/’.bvecs’ or ‘.txt’ or ‘.npy’ (containing
+arrays stored with the appropriate values).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">run_denoise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">moving</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">moving_bval</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">moving_bvec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/micaflow/scripts/denoise.html#run_denoise"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Denoise diffusion-weighted images using the Patch2Self algorithm.</p>
+<p>This function applies Patch2Self denoising to diffusion-weighted images (DWI),
+which uses a self-supervised learning approach to remove noise while preserving
+anatomical structure. It leverages redundant information across diffusion gradients.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>moving</strong> (<em>str</em>) – Path to the input DWI image (NIfTI file).</p></li>
+<li><p><strong>moving_bval</strong> (<em>str</em>) – Path to the b-values file (.bval).</p></li>
+<li><p><strong>moving_bvec</strong> (<em>str</em>) – Path to the b-vectors file (.bvec).</p></li>
+<li><p><strong>output</strong> (<em>str</em>) – Path where the denoised image will be saved.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Path to the saved denoised image.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The implementation uses an Ordinary Least Squares regression model,
+shifts intensity values to ensure positivity, and does not denoise
+b0 volumes separately. The b0 threshold is set to 50 s/mm².</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="coregister.html" class="btn btn-neutral float-left" title="Coregister" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="motion_correction.html" class="btn btn-neutral float-right" title="Motion Correction" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

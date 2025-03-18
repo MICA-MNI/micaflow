@@ -1,0 +1,426 @@
+import os
+from pathlib import Path
+from micaflow.scripts.util_bids_pathing import check_paths
+
+
+# Default parameters
+SUBJECT = config.get("subject", "")
+SESSION = config.get("session", "")
+OUT_DIR = config.get("output", "")
+THREADS = workflow.cores
+DATA_DIRECTORY = config.get("data_directory", "")
+FLAIR_FILE = config.get("flair_file", "")
+T1W_FILE = config.get("t1w_file", "")
+DWI_FILE = config.get("dwi_file", "")
+BVAL_FILE = config.get("bval_file", "")
+BVEC_FILE = config.get("bvec_file", "")
+INVERSE_DWI_FILE = config.get("inverse_dwi_file", "")
+CPU = config.get("cpu", "")
+CPU = "--cpu" if CPU else ""
+print("CPU: ", CPU)
+
+# Atlas paths
+ATLAS_DIR = os.path.join(workflow.basedir, "atlas")
+print("ATLAS_DIR: ", ATLAS_DIR)
+ATLAS = os.path.join(ATLAS_DIR, "mni_icbm152_t1_tal_nlin_sym_09a.nii")
+ATLAS_MASK = os.path.join(ATLAS_DIR, "mni_icbm152_t1_tal_nlin_sym_09a_mask.nii")
+ATLAS_SEG = os.path.join(ATLAS_DIR, "mni_icbm152_t1_tal_nlin_sym_09a_seg.nii")
+
+SCRIPT_DIR = os.path.join(os.path.dirname(workflow.basedir), "scripts")
+
+# Check paths
+DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, RUN_DWI, CPU, FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, THREADS = check_paths(
+        DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, CPU, 
+        FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, THREADS
+    )
+
+def get_final_output():
+    outputs = []
+    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_textures-T1w_gradient-magnitude.nii")
+    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_textures-T1w_relative-intensity.nii")
+    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_T1w-to-MNI152-space_jaccard.csv")
+    outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_space-T1w_T1w.nii.gz"))
+
+    if FLAIR_FILE:
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_FLAIR-to-T1w-space_jaccard.csv")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_textures-FLAIR_gradient-magnitude.nii")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_textures-FLAIR_relative-intensity.nii")
+        outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_space-T1w_FLAIR.nii.gz"))
+
+    if RUN_DWI:
+        outputs.extend([
+            f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_FA.nii.gz",
+            f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_MD.nii.gz"
+        ])
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_DWI-to-T1w-space_jaccard.csv")
+
+    return outputs
+
+
+
+rule all:
+    input:
+        get_final_output(),
+        
+
+rule skull_strip:
+    input:
+        image = lambda wildcards: T1W_FILE if wildcards.modality == "T1w" else FLAIR_FILE
+    output:
+        brain = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_{{modality}}.nii.gz",
+        mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_{{modality}}_mask.nii.gz"
+    resources:
+        skull_strip_jobs=1  # Allows only one job of this type to run at a time
+    shell:
+        "micaflow bet --input {input.image} --output {output.brain} --output-mask {output.mask} {CPU}"
+
+rule bias_field_correction:
+    input:
+        image = rules.skull_strip.output.brain,
+        mask = rules.skull_strip.output.mask
+    output:
+        corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_biascorrected_{{modality}}.nii.gz"
+    shell:
+        "micaflow bias_correction -i {input.image} -o {output.corrected} -m {input.mask}"
+
+rule synthseg_t1w:
+    input:
+        image = T1W_FILE
+    output:
+        seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_synthseg_T1w.nii.gz"
+    threads: THREADS
+    shell:
+        "micaflow synthseg --i {input.image} --o {output.seg} --parc --fast --threads {threads} {CPU}"
+
+rule synthseg_flair:
+    input:
+        image = FLAIR_FILE,
+        t1w_seg = rules.synthseg_t1w.output.seg
+    output:
+        seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_synthseg_FLAIR.nii.gz"
+    threads: THREADS
+    shell:
+        "micaflow synthseg --i {input.image} --o {output.seg} --parc --fast --threads {threads} {CPU}"
+
+rule registration_t1w:
+    input:
+        fixed = rules.synthseg_t1w.output.seg,
+        moving = rules.synthseg_flair.output.seg
+    output:
+        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_FLAIR_space-T1w.nii.gz",
+        fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdfield.nii.gz",
+        bak_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_bakfield.nii.gz",
+        fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdaffine.mat",
+        bak_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_bakaffine.mat"
+    shell:
+        """
+        micaflow coregister \
+            --fixed-file {input.fixed} \
+            --moving-file {input.moving} \
+            --output {output.warped} \
+            --warp-file {output.fwd_field} \
+            --affine-file {output.fwd_affine} \
+            --rev-warp-file {output.bak_field} \
+            --rev-affine-file {output.bak_affine}
+        """
+
+rule registration_mni152:
+    input:
+        image = rules.synthseg_t1w.output.seg,
+        fixed = ATLAS_SEG
+    output:
+        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_T1w_space-MNI152.nii.gz",
+        fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_fwdfield.nii.gz",
+        bak_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_bakfield.nii.gz",
+        fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_fwdaffine.mat",
+        bak_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_bakaffine.mat"
+    shell:
+        """
+        micaflow coregister \
+            --fixed-file {input.fixed} \
+            --moving-file {input.image} \
+            --output {output.warped} \
+            --warp-file {output.fwd_field} \
+            --affine-file {output.fwd_affine} \
+            --rev-warp-file {output.bak_field} \
+            --rev-affine-file {output.bak_affine}
+        """
+
+rule apply_warp_flair_to_t1w:
+    input:
+        moving = rules.bias_field_correction.output.corrected,
+        warp = rules.registration_t1w.output.fwd_field,
+        affine = rules.registration_t1w.output.fwd_affine,
+        reference = rules.bias_field_correction.output.corrected
+    output:
+        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_space-T1w_{{modality}}.nii.gz"
+    shell:
+        """
+        micaflow apply_warp \
+            --moving {input.moving} \
+            --reference {input.reference} \
+            --affine {input.affine} \
+            --warp {input.warp} \
+            --output {output.warped}
+        """
+
+rule apply_warp_to_mni:
+    input:
+        moving = lambda wildcards: rules.bias_field_correction.output.corrected if wildcards.modality == "T1w" else rules.apply_warp_flair_to_t1w.output.warped,
+        warp = rules.registration_mni152.output.fwd_field,
+        affine = rules.registration_mni152.output.fwd_affine,
+        reference = ATLAS
+    output:
+        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_space-MNI152_{{modality}}.nii.gz"
+    shell:
+        """
+        micaflow apply_warp \
+            --moving {input.moving} \
+            --reference {input.reference} \
+            --affine {input.affine} \
+            --warp {input.warp} \
+            --output {output.warped}
+        """
+
+rule run_texture:
+    input:
+        image = rules.apply_warp_to_mni.output.warped,
+        mask = ATLAS_MASK
+    output:
+        gradient = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_textures-{{modality}}_gradient-magnitude.nii",
+        intensity = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_textures-{{modality}}_relative-intensity.nii"
+    shell:
+        """
+        micaflow texture_generation \
+            --input {input.image} \
+            --mask {input.mask} \
+            --output {OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_textures-{wildcards.modality}
+        """
+
+rule calculate_metrics_T1w:
+    input:
+        image = rules.registration_mni152.output.warped,
+        atlas = ATLAS_SEG
+    output:
+        metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_T1w-to-MNI152-space_jaccard.csv"
+    shell:
+        """
+        micaflow calculate_jaccard \
+            --input {input.image} \
+            --reference {input.atlas} \
+            --output {output.metrics}
+        """
+
+rule calculate_metrics_FLAIR:
+    input:
+        image = rules.registration_t1w.output.warped,
+        atlas = rules.synthseg_t1w.output.seg
+    output:
+        metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_FLAIR-to-T1w-space_jaccard.csv"
+    shell:
+        """
+        micaflow calculate_jaccard \
+            --input {input.image} \
+            --reference {input.atlas} \
+            --output {output.metrics}
+        """
+if RUN_DWI:
+    rule dwi_denoise:
+        input:
+            moving = DWI_FILE,
+            bval = BVAL_FILE,
+            bvec = BVEC_FILE
+        output:
+            denoised = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_denoised_DWI.nii.gz"
+        shell:
+            """
+            micaflow denoise \
+                --input {input.moving} \
+                --bval {input.bval} \
+                --bvec {input.bvec} \
+                --output {output.denoised}
+            """
+
+    rule dwi_motion_correction:
+        input:
+            denoised = rules.dwi_denoise.output.denoised,
+            bval = BVAL_FILE,
+            bvec = BVEC_FILE
+        output:
+            corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_denoised_motioncorrected_DWI.nii.gz"
+        shell:
+            """
+            micaflow motion_correction \
+                --denoised {input.denoised} \
+                --bval {input.bval} \
+                --bvec {input.bvec} \
+                --output {output.corrected}
+            """
+
+    rule dwi_topup:
+        input:
+            moving = rules.dwi_motion_correction.output.corrected,
+            b0 = INVERSE_DWI_FILE,  # Using the direct path here
+            b0_bval = BVAL_FILE,    # You might need separate variables for these
+            b0_bvec = BVEC_FILE     # You might need separate variables for these
+        output:
+            warp = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_SDC-warp.nii.gz",
+            corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_corrected-b0_DWI.nii.gz"
+        shell:
+            """
+            micaflow SDC \
+                --input {input.moving} \
+                --reverse-image {input.b0} \
+                --output {output.corrected} \
+                --output-warp {output.warp} 
+            """
+
+    rule dwi_apply_topup:
+        input:
+            motion_corr = rules.dwi_motion_correction.output.corrected,
+            warp = rules.dwi_topup.output.warp,
+            affine = DWI_FILE  # Using the direct path
+        output:
+            corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_SDC-DWI.nii.gz"
+        shell:
+            """
+            micaflow apply_SDC \
+                --input {input.motion_corr} \
+                --warp {input.warp} \
+                --affine {input.affine} \
+                --output {output.corrected}
+            """
+
+    rule dwi_skull_strip:
+        input:
+            image = rules.dwi_topup.output.corrected
+        output:
+            image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_DWI.nii.gz",
+            mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_DWI_mask.nii.gz"
+        shell:
+            """
+            micaflow bet \
+                --input {input.image} \
+                --output {output.image} \
+                --output-mask {output.mask} \
+                {CPU}
+            """
+
+    rule dwi_bias_correction:
+        input:
+            image = rules.dwi_apply_topup.output.corrected,
+            mask = rules.dwi_skull_strip.output.mask
+        output:
+            corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_denoised_bias-corrected_DWI.nii.gz"
+        shell:
+            """
+            micaflow bias_correction \
+                --input {input.image} \
+                --mask {input.mask} \
+                --output {output.corrected}
+            """
+
+    rule synthseg_dwi:
+        input:
+            image = rules.dwi_topup.output.corrected,
+            flair_seg = rules.synthseg_flair.output.seg
+        output:
+            seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_synthseg_DWI.nii.gz"
+        threads: THREADS
+        shell:
+            """
+            micaflow synthseg \
+                --i {input.image} \
+                --o {output.seg} \
+                --parc \
+                --fast \
+                --threads {threads} \
+                {CPU}
+            """
+
+    rule dwi_registration:
+        input:
+            moving = rules.synthseg_dwi.output.seg,
+            fixed = rules.synthseg_t1w.output.seg
+        output:
+            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_DWI_space-T1w.nii.gz",
+            fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_fwdfield.nii.gz",
+            fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_fwdaffine.mat",
+            rev_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_revfield.nii.gz",
+            rev_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_revaffine.mat"
+        shell:
+            """
+            micaflow coregister \
+                --fixed-file {input.fixed} \
+                --moving-file {input.moving} \
+                --output {output.warped} \
+                --warp-file {output.fwd_field} \
+                --affine-file {output.fwd_affine} \
+                --rev-warp-file {output.rev_field} \
+                --rev-affine-file {output.rev_affine}
+            """
+    
+    rule dwi_compute_fa_md:
+        input:
+            image = rules.dwi_bias_correction.output.corrected,
+            mask = rules.dwi_topup.output.corrected,
+            bval = BVAL_FILE,
+            bvec = BVEC_FILE
+        output:
+            fa = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-DWI_FA.nii.gz",
+            md = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-DWI_MD.nii.gz"
+        shell:
+            """
+            micaflow compute_fa_md \
+                --input {input.image} \
+                --mask {input.mask} \
+                --bval {input.bval} \
+                --bvec {input.bvec} \
+                --output-fa {output.fa} \
+                --output-md {output.md}
+            """
+
+    rule dwi_fa_md_registration:
+        input:
+            fa = rules.dwi_compute_fa_md.output.fa,
+            md = rules.dwi_compute_fa_md.output.md,
+            reference = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_biascorrected_T1w.nii.gz",
+            affine = rules.dwi_registration.output.fwd_affine,
+            warp = rules.dwi_registration.output.fwd_field
+        output:
+            fa_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_FA.nii.gz",
+            md_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_MD.nii.gz"
+        wildcard_constraints:
+            modality="T1w"
+        shell:
+            """
+            # Apply transformation to FA map
+            micaflow apply_warp \
+                --moving {input.fa} \
+                --reference {input.reference} \
+                --affine {input.affine} \
+                --warp {input.warp} \
+                --output {output.fa_reg}
+            
+            # Apply transformation to MD map
+            micaflow apply_warp \
+                --moving {input.md} \
+                --reference {input.reference} \
+                --affine {input.affine} \
+                --warp {input.warp} \
+                --output {output.md_reg}
+            """
+
+    rule calculate_metrics_DWI:
+        input:
+            image = rules.dwi_registration.output.warped,
+            atlas = rules.synthseg_t1w.output.seg
+        output:
+            metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_DWI-to-T1w-space_jaccard.csv"
+        shell:
+            """
+            micaflow calculate_jaccard \
+                --input {input.image} \
+                --reference {input.atlas} \
+                --output {output.metrics}
+            """

@@ -1,0 +1,289 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>micaflow.scripts.motion_correction &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scripts.html">Scripts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">micaflow.scripts.motion_correction</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for micaflow.scripts.motion_correction</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ants</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">colorama</span><span class="w"> </span><span class="kn">import</span> <span class="n">init</span><span class="p">,</span> <span class="n">Fore</span><span class="p">,</span> <span class="n">Style</span>
+
+<span class="n">init</span><span class="p">()</span>
+
+<div class="viewcode-block" id="print_help_message">
+<a class="viewcode-back" href="../../../scripts/motion_correction.html#micaflow.scripts.motion_correction.print_help_message">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">print_help_message</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Print a help message with formatted text.&quot;&quot;&quot;</span>
+    <span class="c1"># ANSI color codes</span>
+    <span class="n">CYAN</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">CYAN</span>
+    <span class="n">GREEN</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">GREEN</span>
+    <span class="n">YELLOW</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">YELLOW</span>
+    <span class="n">BLUE</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">BLUE</span>
+    <span class="n">MAGENTA</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">MAGENTA</span>
+    <span class="n">BOLD</span> <span class="o">=</span> <span class="n">Style</span><span class="o">.</span><span class="n">BRIGHT</span>
+    <span class="n">RESET</span> <span class="o">=</span> <span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span>
+    
+    <span class="n">help_text</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">╔════════════════════════════════════════════════════════════════╗</span>
+<span class="s2">    ║                     MOTION CORRECTION                          ║</span>
+<span class="s2">    ╚════════════════════════════════════════════════════════════════╝</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    </span>
+<span class="s2">    This script corrects for subject motion in diffusion-weighted images (DWI)</span>
+<span class="s2">    by registering each volume to the first volume (typically a B0 image).</span>
+<span class="s2">    It uses ANTs SyNRA registration which combines rigid, affine, and</span>
+<span class="s2">    deformable transformations.</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">────────────────────────── USAGE ──────────────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">      micaflow motion_correction </span><span class="si">{</span><span class="n">GREEN</span><span class="si">}</span><span class="s2">[options]</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">─────────────────── REQUIRED ARGUMENTS ───────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--denoised</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">   : Path to the input denoised DWI image (.nii.gz)</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--bval</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">       : Path to the b-values file (.bval)</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--bvec</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">       : Path to the b-vectors file (.bvec)</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--output</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">     : Output path for the motion-corrected image (.nii.gz)</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">─────────────────── EXAMPLE USAGE ───────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">      micaflow motion_correction </span><span class="se">\\</span>
+<span class="s2">        </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--denoised</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> denoised_dwi.nii.gz </span><span class="se">\\</span>
+<span class="s2">        </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--bval</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> dwi.bval </span><span class="se">\\</span>
+<span class="s2">        </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--bvec</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> dwi.bvec </span><span class="se">\\</span>
+<span class="s2">        </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--output</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> motion_corrected_dwi.nii.gz</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">────────────────────────── NOTES ─────────────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    - The first volume is assumed to be a B0 image and used as the reference</span>
+<span class="s2">    - Each subsequent volume is registered to this reference</span>
+<span class="s2">    - The process can take significant time depending on volume count</span>
+<span class="s2">    - Progress is displayed using a progress bar</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">help_text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="run_motion_correction">
+<a class="viewcode-back" href="../../../scripts/motion_correction.html#micaflow.scripts.motion_correction.run_motion_correction">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_motion_correction</span><span class="p">(</span><span class="n">dwi_path</span><span class="p">,</span> <span class="n">bval_path</span><span class="p">,</span> <span class="n">bvec_path</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Perform motion correction on diffusion-weighted images (DWI).</span>
+<span class="sd">    </span>
+<span class="sd">    This function corrects for subject motion in DWI data by registering each volume </span>
+<span class="sd">    to the first volume (assumed to be a B0 image). It uses ANTs SyNRA registration</span>
+<span class="sd">    which combines rigid, affine, and deformable transformations to achieve robust </span>
+<span class="sd">    alignment between volumes.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        dwi_path (str): Path to the input DWI NIfTI file.</span>
+<span class="sd">        bval_path (str): Path to the b-values file (.bval). Currently unused but </span>
+<span class="sd">            included for API consistency.</span>
+<span class="sd">        bvec_path (str): Path to the b-vectors file (.bvec). Currently unused but </span>
+<span class="sd">            included for API consistency.</span>
+<span class="sd">        output (str): Path where the motion-corrected DWI will be saved.</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        str: Path to the saved motion-corrected DWI image.</span>
+<span class="sd">        </span>
+<span class="sd">    Notes:</span>
+<span class="sd">        The function assumes the first volume (index 0) is a B0 image that serves</span>
+<span class="sd">        as the reference for registration. All other volumes are aligned to this</span>
+<span class="sd">        reference using ANTs&#39; SyNRA transformation. Progress is displayed using </span>
+<span class="sd">        a tqdm progress bar.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Read the main DWI file using ANTs</span>
+    <span class="n">dwi_ants</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">image_read</span><span class="p">(</span><span class="n">dwi_path</span><span class="p">)</span>
+    <span class="n">dwi_data</span> <span class="o">=</span> <span class="n">dwi_ants</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+    <span class="c1"># B0 is assumed to be the first volume (index 0)</span>
+    <span class="n">b0_data</span> <span class="o">=</span> <span class="n">dwi_data</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">b0_ants</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span>
+        <span class="n">b0_data</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="n">dwi_ants</span><span class="o">.</span><span class="n">origin</span><span class="p">[:</span><span class="mi">3</span><span class="p">],</span> <span class="n">spacing</span><span class="o">=</span><span class="n">dwi_ants</span><span class="o">.</span><span class="n">spacing</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="n">registered_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">dwi_data</span><span class="p">)</span>
+    <span class="c1"># Keep the original B0 in the first volume</span>
+    <span class="n">registered_data</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">b0_data</span>
+
+    <span class="c1"># Register each shell to B0 using a quick approach</span>
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dwi_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Registering volumes&quot;</span><span class="p">):</span>
+        <span class="n">moving_data</span> <span class="o">=</span> <span class="n">dwi_data</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span>
+        <span class="n">moving_ants</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span>
+            <span class="n">moving_data</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="n">dwi_ants</span><span class="o">.</span><span class="n">origin</span><span class="p">[:</span><span class="mi">3</span><span class="p">],</span> <span class="n">spacing</span><span class="o">=</span><span class="n">dwi_ants</span><span class="o">.</span><span class="n">spacing</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Non-linear registration (SyNOnly) using the rigid transform as initial</span>
+        <span class="n">quicksyn_reg</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">registration</span><span class="p">(</span>
+            <span class="n">fixed</span><span class="o">=</span><span class="n">b0_ants</span><span class="p">,</span>
+            <span class="n">moving</span><span class="o">=</span><span class="n">moving_ants</span><span class="p">,</span>
+            <span class="n">type_of_transform</span><span class="o">=</span><span class="s2">&quot;SyNRA&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Place the registered volume in the output array</span>
+        <span class="n">warped_data</span> <span class="o">=</span> <span class="n">quicksyn_reg</span><span class="p">[</span><span class="s2">&quot;warpedmovout&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        <span class="n">registered_data</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">warped_data</span>
+
+    <span class="c1"># Save the registered data</span>
+    <span class="n">registered_ants</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span>
+        <span class="n">registered_data</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="n">dwi_ants</span><span class="o">.</span><span class="n">origin</span><span class="p">,</span> <span class="n">spacing</span><span class="o">=</span><span class="n">dwi_ants</span><span class="o">.</span><span class="n">spacing</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">dwi_ants</span><span class="o">.</span><span class="n">direction</span>
+    <span class="p">)</span>
+
+    <span class="n">ants</span><span class="o">.</span><span class="n">image_write</span><span class="p">(</span><span class="n">registered_ants</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Motion correction completed for all shells with QuickSyN registration.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">output</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># Check if no arguments were provided or help was requested</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="s2">&quot;-h&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="ow">or</span> <span class="s2">&quot;--help&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">:</span>
+        <span class="n">print_help_message</span><span class="p">()</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Perform motion correction on a DWI image using ANTs QuickSyN.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--denoised&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to the denoised DWI (NIfTI file).&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--bval&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to the bvals file. (Currently unused, but retained for consistency.)&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--bvec&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to the bvecs file. (Currently unused, but retained for consistency.)&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--output&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Output path for the motion-corrected DWI.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="n">corrected_image</span> <span class="o">=</span> <span class="n">run_motion_correction</span><span class="p">(</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">denoised</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">bval</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">bvec</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">output</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Motion corrected image saved as:&quot;</span><span class="p">,</span> <span class="n">corrected_image</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

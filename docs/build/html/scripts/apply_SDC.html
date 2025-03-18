@@ -1,0 +1,329 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apply Sdc &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Apply Warp" href="apply_warp.html" />
+    <link rel="prev" title="Scripts" href="../scripts.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../scripts.html">Scripts</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../scripts.html">Scripts</a></li>
+      <li class="breadcrumb-item active">Apply Sdc</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/scripts/apply_SDC.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="apply-sdc">
+<h1>Apply Sdc<a class="headerlink" href="#apply-sdc" title="Link to this heading"></a></h1>
+<section id="command-line-usage">
+<h2>Command Line Usage<a class="headerlink" href="#command-line-usage" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>apply_SDC<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="source-code">
+<h2>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h2>
+<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow2.0/blob/main/micaflow/scripts/apply_SDC.py">GitHub Repository</a></p>
+</section>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>This script applies susceptibility distortion correction to diffusion images</dt><dd><p>using a pre-calculated warp field. It takes a motion-corrected diffusion image
+and applies the warp field to each 3D volume along the y-axis.</p>
+</dd>
+</dl>
+</section>
+<section id="full-help">
+<h2>Full Help<a class="headerlink" href="#full-help" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>╔════════════════════════════════════════════════════════════════╗
+║          APPLY SUSCEPTIBILITY DISTORTION CORRECTION            ║
+╚════════════════════════════════════════════════════════════════╝
+
+This script applies susceptibility distortion correction to diffusion images
+using a pre-calculated warp field. It takes a motion-corrected diffusion image
+and applies the warp field to each 3D volume along the y-axis.
+
+────────────────────────── USAGE ──────────────────────────
+  micaflow apply_SDC [options]
+
+────────────────── REQUIRED ARGUMENTS ───────────────────
+  --input       : Path to the motion-corrected DWI image (.nii.gz)
+  --warp        : Path to the warp field estimated from SDC (.nii.gz)
+  --affine      : Path to an image from which to extract the affine matrix
+  --output      : Output path for the corrected image
+
+─────────────────── EXAMPLE USAGE ───────────────────────
+
+# Apply SDC to a motion-corrected DWI image
+micaflow apply_SDC \
+  --input subj_motion_corrected.nii.gz \
+  --warp SDC.nii.gz \
+  --affine original_dwi.nii.gz \
+  --output corrected_dwi.nii.gz
+
+────────────────────────── NOTES ───────────────────────
+• The warp field should contain displacement values along the y-axis
+• This implementation assumes that susceptibility distortions are primarily
+  in the phase-encoding direction (typically y-axis)
+</pre></div>
+</div>
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">apply_SD_correction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">motion_corr_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warp_field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">moving_affine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/micaflow/scripts/apply_SDC.html#apply_SD_correction"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Apply susceptibility distortion correction by warping each 3D volume of the motion-corrected image along the y-axis.</p>
+<p>Parameters:
+- motion_corr_path: Path to the motion-corrected image (NIfTI file).
+- warp_field: Numpy array of shape (nx, ny, nz) representing the displacement field along the y-axis.
+- moving_affine: The affine matrix to use for the output NIfTI image.
+- output: Path where the corrected image will be saved.</p>
+<p>Returns:
+- out_path: Path to the SD-corrected output image.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">apply_warpfield_y</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warp_field</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/micaflow/scripts/apply_SDC.html#apply_warpfield_y"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Apply a warpfield to a 3D data array along the second dimension (y-axis) using linear interpolation.</p>
+<p>Parameters:
+- data_array: 3D numpy array (e.g. one volume)
+- warp_field: 3D numpy array of shape (nx, ny, nz) with displacement values along the y-axis.</p>
+<p>Returns:
+- warped: 3D numpy array after applying warp_field.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">autoreset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">convert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/colorama/initialise.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">map_coordinates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coordinates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'constant'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefilter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/scipy/ndimage/_interpolation.html#map_coordinates"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Map the input array to new coordinates by interpolation.</p>
+<p>The array of coordinates is used to find, for each point in the output,
+the corresponding coordinates in the input. The value of the input at
+those coordinates is determined by spline interpolation of the
+requested order.</p>
+<p>The shape of the output is derived from that of the coordinate
+array by dropping the first axis. The values of the array along
+the first axis are the coordinates in the input array at which the
+output value is found.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input</strong> (<em>array_like</em>) – The input array.</p></li>
+<li><p><strong>coordinates</strong> (<em>array_like</em>) – The coordinates at which <cite>input</cite> is evaluated.</p></li>
+<li><p><strong>output</strong> (<em>array</em><em> or </em><em>dtype</em><em>, </em><em>optional</em>) – The array in which to place the output, or the dtype of the
+returned array. By default an array of the same dtype as input
+will be created.</p></li>
+<li><p><strong>order</strong> (<em>int</em><em>, </em><em>optional</em>) – The order of the spline interpolation, default is 3.
+The order has to be in the range 0-5.</p></li>
+<li><p><strong>mode</strong> (<em>{'reflect'</em><em>, </em><em>'grid-mirror'</em><em>, </em><em>'constant'</em><em>, </em><em>'grid-constant'</em><em>, </em><em>'nearest'</em><em>, </em><em>'mirror'</em><em>, </em><em>'grid-wrap'</em><em>, </em><em>'wrap'}</em><em>, </em><em>optional</em>) – <p>The <cite>mode</cite> parameter determines how the input array is extended
+beyond its boundaries. Default is ‘constant’. Behavior for each valid
+value is as follows (see additional plots and details on
+<span class="xref std std-ref">boundary modes</span>):</p>
+<dl class="simple">
+<dt>’reflect’ (<cite>d c b a | a b c d | d c b a</cite>)</dt><dd><p>The input is extended by reflecting about the edge of the last
+pixel. This mode is also sometimes referred to as half-sample
+symmetric.</p>
+</dd>
+<dt>’grid-mirror’</dt><dd><p>This is a synonym for ‘reflect’.</p>
+</dd>
+<dt>’constant’ (<cite>k k k k | a b c d | k k k k</cite>)</dt><dd><p>The input is extended by filling all values beyond the edge with
+the same constant value, defined by the <cite>cval</cite> parameter. No
+interpolation is performed beyond the edges of the input.</p>
+</dd>
+<dt>’grid-constant’ (<cite>k k k k | a b c d | k k k k</cite>)</dt><dd><p>The input is extended by filling all values beyond the edge with
+the same constant value, defined by the <cite>cval</cite> parameter. Interpolation
+occurs for samples outside the input’s extent  as well.</p>
+</dd>
+<dt>’nearest’ (<cite>a a a a | a b c d | d d d d</cite>)</dt><dd><p>The input is extended by replicating the last pixel.</p>
+</dd>
+<dt>’mirror’ (<cite>d c b | a b c d | c b a</cite>)</dt><dd><p>The input is extended by reflecting about the center of the last
+pixel. This mode is also sometimes referred to as whole-sample
+symmetric.</p>
+</dd>
+<dt>’grid-wrap’ (<cite>a b c d | a b c d | a b c d</cite>)</dt><dd><p>The input is extended by wrapping around to the opposite edge.</p>
+</dd>
+<dt>’wrap’ (<cite>d b c d | a b c d | b c a b</cite>)</dt><dd><p>The input is extended by wrapping around to the opposite edge, but in a
+way such that the last point and initial point exactly overlap. In this
+case it is not well defined which sample will be chosen at the point of
+overlap.</p>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>cval</strong> (<em>scalar</em><em>, </em><em>optional</em>) – Value to fill past edges of input if <cite>mode</cite> is ‘constant’. Default
+is 0.0.</p></li>
+<li><p><strong>prefilter</strong> (<em>bool</em><em>, </em><em>optional</em>) – Determines if the input array is prefiltered with <cite>spline_filter</cite>
+before interpolation. The default is True, which will create a
+temporary <cite>float64</cite> array of filtered values if <code class="docutils literal notranslate"><span class="pre">order</span> <span class="pre">&gt;</span> <span class="pre">1</span></code>. If
+setting this to False, the output will be slightly blurred if
+<code class="docutils literal notranslate"><span class="pre">order</span> <span class="pre">&gt;</span> <span class="pre">1</span></code>, unless the input is prefiltered, i.e. it is the result
+of calling <cite>spline_filter</cite> on the original input.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>map_coordinates</strong> – The result of transforming the input. The shape of the output is
+derived from that of <cite>coordinates</cite> by dropping the first axis.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">spline_filter</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">geometric_transform</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scipy.interpolate</span></code></p>
+</div>
+<p class="rubric">Notes</p>
+<p>For complex-valued <cite>input</cite>, this function maps the real and imaginary
+components independently.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">Added in version 1.6.0: </span>Complex-valued support added.</p>
+</div>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">ndimage</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">12.</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span>
+<span class="go">array([[  0.,   1.,   2.],</span>
+<span class="go">       [  3.,   4.,   5.],</span>
+<span class="go">       [  6.,   7.,   8.],</span>
+<span class="go">       [  9.,  10.,  11.]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ndimage</span><span class="o">.</span><span class="n">map_coordinates</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="p">[[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">]],</span> <span class="n">order</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">array([ 2.,  7.])</span>
+</pre></div>
+</div>
+<p>Above, the interpolated value of a[0.5, 0.5] gives output[0], while
+a[2, 1] is output[1].</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">4</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ndimage</span><span class="o">.</span><span class="n">map_coordinates</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">inds</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">cval</span><span class="o">=-</span><span class="mf">33.3</span><span class="p">)</span>
+<span class="go">array([  2. , -33.3])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ndimage</span><span class="o">.</span><span class="n">map_coordinates</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">inds</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">)</span>
+<span class="go">array([ 2.,  8.])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ndimage</span><span class="o">.</span><span class="n">map_coordinates</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">inds</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">cval</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+<span class="go">array([ True, False], dtype=bool)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">print_help_message</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/micaflow/scripts/apply_SDC.html#print_help_message"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Print an extended help message with examples.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../scripts.html" class="btn btn-neutral float-left" title="Scripts" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="apply_warp.html" class="btn btn-neutral float-right" title="Apply Warp" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

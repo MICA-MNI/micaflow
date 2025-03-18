@@ -1,0 +1,543 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EPI_MRI.EPIMRIDistortionCorrection &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../scripts.html">Scripts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">EPI_MRI.EPIMRIDistortionCorrection</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for EPI_MRI.EPIMRIDistortionCorrection</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">EPI_MRI.ImageModels</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">EPI_MRI.InitializationMethods</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">EPI_MRI.Preconditioners</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+
+
+<div class="viewcode-block" id="EPIMRIDistortionCorrection">
+<a class="viewcode-back" href="../../scripts/SDC.html#micaflow.scripts.SDC.EPIMRIDistortionCorrection">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EPIMRIDistortionCorrection</span><span class="p">:</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot; Objective function and Jacobian correction for EPI-MRI.</span>
+
+<span class="sd">	Defines and implements a distortion correction model and optimization problem for</span>
+<span class="sd">	Echo-Planar MRI susceptibility artifact distortion correction.</span>
+
+<span class="sd">	Find b that minimizes:</span>
+
+<span class="sd">	J(b) = D(I1(b), I2(b)) + alpha S(b) + beta P(b) + rho Q(b)</span>
+
+<span class="sd">	* D gives distance between corrected images I1(b) and I2(b)</span>
+
+<span class="sd">	* S penalizes non-smooth field maps</span>
+
+<span class="sd">	* P penalizes field maps violating intensity modulation constraint</span>
+
+<span class="sd">	* Q is a proximal term used on some optimization schemes</span>
+
+<span class="sd">	Parameters</span>
+<span class="sd">	----------</span>
+<span class="sd">	data_obj : `DataObject`</span>
+<span class="sd">		object containing interpolation models for input images along with domain size and details</span>
+<span class="sd">	alpha : float</span>
+<span class="sd">		regularization parameter for the smoothness regularizer</span>
+<span class="sd">	beta : float</span>
+<span class="sd">		regularization parameter for the intensity regularizer</span>
+<span class="sd">	averaging_operator : Class (subclass of :obj:`LinearOperators.LinearOperator`), optional</span>
+<span class="sd">		class to use for the averaging operator (default is `LinearOperators.myAvg1D`)</span>
+<span class="sd">	derivative_operator : Class (subclass of `LinearOperators.LinearOperator`), optional</span>
+<span class="sd">		class to use for the derivative operator (default is `LinearOperators.myDiff1D`)</span>
+<span class="sd">	regularizer : Class (subclass of `.LinearOperators.LinearOperator`), optional</span>
+<span class="sd">		class to use for the regularizer (default is `LinearOperators.myLaplacian3D`)</span>
+<span class="sd">	rho : float, optional</span>
+<span class="sd">		augmentation parameter for proximal term (default is 0.0)</span>
+<span class="sd">	initialization : Class (subclass of `InitializationMethods.InitializationMethod`), optional</span>
+<span class="sd">		class to use for the initialization of the field map (default is `InitializationMethods.InitializeOT`)</span>
+<span class="sd">	PC : Class (subclass of `Preconditioners.Preconditioner`), optional</span>
+<span class="sd">		preconditioner (default is `Preconditioners.JacobiCG`)</span>
+
+<span class="sd">	Attributes</span>
+<span class="sd">	----------</span>
+<span class="sd">	dataObj : `DataObject`</span>
+<span class="sd">		object containing interpolation models for input images along with domain size and details</span>
+<span class="sd">	A : `LinearOperators.LinearOperator`</span>
+<span class="sd">		averaging operator</span>
+<span class="sd">	D : `LinearOperators.LinearOperator`</span>
+<span class="sd">		partial derivative operator in the phase encoding dimension</span>
+<span class="sd">	xc : torch.Tensor (size prod(m))</span>
+<span class="sd">		cell-centered grid in the phase encoding dimension</span>
+<span class="sd">	S : `Regularizers.QuadRegularizer`</span>
+<span class="sd">		defines the smoothness regularizer</span>
+<span class="sd">	Q : `Regularizers.TikRegularizer`</span>
+<span class="sd">		defines the proximal term, if used</span>
+<span class="sd">	PC : `Preconditioners.Preconditioner`</span>
+<span class="sd">		preconditioner object, if used</span>
+<span class="sd">	initialization : `InitializationMethods.InitializationMethod`</span>
+<span class="sd">		initialization object</span>
+<span class="sd">	alpha : float</span>
+<span class="sd">		regularization parameter for the smoothness regularizer</span>
+<span class="sd">	beta : float</span>
+<span class="sd">		regularization parameter for the intensity regularizer</span>
+<span class="sd">	rho : float</span>
+<span class="sd">		parameter for the proximal term augmentation parameter, if used</span>
+<span class="sd">	device : string</span>
+<span class="sd">		device on which to compute operations</span>
+<span class="sd">	dtype : torch.dtype</span>
+<span class="sd">		data type for all data tensors</span>
+<span class="sd">	Dc : float</span>
+<span class="sd">		most recent data fit term value</span>
+<span class="sd">	Sc : float</span>
+<span class="sd">		most recent smoothness regularization term value</span>
+<span class="sd">	Pc : float</span>
+<span class="sd">		most recent intensity regularization term value</span>
+<span class="sd">	Qc : float</span>
+<span class="sd">		most recent proximal term value, if used</span>
+<span class="sd">	corr1 : torch.Tensor (size m)</span>
+<span class="sd">		most recent corrected image from dataObj.I1</span>
+<span class="sd">	corr2 : torch.Tensor (size m)</span>
+<span class="sd">		most recent corrected image from dataObj.I2</span>
+
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_obj</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">averaging_operator</span><span class="o">=</span><span class="n">myAvg1D</span><span class="p">,</span> <span class="n">derivative_operator</span><span class="o">=</span><span class="n">myDiff1D</span><span class="p">,</span> <span class="n">regularizer</span><span class="o">=</span><span class="n">myLaplacian3D</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">initialization</span><span class="o">=</span><span class="n">InitializeOT</span><span class="p">,</span> <span class="n">PC</span><span class="o">=</span><span class="n">JacobiCG</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">dataObj</span> <span class="o">=</span> <span class="n">data_obj</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">data_obj</span><span class="o">.</span><span class="n">device</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">data_obj</span><span class="o">.</span><span class="n">dtype</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">=</span> <span class="n">averaging_operator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataObj</span><span class="o">.</span><span class="n">omega</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">dataObj</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="o">=</span> <span class="n">derivative_operator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataObj</span><span class="o">.</span><span class="n">omega</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataObj</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">xc</span> <span class="o">=</span> <span class="n">get_cell_centered_grid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataObj</span><span class="o">.</span><span class="n">omega</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataObj</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataObj</span><span class="o">.</span><span class="n">m</span><span class="p">))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">S</span> <span class="o">=</span> <span class="n">QuadRegularizer</span><span class="p">(</span><span class="n">regularizer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataObj</span><span class="o">.</span><span class="n">omega</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">dataObj</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">Q</span> <span class="o">=</span> <span class="n">TikRegularizer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataObj</span><span class="o">.</span><span class="n">omega</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataObj</span><span class="o">.</span><span class="n">m</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">=</span> <span class="n">beta</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">=</span> <span class="n">rho</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">initialization</span> <span class="o">=</span> <span class="n">initialization</span><span class="p">()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">Dc</span> <span class="o">=</span> <span class="kc">None</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">Sc</span> <span class="o">=</span> <span class="kc">None</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">Pc</span> <span class="o">=</span> <span class="kc">None</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">Qc</span> <span class="o">=</span> <span class="kc">None</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">corr1</span> <span class="o">=</span> <span class="kc">None</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">corr2</span> <span class="o">=</span> <span class="kc">None</span>
+		<span class="k">if</span> <span class="n">PC</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">PC</span> <span class="o">=</span> <span class="n">PC</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataObj</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">PC</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="EPIMRIDistortionCorrection.eval">
+<a class="viewcode-back" href="../../scripts/SDC.html#micaflow.scripts.SDC.EPIMRIDistortionCorrection.eval">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">yc</span><span class="p">,</span> <span class="n">yref</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">do_derivative</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">calc_hessian</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Evaluates the objective function given the field map yc.</span>
+
+<span class="sd">		J(yc) = D(I1(yc),I2(yc)) + alpha S(yc) + beta P(yc) + rho Q(yc, yref)</span>
+
+<span class="sd">		If do_derivative is True, returns the gradient as well.</span>
+
+<span class="sd">		If calc_hessian is True, returns the Hessian and PC as well.</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		yc : torch.Tensor (size m_plus(m))</span>
+<span class="sd">			a field inhomogeneity map</span>
+<span class="sd">		yref : torch.Tensor (size m_plus(m)), optional</span>
+<span class="sd">			reference image used in proximal term, default is None</span>
+<span class="sd">		do_derivative : boolean, optional</span>
+<span class="sd">			flag to compute and return the gradient, default is False</span>
+<span class="sd">		calc_hessian : boolean, optional</span>
+<span class="sd">			flag to construct and return Hessian mat-vec, default is False</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		J(yc) : torch.Tensor (size 1)</span>
+<span class="sd">			objective function value</span>
+<span class="sd">		dJ(yc) : torch.Tensor (size m_plus(m))</span>
+<span class="sd">			gradient of the objective function, only returned when do_derivative=True</span>
+<span class="sd">		H : Callable</span>
+<span class="sd">			callable matrix-vector product with (approximate) Hessian, only returned when calc_hessian=True</span>
+<span class="sd">		PC : Callable</span>
+<span class="sd">			callable solver to apply preconditioner, only returned when calc_hessian=True</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">hd</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataObj</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+		
+		<span class="c1"># compute interpolated image and derivative</span>
+		<span class="n">T1c</span><span class="p">,</span> <span class="n">Jac1</span><span class="p">,</span> <span class="n">FI1</span><span class="p">,</span> <span class="n">dFI1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mp_transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataObj</span><span class="o">.</span><span class="n">I1</span><span class="p">,</span> <span class="n">yc</span><span class="p">,</span> <span class="n">do_derivative</span><span class="o">=</span><span class="n">do_derivative</span><span class="p">)</span>
+		<span class="n">T2c</span><span class="p">,</span> <span class="n">Jac2</span><span class="p">,</span> <span class="n">FI2</span><span class="p">,</span> <span class="n">dFI2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mp_transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataObj</span><span class="o">.</span><span class="n">I2</span><span class="p">,</span> <span class="o">-</span><span class="n">yc</span><span class="p">,</span> <span class="n">do_derivative</span><span class="o">=</span><span class="n">do_derivative</span><span class="p">)</span>
+
+		<span class="c1"># compute distance measure</span>
+		<span class="n">Dc</span><span class="p">,</span> <span class="n">dDc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">T1c</span><span class="p">,</span> <span class="n">T2c</span><span class="p">)</span>
+		<span class="n">dD</span> <span class="o">=</span> <span class="kc">None</span>
+		<span class="k">if</span> <span class="n">do_derivative</span><span class="p">:</span>
+			<span class="n">geom</span> <span class="o">=</span> <span class="n">FI1</span> <span class="o">+</span> <span class="n">FI2</span>
+			<span class="n">intensity</span> <span class="o">=</span> <span class="n">Jac1</span> <span class="o">*</span> <span class="n">dFI1</span> <span class="o">+</span> <span class="n">Jac2</span> <span class="o">*</span> <span class="n">dFI2</span>
+			<span class="n">dD</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="o">.</span><span class="n">transp_mat_mul</span><span class="p">(</span><span class="n">dDc</span><span class="o">*</span><span class="n">geom</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="o">.</span><span class="n">transp_mat_mul</span><span class="p">(</span><span class="n">dDc</span><span class="o">*</span><span class="n">intensity</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">geom</span> <span class="o">=</span> <span class="kc">None</span>
+			<span class="n">intensity</span> <span class="o">=</span> <span class="kc">None</span>
+
+		<span class="c1"># smoothness regularizer</span>
+		<span class="n">Sc</span><span class="p">,</span> <span class="n">dS</span><span class="p">,</span> <span class="n">d2S</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">yc</span><span class="p">,</span> <span class="n">do_derivative</span><span class="o">=</span><span class="n">do_derivative</span><span class="p">)</span>
+
+		<span class="c1"># intensity regularizer</span>
+		<span class="n">G</span><span class="p">,</span> <span class="n">dG</span><span class="p">,</span> <span class="n">d2G</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phi_EPI</span><span class="p">(</span><span class="n">Jac1</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">do_derivative</span><span class="o">=</span><span class="n">do_derivative</span><span class="p">,</span> <span class="n">calc_hessian</span><span class="o">=</span><span class="n">calc_hessian</span><span class="p">)</span>
+		<span class="n">Pc</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">G</span><span class="p">)</span>
+		<span class="n">dP</span> <span class="o">=</span> <span class="kc">None</span>
+		<span class="k">if</span> <span class="n">do_derivative</span><span class="p">:</span>
+			<span class="n">dP</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="o">.</span><span class="n">transp_mat_mul</span><span class="p">(</span><span class="n">dG</span><span class="p">)</span>
+
+		<span class="c1"># compute proximal term</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+			<span class="n">Qc</span><span class="p">,</span><span class="n">dQ</span><span class="p">,</span><span class="n">d2Q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">yc</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">yref</span><span class="p">,</span> <span class="n">do_derivative</span><span class="o">=</span><span class="n">do_derivative</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">Qc</span> <span class="o">=</span> <span class="mf">0.0</span>
+			<span class="n">dQ</span> <span class="o">=</span> <span class="mf">0.0</span>
+			<span class="n">d2Q</span> <span class="o">=</span> <span class="kc">None</span>
+
+		<span class="c1"># save terms of objective function and corrected images</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">Dc</span> <span class="o">=</span> <span class="n">Dc</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">Sc</span> <span class="o">=</span> <span class="n">Sc</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">Pc</span> <span class="o">=</span> <span class="n">Pc</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">Qc</span> <span class="o">=</span> <span class="n">Qc</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">corr1</span> <span class="o">=</span> <span class="n">T1c</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">corr2</span> <span class="o">=</span> <span class="n">T2c</span>
+
+		<span class="n">Jc</span> <span class="o">=</span> <span class="n">Dc</span> <span class="o">+</span> <span class="n">hd</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="o">*</span><span class="n">Sc</span> <span class="o">+</span> <span class="n">hd</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="o">*</span><span class="n">Pc</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="o">*</span><span class="n">Qc</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">do_derivative</span><span class="p">:</span>
+			<span class="k">return</span> <span class="n">Jc</span>
+		<span class="n">dJ</span> <span class="o">=</span> <span class="n">dD</span> <span class="o">+</span> <span class="n">hd</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="o">*</span><span class="n">dS</span> <span class="o">+</span> <span class="n">hd</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="o">*</span><span class="n">dP</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="o">*</span><span class="n">dQ</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">calc_hessian</span><span class="p">:</span>
+			<span class="k">return</span> <span class="n">Jc</span><span class="p">,</span> <span class="n">dJ</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">def</span><span class="w"> </span><span class="nf">H</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">				</span><span class="sd">&quot;&quot;&quot; Matrix-vector product between Hessian and a tensor x of size m_plus(m). &quot;&quot;&quot;</span>
+				<span class="n">Dx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="o">.</span><span class="n">mat_mul</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+				<span class="n">dr</span> <span class="o">=</span> <span class="n">geom</span><span class="o">*</span><span class="n">Dx</span> <span class="o">+</span> <span class="n">intensity</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="o">.</span><span class="n">mat_mul</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+				<span class="n">dr_d2psi</span> <span class="o">=</span> <span class="n">dr</span> <span class="o">*</span> <span class="n">hd</span>
+				<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># d2P is zeros</span>
+					<span class="n">d2D</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="o">.</span><span class="n">transp_mat_mul</span><span class="p">(</span><span class="n">dr_d2psi</span><span class="o">*</span><span class="n">geom</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="o">.</span><span class="n">transp_mat_mul</span><span class="p">(</span><span class="n">dr_d2psi</span><span class="o">*</span><span class="n">intensity</span><span class="p">)</span>				
+					<span class="k">return</span> <span class="n">d2D</span> <span class="o">+</span> <span class="n">hd</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="o">*</span><span class="n">d2S</span><span class="o">.</span><span class="n">mat_mul</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">hd</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="o">*</span><span class="n">x</span>
+				<span class="k">else</span><span class="p">:</span>
+					<span class="n">d2D</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="o">.</span><span class="n">transp_mat_mul</span><span class="p">(</span><span class="n">dr_d2psi</span><span class="o">*</span><span class="n">geom</span> <span class="o">+</span> <span class="n">hd</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="o">*</span><span class="n">d2G</span><span class="o">*</span><span class="n">Dx</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="o">.</span><span class="n">transp_mat_mul</span><span class="p">(</span><span class="n">dr_d2psi</span><span class="o">*</span><span class="n">intensity</span><span class="p">)</span>
+					<span class="k">return</span> <span class="n">d2D</span> <span class="o">+</span> <span class="n">hd</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="o">*</span><span class="n">d2S</span><span class="o">.</span><span class="n">mat_mul</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">hd</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="o">*</span><span class="n">x</span>
+			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">PC</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+				<span class="n">diagD</span><span class="p">,</span> <span class="n">diagP</span><span class="p">,</span> <span class="n">diagS</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PC</span><span class="o">.</span><span class="n">getM</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">intensity</span><span class="p">,</span><span class="n">hd</span><span class="p">,</span> <span class="n">d2G</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="o">.</span><span class="n">H</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="p">)</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">PC</span><span class="o">.</span><span class="n">M</span> <span class="o">+=</span> <span class="n">hd</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">rho</span>
+				<span class="n">M</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">PC</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="n">M</span> <span class="o">=</span> <span class="kc">None</span>
+
+			<span class="k">return</span> <span class="n">Jc</span><span class="p">,</span> <span class="n">dJ</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">M</span></div>
+
+
+<div class="viewcode-block" id="EPIMRIDistortionCorrection.mp_transform">
+<a class="viewcode-back" href="../../scripts/SDC.html#micaflow.scripts.SDC.EPIMRIDistortionCorrection.mp_transform">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">mp_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">do_derivative</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Applies the distortion correction model.</span>
+
+<span class="sd">		TI(xc) = I(xc + bc) * (1 + dbc)</span>
+
+<span class="sd">		If do_derivative is True, computes gradient information as well.</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		I : ImageModels.ImageModel</span>
+<span class="sd">			interpolating image model</span>
+<span class="sd">		b : torch.Tensor (size m_plus(m))</span>
+<span class="sd">			a field inhomogeneity map</span>
+<span class="sd">		do_derivative : boolean, optional</span>
+<span class="sd">			flag to compute and return the gradient, default is False</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		----------</span>
+<span class="sd">		TI : torch.Tensor (size m)</span>
+<span class="sd">			result of applying the correction model to image I using the field map b</span>
+<span class="sd">		Jac : torch.Tensor (size m)</span>
+<span class="sd">			mass preserving factor 1 + dbc</span>
+<span class="sd">		FI : torch.Tensor (size m)</span>
+<span class="sd">			result of I interpolated on xc + bc</span>
+<span class="sd">		dFI : torch.Tensor (size m)</span>
+<span class="sd">			derivative of applying image model interpolation, None when do_derivative=False</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">bc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="o">.</span><span class="n">mat_mul</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>  <span class="c1"># averaging matrix &amp; translation vector</span>
+		<span class="n">dbc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="o">.</span><span class="n">mat_mul</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>  <span class="c1"># derivative matrix &amp; derivative of deformation vector</span>
+		<span class="n">Jac</span> <span class="o">=</span> <span class="mi">1</span><span class="o">+</span><span class="n">dbc</span>  <span class="c1"># determinant of the transform xc+bc</span>
+		<span class="n">xt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xc</span> <span class="o">+</span> <span class="n">bc</span>
+
+		<span class="k">if</span> <span class="n">do_derivative</span><span class="p">:</span>
+			<span class="n">FI</span><span class="p">,</span> <span class="n">dFI</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span> <span class="n">do_derivative</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># interpolation on deformed grid</span>
+			<span class="n">TI</span> <span class="o">=</span> <span class="n">FI</span> <span class="o">*</span> <span class="n">Jac</span>  <span class="c1"># mass preserving factor</span>
+
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">FI</span> <span class="o">=</span> <span class="n">I</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">xt</span><span class="p">)</span>  <span class="c1"># interpolation on deformed grid</span>
+			<span class="n">TI</span> <span class="o">=</span> <span class="n">FI</span> <span class="o">*</span> <span class="n">Jac</span>  <span class="c1"># mass preserving factor</span>
+			<span class="n">dFI</span> <span class="o">=</span> <span class="kc">None</span>
+
+		<span class="k">return</span> <span class="n">TI</span><span class="p">,</span> <span class="n">Jac</span><span class="p">,</span> <span class="n">FI</span><span class="p">,</span> <span class="n">dFI</span></div>
+
+
+<div class="viewcode-block" id="EPIMRIDistortionCorrection.phi_EPI">
+<a class="viewcode-back" href="../../scripts/SDC.html#micaflow.scripts.SDC.EPIMRIDistortionCorrection.phi_EPI">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">phi_EPI</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">do_derivative</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">calc_hessian</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Barrier function for the intensity regularization term, applied element-wise.</span>
+
+<span class="sd">		phi(x) = -x^4 / ((x^2 - 1))</span>
+
+<span class="sd">		phi satisfies these important conditions:</span>
+
+<span class="sd">			* phi(x) &gt; 0, for all x</span>
+
+<span class="sd">			* phi(|x| -&gt; 1) -&gt; infinity</span>
+
+<span class="sd">			* phi(0) = 0</span>
+
+<span class="sd">			* phi is convex</span>
+
+<span class="sd">			* phi(x) = phi(-x)</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		x : torch.Tensor (size m)</span>
+<span class="sd">			partial derivative of the field map</span>
+<span class="sd">		do_derivative : boolean, optional</span>
+<span class="sd">			flag to compute the first derivative (default is False)</span>
+<span class="sd">		calc_hessian : boolean, optional</span>
+<span class="sd">			flag to compute the second derivative (default is False)</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		----------</span>
+<span class="sd">		G : torch.Tensor (size m)</span>
+<span class="sd">			function value</span>
+<span class="sd">		dG : torch.Tensor (size m)</span>
+<span class="sd">			first derivative of the function, None if do_derivative=False</span>
+<span class="sd">		d2G : torch.Tensor (size m)</span>
+<span class="sd">			second derivative of the function, None if calc_hessian=False</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">dG</span><span class="p">,</span> <span class="n">d2G</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+		<span class="c1"># penalize values outside of (-1,1)</span>
+		<span class="n">x</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">)</span>
+		<span class="n">x2</span> <span class="o">=</span> <span class="n">x</span><span class="o">*</span><span class="n">x</span>
+		<span class="n">G</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">x2</span><span class="o">*</span><span class="n">x2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">x2</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+		<span class="k">if</span> <span class="n">do_derivative</span><span class="p">:</span>
+			<span class="n">dG</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">*</span><span class="n">x2</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">x2</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">x2</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">calc_hessian</span><span class="p">:</span>
+			<span class="n">d2G</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">x2</span> <span class="o">*</span> <span class="p">(</span><span class="n">x2</span> <span class="o">*</span> <span class="n">x2</span> <span class="o">-</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">x2</span> <span class="o">+</span> <span class="mi">6</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">x2</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">3</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">G</span><span class="p">,</span> <span class="n">dG</span><span class="p">,</span> <span class="n">d2G</span></div>
+
+
+<div class="viewcode-block" id="EPIMRIDistortionCorrection.initialize">
+<a class="viewcode-back" href="../../scripts/SDC.html#micaflow.scripts.SDC.EPIMRIDistortionCorrection.initialize">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Calls the initialization scheme.</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		args, kwargs : Any</span>
+<span class="sd">			arguments and keyword arguments as needed for the initialization scheme</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		----------</span>
+<span class="sd">		B0 : torch.Tensor (size m_plus(m))</span>
+<span class="sd">			initial guess for the field map</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialization</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataObj</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EPIMRIDistortionCorrection.distance">
+<a class="viewcode-back" href="../../scripts/SDC.html#micaflow.scripts.SDC.EPIMRIDistortionCorrection.distance">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Tc</span><span class="p">,</span> <span class="n">Rc</span><span class="p">):</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Computes the sum of squared difference metric and derivatives for two images.</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		Tc : torch.Tensor (size m)</span>
+<span class="sd">			first image</span>
+<span class="sd">		Rc : torch.Tensor (size m)</span>
+<span class="sd">			second image</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		----------</span>
+<span class="sd">		Dc : torch.Tensor (size 1)</span>
+<span class="sd">			distance value = 1/2 * hd * rc.T * rc</span>
+<span class="sd">		dD : torch.Tensor (size m)</span>
+<span class="sd">			distance derivative = hd * dr</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">d2psi</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataObj</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+		<span class="n">rc</span> <span class="o">=</span> <span class="n">Tc</span> <span class="o">-</span> <span class="n">Rc</span>
+		<span class="n">Dc</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">d2psi</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">rc</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+		<span class="n">dr</span> <span class="o">=</span> <span class="mi">1</span>
+		<span class="n">dD</span> <span class="o">=</span> <span class="n">rc</span><span class="o">*</span><span class="n">d2psi</span><span class="o">*</span><span class="n">dr</span>
+		<span class="k">return</span> <span class="n">Dc</span><span class="p">,</span> <span class="n">dD</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DataObject">
+<a class="viewcode-back" href="../../scripts/SDC.html#micaflow.scripts.SDC.DataObject">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DataObject</span><span class="p">:</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Defines an object to store input images, interpolation models, and domain information.</span>
+
+<span class="sd">	Attributes</span>
+<span class="sd">	----------</span>
+<span class="sd">	I1 : ImageModels.ImageModel</span>
+<span class="sd">		interpolating image model for the first input image; has the opposite phase encoding direction as I2</span>
+<span class="sd">	I2 : ImageModels.ImageModel</span>
+<span class="sd">		interpolating image model for the second input image; has the opposite phase encoding direction as I1</span>
+<span class="sd">	omega : torch.Tensor (size # of dimensions x 2)</span>
+<span class="sd">		image domain</span>
+<span class="sd">	m : torch.Tensor (size # of dimensions)</span>
+<span class="sd">		discretization size</span>
+<span class="sd">	h : torch.Tensor (size # of dimensions)</span>
+<span class="sd">		cell size</span>
+<span class="sd">	p : list (size # of dimensions)</span>
+<span class="sd">		order to permute dimensions to return the image to input orientation</span>
+<span class="sd">	im1 : torch.Tensor</span>
+<span class="sd">		original image 1 without normalization</span>
+<span class="sd">	im2 : torch.Tensor</span>
+<span class="sd">		original image 2 without normalization</span>
+<span class="sd">	device : string</span>
+<span class="sd">		device on which to compute operations</span>
+<span class="sd">	dtype : torch.dtype</span>
+<span class="sd">		data type for all data tensors</span>
+
+<span class="sd">	Parameters</span>
+<span class="sd">	----------</span>
+<span class="sd">	img1 : str</span>
+<span class="sd">		file path of [first] input image or stacked images if in the same file</span>
+<span class="sd">	img2: str, optional</span>
+<span class="sd">		file path of the second input image if images are separate files (default is None)</span>
+<span class="sd">	phase_encoding_direction: int, optional</span>
+<span class="sd">		gives which dimension of img1 and img2 is the phase encoding dimension (i.e. 1 for the first, 2 for the second, etc.) (default is 1)</span>
+<span class="sd">	image_model : Class (subclass of ImagesModels.ImageModel), optional</span>
+<span class="sd">		class to use for the image interpolation model (default is ImageModels.Interp1D)</span>
+<span class="sd">	do_normalize : boolean, optional</span>
+<span class="sd">		flag to normalize image intensities (default is True)</span>
+<span class="sd">	device : string, optional</span>
+<span class="sd">		device on which to compute operations (default is &#39;cpu&#39;)</span>
+<span class="sd">	dtype : torch.dtype, optional</span>
+<span class="sd">		data type for all data tensors (default is torch.float64)</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img1</span><span class="p">,</span> <span class="n">img2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">phase_encoding_direction</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">image_model</span><span class="o">=</span><span class="n">Interp1D</span><span class="p">,</span> <span class="n">do_normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s1">&#39;cpu&#39;</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">dtype</span>
+		<span class="n">rho0</span><span class="p">,</span> <span class="n">rho1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">omega</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">load_data</span><span class="p">(</span><span class="n">img1</span><span class="p">,</span> <span class="n">im2</span><span class="o">=</span><span class="n">img2</span><span class="p">,</span> <span class="n">phase_encoding_direction</span><span class="o">=</span><span class="n">phase_encoding_direction</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">im1</span> <span class="o">=</span> <span class="n">rho0</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">im2</span> <span class="o">=</span> <span class="n">rho1</span>
+		<span class="k">if</span> <span class="n">do_normalize</span><span class="p">:</span>
+			<span class="n">rho0</span><span class="p">,</span> <span class="n">rho1</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">rho0</span><span class="p">,</span> <span class="n">rho1</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">I1</span> <span class="o">=</span> <span class="n">image_model</span><span class="p">(</span><span class="n">rho0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">omega</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">I2</span> <span class="o">=</span> <span class="n">image_model</span><span class="p">(</span><span class="n">rho1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">omega</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
