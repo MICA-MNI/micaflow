@@ -18,6 +18,7 @@ docs/build/doctrees/environment.pickle
 docs/build/doctrees/examples.doctree
 docs/build/doctrees/getting_started.doctree
 docs/build/doctrees/index.doctree
+docs/build/doctrees/pipeline.doctree
 docs/build/doctrees/scripts.doctree
 docs/build/doctrees/_templates/module.doctree
 docs/build/doctrees/scripts/SDC.doctree
@@ -31,6 +32,7 @@ docs/build/doctrees/scripts/coregister.doctree
 docs/build/doctrees/scripts/denoise.doctree
 docs/build/doctrees/scripts/index.doctree
 docs/build/doctrees/scripts/motion_correction.doctree
+docs/build/doctrees/scripts/normalize.doctree
 docs/build/doctrees/scripts/synthseg.doctree
 docs/build/doctrees/scripts/texture_generation.doctree
 docs/build/doctrees/scripts/_autosummary/scripts.doctree
@@ -40,6 +42,7 @@ docs/build/html/genindex.html
 docs/build/html/getting_started.html
 docs/build/html/index.html
 docs/build/html/objects.inv
+docs/build/html/pipeline.html
 docs/build/html/py-modindex.html
 docs/build/html/scripts.html
 docs/build/html/search.html
@@ -65,6 +68,7 @@ docs/build/html/_modules/micaflow/scripts/compute_fa_md.html
 docs/build/html/_modules/micaflow/scripts/coregister.html
 docs/build/html/_modules/micaflow/scripts/denoise.html
 docs/build/html/_modules/micaflow/scripts/motion_correction.html
+docs/build/html/_modules/micaflow/scripts/normalize.html
 docs/build/html/_modules/micaflow/scripts/synthseg.html
 docs/build/html/_modules/micaflow/scripts/texture_generation.html
 docs/build/html/_modules/optimization/ADMM.html
@@ -73,6 +77,7 @@ docs/build/html/_modules/tqdm/std.html
 docs/build/html/_sources/examples.rst.txt
 docs/build/html/_sources/getting_started.rst.txt
 docs/build/html/_sources/index.rst.txt
+docs/build/html/_sources/pipeline.rst.txt
 docs/build/html/_sources/scripts.rst.txt
 docs/build/html/_sources/_templates/module.rst.txt
 docs/build/html/_sources/scripts/SDC.rst.txt
@@ -86,6 +91,7 @@ docs/build/html/_sources/scripts/coregister.rst.txt
 docs/build/html/_sources/scripts/denoise.rst.txt
 docs/build/html/_sources/scripts/index.rst.txt
 docs/build/html/_sources/scripts/motion_correction.rst.txt
+docs/build/html/_sources/scripts/normalize.rst.txt
 docs/build/html/_sources/scripts/synthseg.rst.txt
 docs/build/html/_sources/scripts/texture_generation.rst.txt
 docs/build/html/_sources/scripts/_autosummary/scripts.rst.txt
@@ -170,6 +176,7 @@ docs/build/html/scripts/coregister.html
 docs/build/html/scripts/denoise.html
 docs/build/html/scripts/index.html
 docs/build/html/scripts/motion_correction.html
+docs/build/html/scripts/normalize.html
 docs/build/html/scripts/synthseg.html
 docs/build/html/scripts/texture_generation.html
 docs/build/html/scripts/_autosummary/scripts.html
@@ -177,6 +184,7 @@ docs/source/conf.py
 docs/source/examples.rst
 docs/source/getting_started.rst
 docs/source/index.rst
+docs/source/pipeline.rst
 docs/source/scripts.rst
 docs/source/_static/css/custom.css
 docs/source/_static/images/logo.png
@@ -192,6 +200,7 @@ docs/source/scripts/coregister.rst
 docs/source/scripts/denoise.rst
 docs/source/scripts/index.rst
 docs/source/scripts/motion_correction.rst
+docs/source/scripts/normalize.rst
 docs/source/scripts/synthseg.rst
 docs/source/scripts/texture_generation.rst
 docs/source/scripts/_autosummary/scripts.rst
@@ -378,6 +387,7 @@ micaflow/scripts/__pycache__/hdbet.cpython-310.pyc
 micaflow/scripts/__pycache__/motion_correction.cpython-310.pyc
 micaflow/scripts/__pycache__/motion_correction.cpython-311.pyc
 micaflow/scripts/__pycache__/motion_correction.cpython-312.pyc
+micaflow/scripts/__pycache__/normalize.cpython-310.pyc
 micaflow/scripts/__pycache__/pyhysco.cpython-310.pyc
 micaflow/scripts/__pycache__/run_synthseg.cpython-310.pyc
 micaflow/scripts/__pycache__/runtexture.cpython-310.pyc

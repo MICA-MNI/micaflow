@@ -73,6 +73,12 @@ def check_paths(DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, CPU, FLAIR_FILE, T1W_
     else:
         RUN_DWI = False
         print_note("DWI file not provided, disabiling diffusion pipeline.")
+    if FLAIR_FILE == '':
+        print_note("FLAIR file not provided, disabling FLAIR processing.")
+        RUN_FLAIR = False
+    else:
+        print_note("FLAIR file provided. Enabling FLAIR processing...")
+        RUN_FLAIR = True
 
     print_note("Checking paths...")
     if DATA_DIRECTORY != '':
@@ -100,8 +106,7 @@ def check_paths(DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, CPU, FLAIR_FILE, T1W_
             else:
                 print_error("Subject not provided.")
                 sys.exit(1)
-            if FLAIR_FILE != '':
-                # Construct path based on SESSION value
+            if RUN_FLAIR:
                 flair_path = (DATA_DIRECTORY + '/' + SUBJECT + '/anat/' + FLAIR_FILE) if SESSION is None else (DATA_DIRECTORY + '/' + SUBJECT + '/' + SESSION + '/anat/' + FLAIR_FILE)
                 if os.path.exists(flair_path):
                     print_note(f"FLAIR file exists at path {flair_path}.")
@@ -184,15 +189,14 @@ def check_paths(DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, CPU, FLAIR_FILE, T1W_
                 print_note(f"Diffusion data not provided, diffusion pipeline is disabled.")
     else:
         print_note("Data directory not provided, file paths are assumed to be absolute paths to the relevant files.")
-        
-        if FLAIR_FILE != '':
+        if RUN_FLAIR:
             if os.path.exists(FLAIR_FILE):
                 print_note(f"FLAIR file exists at path {FLAIR_FILE}.")
             else:
                 print_error(f"FLAIR file does not exist at path {FLAIR_FILE}.")
                 sys.exit(1)
         else:
-            print_note("FLAIR file not provided.")
+            print_note("FLAIR will not be processed.")
         if T1W_FILE != '':
             if os.path.exists(T1W_FILE):
                 print_note(f"T1w file exists at path {T1W_FILE}.")
@@ -275,5 +279,5 @@ def check_paths(DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, CPU, FLAIR_FILE, T1W_
     print_note("Checking number of threads...")
     print_note(f"Number of threads: {THREADS}")
     
-    return DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, RUN_DWI, CPU, FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, THREADS
+    return DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, RUN_DWI, CPU, FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, THREADS, RUN_FLAIR
     

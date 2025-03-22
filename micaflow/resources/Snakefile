@@ -29,42 +29,47 @@ ATLAS_SEG = os.path.join(ATLAS_DIR, "mni_icbm152_t1_tal_nlin_sym_09a_seg.nii")
 SCRIPT_DIR = os.path.join(os.path.dirname(workflow.basedir), "scripts")
 
 # Check paths
-DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, RUN_DWI, CPU, FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, THREADS = check_paths(
+DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, RUN_DWI, CPU, FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, THREADS, RUN_FLAIR = check_paths(
         DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, CPU, 
         FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, THREADS
     )
-
+print("flair_file: ", FLAIR_FILE)
+print("run_flair: ", RUN_FLAIR)
 def get_final_output():
     outputs = []
-    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_textures-T1w_gradient-magnitude.nii")
-    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_textures-T1w_relative-intensity.nii")
+    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-T1w_gradient-magnitude.nii")
+    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-T1w_relative-intensity.nii")
+    # outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-T1w_gradient-magnitude.nii")
+    # outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-T1w_relative-intensity.nii")
     outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_T1w-to-MNI152-space_jaccard.csv")
-    outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_space-T1w_T1w.nii.gz"))
+    outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_T1w-space_T1w.nii.gz"))
     
     # Add normalized T1w images
-    outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_space-T1w_T1w_normalized.nii.gz"))
-    outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_space-MNI152_T1w_normalized.nii.gz"))
+    outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_T1w-space_T1w_normalized.nii.gz"))
+    outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_MNI152-space_T1w_normalized.nii.gz"))
 
-    if FLAIR_FILE:
+    if RUN_FLAIR:
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_FLAIR-to-T1w-space_jaccard.csv")
-        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_textures-FLAIR_gradient-magnitude.nii")
-        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_textures-FLAIR_relative-intensity.nii")
-        outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_space-T1w_FLAIR.nii.gz"))
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-FLAIR_gradient-magnitude.nii")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-FLAIR_relative-intensity.nii")
+        # outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-FLAIR_gradient-magnitude.nii")
+        # outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-FLAIR_relative-intensity.nii")
+        outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_T1w-space_FLAIR.nii.gz"))
         
-        # Add normalized FLAIR images
-        outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_space-T1w_FLAIR_normalized.nii.gz"))
-        outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_space-MNI152_FLAIR_normalized.nii.gz"))
+        # Add normalized FLAIR images 
+        outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_T1w-space_FLAIR_normalized.nii.gz"))
+        outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_MNI152-space_FLAIR_normalized.nii.gz"))
 
     if RUN_DWI:
         outputs.extend([
-            f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_FA.nii.gz",
-            f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_MD.nii.gz"
+            f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_FA.nii.gz",
+            f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_MD.nii.gz"
         ])
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_DWI-to-T1w-space_jaccard.csv")
         
         # Add normalized FA and MD maps
-        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_FA_normalized.nii.gz")
-        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_MD_normalized.nii.gz")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_FA_normalized.nii.gz")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_MD_normalized.nii.gz")
 
     return outputs
 
@@ -90,7 +95,7 @@ rule bias_field_correction:
         image = rules.skull_strip.output.brain,
         mask = rules.skull_strip.output.mask
     output:
-        corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_biascorrected_{{modality}}.nii.gz"
+        corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{{modality}}-space_{{modality}}.nii.gz"
     shell:
         "micaflow bias_correction -i {input.image} -o {output.corrected} -m {input.mask}"
 
@@ -118,7 +123,7 @@ rule registration_t1w:
         fixed = rules.synthseg_t1w.output.seg,
         moving = rules.synthseg_flair.output.seg
     output:
-        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_FLAIR_space-T1w.nii.gz",
+        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_T1w-space_FLAIR.nii.gz",
         fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdfield.nii.gz",
         bak_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_bakfield.nii.gz",
         fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdaffine.mat",
@@ -140,7 +145,7 @@ rule registration_mni152:
         image = rules.synthseg_t1w.output.seg,
         fixed = ATLAS_SEG
     output:
-        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_T1w_space-MNI152.nii.gz",
+        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_MNI152-space_T1w.nii.gz",
         fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_fwdfield.nii.gz",
         bak_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_bakfield.nii.gz",
         fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_fwdaffine.mat",
@@ -164,9 +169,9 @@ rule apply_warp_flair_to_t1w:
         affine = rules.registration_t1w.output.fwd_affine,
         reference = rules.bias_field_correction.output.corrected
     output:
-        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_space-T1w_{{modality}}.nii.gz"
+        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_T1w-space_{{modality}}.nii.gz"
     wildcard_constraints:
-        modality="T1w|FLAIR"
+        modality="FLAIR"
     shell:
         """
         micaflow apply_warp \
@@ -184,7 +189,7 @@ rule apply_warp_to_mni:
         affine = rules.registration_mni152.output.fwd_affine,
         reference = ATLAS
     output:
-        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_space-MNI152_{{modality}}.nii.gz"
+        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_MNI152-space_{{modality}}.nii.gz"
     wildcard_constraints:
         modality="T1w|FLAIR"
     shell:
@@ -202,8 +207,24 @@ rule run_texture:
         image = rules.apply_warp_to_mni.output.warped,
         mask = ATLAS_MASK
     output:
-        gradient = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_textures-{{modality}}_gradient-magnitude.nii",
-        intensity = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_textures-{{modality}}_relative-intensity.nii"
+        gradient = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-{{modality}}_gradient-magnitude.nii",
+        intensity = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-{{modality}}_relative-intensity.nii"
+    shell:
+        """
+        micaflow texture_generation \
+            --input {input.image} \
+            --mask {input.mask} \
+            --output {OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-{wildcards.modality}
+        """
+
+
+rule run_texture_T1w:
+    input:
+        image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_T1w-space_{{modality}}.nii.gz",
+        mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_T1w_mask.nii.gz"
+    output:
+        gradient = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-{{modality}}_gradient-magnitude.nii",
+        intensity = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-{{modality}}_relative-intensity.nii"
     shell:
         """
         micaflow texture_generation \
@@ -241,9 +262,9 @@ rule calculate_metrics_FLAIR:
         """
 rule normalize_anatomical:
     input:
-        image = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_space-{wildcards.space}_{wildcards.modality}.nii.gz"
+        image = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{wildcards.space}-space_{wildcards.modality}.nii.gz"
     output:
-        normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_space-{{space}}_{{modality}}_normalized.nii.gz"
+        normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{{space}}-space_{{modality}}_normalized.nii.gz"
     shell:
         """
         micaflow normalize \
@@ -258,7 +279,7 @@ rule normalize_anatomical:
 if RUN_DWI:
     rule normalize_dwi_metrics:
         input:
-            image = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_{wildcards.metric}.nii.gz"
+            image = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_{wildcards.metric}.nii.gz"
         output:
             normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_{{metric}}_normalized.nii.gz"
         shell:
@@ -389,7 +410,7 @@ if RUN_DWI:
             moving = rules.synthseg_dwi.output.seg,
             fixed = rules.synthseg_t1w.output.seg
         output:
-            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_DWI_space-T1w.nii.gz",
+            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_T1w-space_DWI.nii.gz",
             fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_fwdfield.nii.gz",
             fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_fwdaffine.mat",
             rev_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_revfield.nii.gz",
@@ -413,8 +434,8 @@ if RUN_DWI:
             bval = BVAL_FILE,
             bvec = BVEC_FILE
         output:
-            fa = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-DWI_FA.nii.gz",
-            md = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-DWI_MD.nii.gz"
+            fa = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_DWI-space_FA.nii.gz",
+            md = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_DWI-space_MD.nii.gz"
         shell:
             """
             micaflow compute_fa_md \
@@ -434,8 +455,8 @@ if RUN_DWI:
             affine = rules.dwi_registration.output.fwd_affine,
             warp = rules.dwi_registration.output.fwd_field
         output:
-            fa_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_FA.nii.gz",
-            md_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_MD.nii.gz"
+            fa_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_FA.nii.gz",
+            md_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_MD.nii.gz"
         wildcard_constraints:
             modality="T1w"
         shell:
