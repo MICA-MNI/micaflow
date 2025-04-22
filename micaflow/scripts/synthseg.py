@@ -50,7 +50,7 @@ import os
 import sys
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from colorama import init, Fore, Style
-
+from lamar.scripts.synthseg import main
 init()
 
 def print_extended_help():
@@ -121,94 +121,6 @@ def print_extended_help():
     """
     print(help_text)
     
-def main(args):
-  synthseg_home = os.path.dirname(os.path.abspath(__file__))
-  sys.path.append(synthseg_home)
-  model_dir = os.path.join(synthseg_home, 'models')
-  labels_dir = os.path.join(synthseg_home, 'data/labels_classes_priors')
-  # The rest of your code remains unchanged
-  # print SynthSeg version and checks boolean params for SynthSeg-robust
-  if args['robust']:
-      args['fast'] = True
-      assert not args['v1'], 'The flag --v1 cannot be used with --robust since SynthSeg-robust only came out with 2.0.'
-      version = 'SynthSeg-robust 2.0'
-  else:
-      version = 'SynthSeg 1.0' if args['v1'] else 'SynthSeg 2.0'
-      if args['fast']:
-          version += ' (fast)'
-  print('\n' + version + '\n')
-
-  # enforce CPU processing if necessary
-  if args['cpu']:
-      print('using CPU, hiding all CUDA_VISIBLE_DEVICES')
-      os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-
-  # limit the number of threads to be used if running on CPU
-  import tensorflow as tf
-  if args['threads'] == 1:
-      print('using 1 thread')
-  else:
-      print('using %s threads' % args['threads'])
-  tf.config.threading.set_inter_op_parallelism_threads(args['threads'])
-  tf.config.threading.set_intra_op_parallelism_threads(args['threads'])
-
-
-  # path models
-  if args['robust']:
-      args['path_model_segmentation'] = os.path.join(model_dir, 'synthseg_robust_2.0.h5')
-  else:
-      args['path_model_segmentation'] = os.path.join(model_dir, 'synthseg_2.0.h5')
-  args['path_model_parcellation'] = os.path.join(model_dir, 'synthseg_parc_2.0.h5')
-  args['path_model_qc'] = os.path.join(model_dir, 'synthseg_qc_2.0.h5')
-
-  # path labels
-  args['labels_segmentation'] = os.path.join(labels_dir, 'synthseg_segmentation_labels_2.0.npy')
-  args['labels_denoiser'] = os.path.join(labels_dir, 'synthseg_denoiser_labels_2.0.npy')
-  args['labels_parcellation'] = os.path.join(labels_dir, 'synthseg_parcellation_labels.npy')
-  args['labels_qc'] = os.path.join(labels_dir, 'synthseg_qc_labels_2.0.npy')
-  args['names_segmentation_labels'] = os.path.join(labels_dir, 'synthseg_segmentation_names_2.0.npy')
-  args['names_parcellation_labels'] = os.path.join(labels_dir, 'synthseg_parcellation_names.npy')
-  args['names_qc_labels'] = os.path.join(labels_dir, 'synthseg_qc_names_2.0.npy')
-  args['topology_classes'] = os.path.join(labels_dir, 'synthseg_topological_classes_2.0.npy')
-  args['n_neutral_labels'] = 19
-
-  # use previous model if needed
-  if args['v1']:
-      args['path_model_segmentation'] = os.path.join(model_dir, 'synthseg_1.0.h5')
-      args['labels_segmentation'] = args['labels_segmentation'].replace('_2.0.npy', '.npy')
-      args['labels_qc'] = args['labels_qc'].replace('_2.0.npy', '.npy')
-      args['names_segmentation_labels'] = args['names_segmentation_labels'].replace('_2.0.npy', '.npy')
-      args['names_qc_labels'] = args['names_qc_labels'].replace('_2.0.npy', '.npy')
-      args['topology_classes'] = args['topology_classes'].replace('_2.0.npy', '.npy')
-      args['n_neutral_labels'] = 18
-
-  from SynthSeg.predict_synthseg import predict
-  # run prediction
-  predict(path_images=args['i'],
-          path_segmentations=args['o'],
-          path_model_segmentation=args['path_model_segmentation'],
-          labels_segmentation=args['labels_segmentation'],
-          robust=args['robust'],
-          fast=args['fast'],
-          v1=args['v1'],
-          do_parcellation=args['parc'],
-          n_neutral_labels=args['n_neutral_labels'],
-          names_segmentation=args['names_segmentation_labels'],
-          labels_denoiser=args['labels_denoiser'],
-          path_posteriors=args['post'],
-          path_resampled=args['resample'],
-          path_volumes=args['vol'],
-          path_model_parcellation=args['path_model_parcellation'],
-          labels_parcellation=args['labels_parcellation'],
-          names_parcellation=args['names_parcellation_labels'],
-          path_model_qc=args['path_model_qc'],
-          labels_qc=args['labels_qc'],
-          path_qc_scores=args['qc'],
-          names_qc=args['names_qc_labels'],
-          cropping=args['crop'],
-          topology_classes=args['topology_classes'],
-          ct=args['ct'])
-
 if __name__ == '__main__':
     # Check if help flags are provided or no arguments
   if len(sys.argv) == 1 or '-h' in sys.argv or '--help' in sys.argv:

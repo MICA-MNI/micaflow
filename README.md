@@ -145,7 +145,7 @@ output/
 │   └── <session>/
 │       ├── anat/             # Anatomical images (brain-extracted, bias-corrected)
 │       ├── dwi/              # Processed diffusion data and DTI metrics
-│       ├── metrics/          # Quality metrics and Jaccard indices
+│       ├── metrics/          # Quality metrics and DICE scores
 │       ├── textures/         # Texture features
 │       └── xfm/              # Transformation matrices and warps
 ```

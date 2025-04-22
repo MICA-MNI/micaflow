@@ -41,7 +41,7 @@ def get_final_output():
     outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-T1w_relative-intensity.nii")
     # outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-T1w_gradient-magnitude.nii")
     # outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-T1w_relative-intensity.nii")
-    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_T1w-to-MNI152-space_jaccard.csv")
+    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_T1w-to-MNI152-space_DICE.csv")
     outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_T1w-space_T1w.nii.gz"))
     
     # Add normalized T1w images
@@ -49,7 +49,7 @@ def get_final_output():
     outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_MNI152-space_T1w_normalized.nii.gz"))
 
     if RUN_FLAIR:
-        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_FLAIR-to-T1w-space_jaccard.csv")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_FLAIR-to-T1w-space_DICE.csv")
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-FLAIR_gradient-magnitude.nii")
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-FLAIR_relative-intensity.nii")
         # outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-FLAIR_gradient-magnitude.nii")
@@ -65,7 +65,7 @@ def get_final_output():
             f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_FA.nii.gz",
             f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_MD.nii.gz"
         ])
-        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_DWI-to-T1w-space_jaccard.csv")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_DWI-to-T1w-space_DICE.csv")
         
         # Add normalized FA and MD maps
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_FA_normalized.nii.gz")
@@ -106,7 +106,7 @@ rule synthseg_t1w:
         seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_synthseg_T1w.nii.gz"
     threads: THREADS
     shell:
-        "micaflow synthseg --i {input.image} --o {output.seg} --parc --fast --threads {threads} {CPU}"
+        "micaflow synthseg --i {input.image} --o {output.seg} --parc --robust --threads {threads} {CPU}"
 
 rule synthseg_flair:
     input:
@@ -116,7 +116,7 @@ rule synthseg_flair:
         seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_synthseg_FLAIR.nii.gz"
     threads: THREADS
     shell:
-        "micaflow synthseg --i {input.image} --o {output.seg} --parc --fast --threads {threads} {CPU}"
+        "micaflow synthseg --i {input.image} --o {output.seg} --parc --robust --threads {threads} {CPU}"
 
 rule registration_t1w:
     input:
@@ -238,10 +238,10 @@ rule calculate_metrics_T1w:
         image = rules.registration_mni152.output.warped,
         atlas = ATLAS_SEG
     output:
-        metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_T1w-to-MNI152-space_jaccard.csv"
+        metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_T1w-to-MNI152-space_DICE.csv"
     shell:
         """
-        micaflow calculate_jaccard \
+        micaflow calculate_dice \
             --input {input.image} \
             --reference {input.atlas} \
             --output {output.metrics}
@@ -252,10 +252,10 @@ rule calculate_metrics_FLAIR:
         image = rules.registration_t1w.output.warped,
         atlas = rules.synthseg_t1w.output.seg
     output:
-        metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_FLAIR-to-T1w-space_jaccard.csv"
+        metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_FLAIR-to-T1w-space_DICE.csv"
     shell:
         """
-        micaflow calculate_jaccard \
+        micaflow calculate_dice \
             --input {input.image} \
             --reference {input.atlas} \
             --output {output.metrics}
@@ -400,7 +400,7 @@ if RUN_DWI:
                 --i {input.image} \
                 --o {output.seg} \
                 --parc \
-                --fast \
+                --robust \
                 --threads {threads} \
                 {CPU}
             """
@@ -483,10 +483,10 @@ if RUN_DWI:
             image = rules.dwi_registration.output.warped,
             atlas = rules.synthseg_t1w.output.seg
         output:
-            metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_DWI-to-T1w-space_jaccard.csv"
+            metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_DWI-to-T1w-space_DICE.csv"
         shell:
             """
-            micaflow calculate_jaccard \
+            micaflow calculate_dice \
                 --input {input.image} \
                 --reference {input.atlas} \
                 --output {output.metrics}

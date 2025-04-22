@@ -41,7 +41,7 @@ def print_extended_help():
       {GREEN}apply_warp{RESET}        : Apply transformation to warp an image to a reference space
       {GREEN}bet{RESET}               : Run HD-BET brain extraction
       {GREEN}bias_correction{RESET}   : Run N4 Bias Field Correction
-      {GREEN}calculate_jaccard{RESET} : Calculate Jaccard similarity index between two segmentations
+      {GREEN}calculate_dice{RESET} : Calculate DICE score between two segmentations
       {GREEN}compute_fa_md{RESET}     : Compute Fractional Anisotropy and Mean Diffusivity maps
       {GREEN}coregister{RESET}        : Coregister a moving image to a reference image
       {GREEN}denoise{RESET}           : Denoise diffusion-weighted images using Patch2Self
@@ -126,7 +126,7 @@ def main():
             "apply_warp": "micaflow.scripts.apply_warp",
             "bet": "micaflow.scripts.bet",
             "bias_correction": "micaflow.scripts.bias_correction",
-            "calculate_jaccard": "micaflow.scripts.calculate_jaccard",
+            "calculate_dice": "micaflow.scripts.calculate_dice",
             "compute_fa_md": "micaflow.scripts.compute_fa_md",
             "coregister": "micaflow.scripts.coregister",
             "denoise": "micaflow.scripts.denoise",
@@ -360,28 +360,21 @@ def main():
 
     # Add this after the bias_corr_parser section but before the args.parse_args() call:
 
-    # Jaccard Index Calculator command
-    jaccard_parser = subparsers.add_parser(
-        "calculate_jaccard",
-        help="Calculate Jaccard similarity index between two segmentations",
+    # DICE Calculator command
+    dice_parser = subparsers.add_parser(
+        "calculate_dice",
+        help="Calculate DICE between two segmentations",
     )
-    jaccard_parser.add_argument(
+    dice_parser.add_argument(
         "--input", "-i", required=True, help="First input volume"
     )
-    jaccard_parser.add_argument(
+    dice_parser.add_argument(
         "--reference", "-r", required=True, help="Reference volume to compare against"
     )
-    jaccard_parser.add_argument(
+    dice_parser.add_argument(
         "--output", "-o", required=True, help="Output CSV file path"
     )
-    jaccard_parser.add_argument("--mask", "-m", help="Optional mask volume")
-    jaccard_parser.add_argument(
-        "--threshold",
-        "-t",
-        type=float,
-        default=0.5,
-        help="Threshold value (default: 0.5)",
-    )
+
 
     # Compute FA/MD command
     compute_fa_md_parser = subparsers.add_parser(
@@ -752,34 +745,34 @@ def main():
             print(f"Error running bias correction: {e}")
             sys.exit(1)
 
-    elif args.command == "calculate_jaccard":
-        # Prepare arguments for calculate_jaccard
-        jaccard_args = []
+    elif args.command == "calculate_dice":
+        # Prepare arguments for calculate_dice
+        dice_args = []
         for arg_name, arg_value in vars(args).items():
             if arg_name != "command" and arg_value is not None:
                 if isinstance(arg_value, bool):
                     if arg_value:
-                        jaccard_args.append(f"--{arg_name}")
+                        dice_args.append(f"--{arg_name}")
                 elif isinstance(arg_value, list):
-                    jaccard_args.append(f"--{arg_name}")
-                    jaccard_args.extend([str(x) for x in arg_value])
+                    dice_args.append(f"--{arg_name}")
+                    dice_args.extend([str(x) for x in arg_value])
                 else:
-                    jaccard_args.append(f"--{arg_name}")
-                    jaccard_args.append(str(arg_value))
+                    dice_args.append(f"--{arg_name}")
+                    dice_args.append(str(arg_value))
 
-        # Run the calculate_jaccard script
+        # Run the calculate_dice script
         try:
             print(
-                f"Calculating Jaccard index between {args.input} and {args.reference}..."
+                f"Calculating DICE between {args.input} and {args.reference}..."
             )
             subprocess.run(
-                ["python", "-m", "micaflow.scripts.calculate_jaccard"] + jaccard_args,
+                ["python", "-m", "micaflow.scripts.calculate_dice"] + dice_args,
                 check=True,
             )
             if args.output:
                 print(f"Results saved to {args.output}")
         except subprocess.CalledProcessError as e:
-            print(f"Error calculating Jaccard index: {e}")
+            print(f"Error calculating DICE: {e}")
             sys.exit(1)
 
     elif args.command == "compute_fa_md":

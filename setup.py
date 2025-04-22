@@ -6,16 +6,10 @@ def get_requirements():
     """Get requirements based on Python version"""
     python_version = sys.version_info
     
-    if python_version.major == 3 and python_version.minor == 9:
-        req_file = "requirements_39.txt"
-    elif python_version.major == 3 and python_version.minor == 10:
-        req_file = "requirements_310.txt"
-    elif python_version.major == 3 and python_version.minor == 11:
-        req_file = "requirements_311.txt"
+    if python_version.major == 3 and python_version.minor >= 10 and python_version.minor <= 12:
+        req_file = "requirements.txt"
     else:
-        # Default to 3.9 requirements if version not specifically supported
-        print(f"Warning: Python {python_version.major}.{python_version.minor} not explicitly supported. Using Python 3.9 requirements.")
-        req_file = "requirements_39.txt"
+        print(f"Warning: Python version {python_version.major}.{python_version.minor} is not officially supported.")
     
     print(f"Using requirements from: {req_file}")
     
@@ -45,5 +39,5 @@ setup(
         ],
     },
     install_requires=get_requirements(),
-    python_requires=">=3.9",
+    python_requires=">=3.10",
 )

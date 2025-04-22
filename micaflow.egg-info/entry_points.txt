@@ -1,2 +1,0 @@
-[console_scripts]
-micaflow = micaflow.cli:main
