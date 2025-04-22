@@ -1,0 +1,334 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>micaflow.scripts.normalize &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scripts.html">Scripts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">micaflow.scripts.normalize</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for micaflow.scripts.normalize</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">normalize_intensity - Percentile-based Intensity Normalization for MRI Data</span>
+
+<span class="sd">Part of the micaflow processing pipeline for neuroimaging data.</span>
+
+<span class="sd">This script performs intensity normalization on MRI data by:</span>
+<span class="sd">1. Clamping values at the 1st and 99th percentiles to reduce outlier effects</span>
+<span class="sd">2. Rescaling the clamped values to a standardized 0-100 range</span>
+
+<span class="sd">This normalization helps improve consistency across different scans and scanners,</span>
+<span class="sd">making downstream analysis and visualization more robust.</span>
+
+<span class="sd">API Usage:</span>
+<span class="sd">---------</span>
+<span class="sd">micaflow normalize_intensity </span>
+<span class="sd">    --input &lt;path/to/image.nii.gz&gt;</span>
+<span class="sd">    --output &lt;path/to/normalized.nii.gz&gt;</span>
+<span class="sd">    [--lower-percentile &lt;value&gt;]</span>
+<span class="sd">    [--upper-percentile &lt;value&gt;]</span>
+<span class="sd">    [--min-value &lt;value&gt;]</span>
+<span class="sd">    [--max-value &lt;value&gt;]</span>
+
+<span class="sd">Python Usage:</span>
+<span class="sd">-----------</span>
+<span class="sd">&gt;&gt;&gt; from micaflow.scripts.normalize_intensity import normalize_intensity</span>
+<span class="sd">&gt;&gt;&gt; normalize_intensity(</span>
+<span class="sd">...     input_file=&quot;t1w.nii.gz&quot;,</span>
+<span class="sd">...     output_file=&quot;t1w_normalized.nii.gz&quot;,</span>
+<span class="sd">...     lower_percentile=1,</span>
+<span class="sd">...     upper_percentile=99,</span>
+<span class="sd">...     min_val=0,</span>
+<span class="sd">...     max_val=100</span>
+<span class="sd">... )</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">nibabel</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">colorama</span><span class="w"> </span><span class="kn">import</span> <span class="n">init</span><span class="p">,</span> <span class="n">Fore</span><span class="p">,</span> <span class="n">Style</span>
+
+<span class="n">init</span><span class="p">()</span>
+
+<div class="viewcode-block" id="print_help_message">
+<a class="viewcode-back" href="../../../scripts/normalize.html#micaflow.scripts.normalize.print_help_message">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">print_help_message</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Print a help message with formatted text.&quot;&quot;&quot;</span>
+    <span class="n">YELLOW</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">YELLOW</span>
+    <span class="n">GREEN</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">GREEN</span>
+    <span class="n">CYAN</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">CYAN</span>
+    <span class="n">BOLD</span> <span class="o">=</span> <span class="n">Style</span><span class="o">.</span><span class="n">BRIGHT</span>
+    <span class="n">RESET</span> <span class="o">=</span> <span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span>
+    
+    <span class="n">help_text</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">╔════════════════════════════════════════════════════════════════╗</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">║                 INTENSITY NORMALIZATION                        ║</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">╚════════════════════════════════════════════════════════════════╝</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    </span>
+<span class="s2">    This script normalizes MRI intensity values by clamping at specified </span>
+<span class="s2">    percentiles and rescaling to a standard range.</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">────────────────────────── USAGE ──────────────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">      micaflow normalize_intensity [options]</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">─────────────────── REQUIRED ARGUMENTS ───────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--input, -i</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">  : Path to the input image file (.nii.gz)</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--output, -o</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> : Path for the normalized output image (.nii.gz)</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">─────────────────── OPTIONAL ARGUMENTS ───────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--lower-percentile</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> : Lower percentile for clamping (default: 1.0)</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--upper-percentile</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> : Upper percentile for clamping (default: 99.0)</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--min-value</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">        : Minimum value in output range (default: 0)</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--max-value</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">        : Maximum value in output range (default: 100)</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">──────────────────── EXAMPLE USAGE ──────────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">GREEN</span><span class="si">}</span><span class="s2"># Basic usage with default parameters</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    micaflow normalize_intensity </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--input</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> t1w.nii.gz </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--output</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> t1w_norm.nii.gz</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">GREEN</span><span class="si">}</span><span class="s2"># Custom percentiles and range</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    micaflow normalize_intensity </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--input</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> t1w.nii.gz </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--output</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> t1w_norm.nii.gz </span><span class="se">\</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--lower-percentile</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> 2.0 </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--upper-percentile</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> 98.0 </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--min-value</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> 0 </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--max-value</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> 1</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">────────────────────────── NOTES ─────────────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    - Clamping at percentiles helps reduce the effect of outliers</span>
+<span class="s2">    - Data type is preserved in the output image</span>
+<span class="s2">    - Non-brain voxels (zeros) remain zero after normalization</span>
+<span class="s2">    </span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">help_text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="normalize_intensity">
+<a class="viewcode-back" href="../../../scripts/normalize.html#micaflow.scripts.normalize.normalize_intensity">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize_intensity</span><span class="p">(</span><span class="n">input_file</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">lower_percentile</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">upper_percentile</span><span class="o">=</span><span class="mf">99.0</span><span class="p">,</span> 
+                        <span class="n">min_val</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_val</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Normalize intensity of a NIfTI image by clamping at percentiles and rescaling.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        input_file (str): Path to the input NIfTI file (.nii.gz).</span>
+<span class="sd">        output_file (str): Path where the normalized image will be saved.</span>
+<span class="sd">        lower_percentile (float): Lower percentile for clamping (0-100).</span>
+<span class="sd">        upper_percentile (float): Upper percentile for clamping (0-100).</span>
+<span class="sd">        min_val (float): Minimum value in the output range.</span>
+<span class="sd">        max_val (float): Maximum value in the output range.</span>
+<span class="sd">        verbose (bool): Whether to print progress messages.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        None: The normalized image is saved to the specified output path.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading image: </span><span class="si">{</span><span class="n">input_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Load the image</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">input_file</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">get_fdata</span><span class="p">()</span>
+    
+    <span class="c1"># Create a mask of non-zero voxels</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">data</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">mask</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warning: Input image contains no non-zero values. Output will be a copy of input.&quot;</span><span class="p">)</span>
+        <span class="n">nib</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">output_file</span><span class="p">)</span>
+        <span class="k">return</span>
+    
+    <span class="c1"># Calculate percentiles on non-zero voxels only</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Calculating </span><span class="si">{</span><span class="n">lower_percentile</span><span class="si">}</span><span class="s2">th and </span><span class="si">{</span><span class="n">upper_percentile</span><span class="si">}</span><span class="s2">th percentiles...&quot;</span><span class="p">)</span>
+    
+    <span class="n">p_low</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">lower_percentile</span><span class="p">)</span>
+    <span class="n">p_high</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">upper_percentile</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Clamping values between </span><span class="si">{</span><span class="n">p_low</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">p_high</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Clamp the data (only non-zero voxels)</span>
+    <span class="n">data_masked</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+    <span class="n">data_masked</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">data_masked</span><span class="p">,</span> <span class="n">p_low</span><span class="p">,</span> <span class="n">p_high</span><span class="p">)</span>
+    
+    <span class="c1"># Normalize to the desired range</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Normalizing to range [</span><span class="si">{</span><span class="n">min_val</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">max_val</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">p_high</span> <span class="o">&gt;</span> <span class="n">p_low</span><span class="p">:</span>  <span class="c1"># Avoid division by zero</span>
+        <span class="n">data_masked</span> <span class="o">=</span> <span class="p">((</span><span class="n">data_masked</span> <span class="o">-</span> <span class="n">p_low</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">p_high</span> <span class="o">-</span> <span class="n">p_low</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="n">max_val</span> <span class="o">-</span> <span class="n">min_val</span><span class="p">)</span> <span class="o">+</span> <span class="n">min_val</span>
+    
+    <span class="c1"># Put the normalized data back</span>
+    <span class="n">normalized_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">normalized_data</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">data_masked</span>
+    
+    <span class="c1"># Create a new image with the same header</span>
+    <span class="n">normalized_img</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">Nifti1Image</span><span class="p">(</span><span class="n">normalized_data</span><span class="p">,</span> <span class="n">img</span><span class="o">.</span><span class="n">affine</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="n">img</span><span class="o">.</span><span class="n">header</span><span class="p">)</span>
+    
+    <span class="c1"># Save the normalized image</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saving normalized image to </span><span class="si">{</span><span class="n">output_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="n">nib</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">normalized_img</span><span class="p">,</span> <span class="n">output_file</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Normalization complete!&quot;</span><span class="p">)</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># Check if no arguments were provided or help was requested</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="s2">&quot;-h&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="ow">or</span> <span class="s2">&quot;--help&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">:</span>
+        <span class="n">print_help_message</span><span class="p">()</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Normalize MRI intensity values&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--input&quot;</span><span class="p">,</span> <span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Input NIfTI image file (.nii.gz)&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--output&quot;</span><span class="p">,</span> <span class="s2">&quot;-o&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Output normalized image file (.nii.gz)&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--lower-percentile&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> 
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Lower percentile for clamping (default: 1.0)&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--upper-percentile&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">99.0</span><span class="p">,</span> 
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Upper percentile for clamping (default: 99.0)&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--min-value&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> 
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Minimum value in output range (default: 0)&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--max-value&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> 
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Maximum value in output range (default: 100)&quot;</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    
+    <span class="c1"># Validate percentile values</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">lower_percentile</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">args</span><span class="o">.</span><span class="n">lower_percentile</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: Lower percentile must be between 0 and 100&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">upper_percentile</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">args</span><span class="o">.</span><span class="n">upper_percentile</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: Upper percentile must be between 0 and 100&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">lower_percentile</span> <span class="o">&gt;=</span> <span class="n">args</span><span class="o">.</span><span class="n">upper_percentile</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: Lower percentile must be less than upper percentile&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    
+    <span class="c1"># Call the normalization function</span>
+    <span class="n">normalize_intensity</span><span class="p">(</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> 
+        <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">,</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">lower_percentile</span><span class="p">,</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">upper_percentile</span><span class="p">,</span> 
+        <span class="n">args</span><span class="o">.</span><span class="n">min_value</span><span class="p">,</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">max_value</span>
+    <span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

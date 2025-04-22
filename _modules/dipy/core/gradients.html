@@ -1,0 +1,1476 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dipy.core.gradients &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scripts.html">Scripts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">dipy.core.gradients</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for dipy.core.gradients</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">warn</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.linalg</span><span class="w"> </span><span class="kn">import</span> <span class="n">inv</span><span class="p">,</span> <span class="n">polar</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dipy.core.geometry</span><span class="w"> </span><span class="kn">import</span> <span class="n">vec2vec_rotmat</span><span class="p">,</span> <span class="n">vector_norm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dipy.core.onetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">auto_attr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dipy.core.sphere</span><span class="w"> </span><span class="kn">import</span> <span class="n">HemiSphere</span><span class="p">,</span> <span class="n">disperse_charges</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dipy.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">gradients</span> <span class="k">as</span> <span class="n">io</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dipy.testing.decorators</span><span class="w"> </span><span class="kn">import</span> <span class="n">warning_for_keywords</span>
+
+<span class="n">WATER_GYROMAGNETIC_RATIO</span> <span class="o">=</span> <span class="mf">267.513e6</span>  <span class="c1"># 1/(sT)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">b0_threshold_empty_gradient_message</span><span class="p">(</span><span class="n">bvals</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">b0_threshold</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Message about the ``b0_threshold`` value resulting in no gradient</span>
+<span class="sd">    selection.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    bvals : (N,) ndarray</span>
+<span class="sd">        The b-value, or magnitude, of each gradient direction.</span>
+<span class="sd">    idx : ndarray</span>
+<span class="sd">        Indices of the gradients to be selected.</span>
+<span class="sd">    b0_threshold : float</span>
+<span class="sd">        Gradients with b-value less than or equal to `b0_threshold` are</span>
+<span class="sd">        considered to not have diffusion weighting.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    str</span>
+<span class="sd">        Message.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="s2">&quot;Filtering gradient values with a b0 threshold value &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;of </span><span class="si">{</span><span class="n">b0_threshold</span><span class="si">}</span><span class="s2"> results in no gradients being &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;selected for the b-values (</span><span class="si">{</span><span class="n">bvals</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="si">}</span><span class="s2">) corresponding &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;to the requested indices (</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">). Lower the b0 threshold &quot;</span>
+        <span class="s2">&quot;value.&quot;</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">b0_threshold_update_slicing_message</span><span class="p">(</span><span class="n">slice_start</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Message for b0 threshold value update for slicing.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    slice_start : int</span>
+<span class="sd">        Starting index for slicing.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    str</span>
+<span class="sd">        Message.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Updating b0_threshold to </span><span class="si">{</span><span class="n">slice_start</span><span class="si">}</span><span class="s2"> for slicing.&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">mask_non_weighted_bvals</span><span class="p">(</span><span class="n">bvals</span><span class="p">,</span> <span class="n">b0_threshold</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a diffusion gradient-weighting mask for the b-values according to</span>
+<span class="sd">    the provided b0 threshold value.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    bvals : (N,) ndarray</span>
+<span class="sd">        The b-value, or magnitude, of each gradient direction.</span>
+<span class="sd">    b0_threshold : float</span>
+<span class="sd">        Gradients with b-value less than or equal to `b0_threshold` are</span>
+<span class="sd">        considered to not have diffusion weighting.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ndarray</span>
+<span class="sd">        Gradient-weighting mask: True for all b-value indices whose value is</span>
+<span class="sd">        smaller or equal to ``b0_threshold``; False otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">bvals</span> <span class="o">&lt;=</span> <span class="n">b0_threshold</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">GradientTable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Diffusion gradient information</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    gradients : array_like (N, 3)</span>
+<span class="sd">        Diffusion gradients. The direction of each of these vectors corresponds</span>
+<span class="sd">        to the b-vector, and the length corresponds to the b-value.</span>
+<span class="sd">    b0_threshold : float</span>
+<span class="sd">        Gradients with b-value less than or equal to `b0_threshold` are</span>
+<span class="sd">        considered as b0s i.e. without diffusion weighting.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    gradients : (N,3) ndarray</span>
+<span class="sd">        diffusion gradients</span>
+<span class="sd">    bvals : (N,) ndarray</span>
+<span class="sd">        The b-value, or magnitude, of each gradient direction.</span>
+<span class="sd">    qvals: (N,) ndarray</span>
+<span class="sd">        The q-value for each gradient direction. Needs big and small</span>
+<span class="sd">        delta.</span>
+<span class="sd">    bvecs : (N,3) ndarray</span>
+<span class="sd">        The direction, represented as a unit vector, of each gradient.</span>
+<span class="sd">    b0s_mask : (N,) ndarray</span>
+<span class="sd">        Boolean array indicating which gradients have no diffusion</span>
+<span class="sd">        weighting, ie b-value is close to 0.</span>
+<span class="sd">    b0_threshold : float</span>
+<span class="sd">        Gradients with b-value less than or equal to `b0_threshold` are</span>
+<span class="sd">        considered to not have diffusion weighting.</span>
+<span class="sd">    btens : (N,3,3) ndarray</span>
+<span class="sd">        The b-tensor of each gradient direction.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    gradient_table</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The GradientTable object is immutable. Do NOT assign attributes.</span>
+<span class="sd">    If you have your gradient table in a bval &amp; bvec format, we recommend</span>
+<span class="sd">    using the factory function gradient_table</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@warning_for_keywords</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">gradients</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">big_delta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">small_delta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">b0_threshold</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+        <span class="n">btens</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor for GradientTable class&quot;&quot;&quot;</span>
+        <span class="n">gradients</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">gradients</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">gradients</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">gradients</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;gradients should be an (N, 3) array&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gradients</span> <span class="o">=</span> <span class="n">gradients</span>
+        <span class="c1"># Avoid nan gradients. Set these to 0 instead:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gradients</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">gradients</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">gradients</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">big_delta</span> <span class="o">=</span> <span class="n">big_delta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">small_delta</span> <span class="o">=</span> <span class="n">small_delta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b0_threshold</span> <span class="o">=</span> <span class="n">b0_threshold</span>
+        <span class="k">if</span> <span class="n">btens</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">linear_tensor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+            <span class="n">planar_tensor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span> <span class="o">/</span> <span class="mi">2</span>
+            <span class="n">spherical_tensor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span> <span class="o">/</span> <span class="mi">3</span>
+            <span class="n">cigar_tensor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]])</span> <span class="o">/</span> <span class="mi">3</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">btens</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">b_tensors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bvals</span><span class="p">),</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">btens</span> <span class="o">==</span> <span class="s2">&quot;LTE&quot;</span><span class="p">:</span>
+                    <span class="n">b_tensor</span> <span class="o">=</span> <span class="n">linear_tensor</span>
+                <span class="k">elif</span> <span class="n">btens</span> <span class="o">==</span> <span class="s2">&quot;PTE&quot;</span><span class="p">:</span>
+                    <span class="n">b_tensor</span> <span class="o">=</span> <span class="n">planar_tensor</span>
+                <span class="k">elif</span> <span class="n">btens</span> <span class="o">==</span> <span class="s2">&quot;STE&quot;</span><span class="p">:</span>
+                    <span class="n">b_tensor</span> <span class="o">=</span> <span class="n">spherical_tensor</span>
+                <span class="k">elif</span> <span class="n">btens</span> <span class="o">==</span> <span class="s2">&quot;CTE&quot;</span><span class="p">:</span>
+                    <span class="n">b_tensor</span> <span class="o">=</span> <span class="n">cigar_tensor</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">btens</span><span class="si">}</span><span class="s2"> is an invalid value for btens. &quot;</span>
+                        <span class="o">+</span> <span class="s2">&quot;Please provide one of the following: &quot;</span>
+                        <span class="o">+</span> <span class="s2">&quot;&#39;LTE&#39;, &#39;PTE&#39;, &#39;STE&#39;, &#39;CTE&#39;.&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">bvec</span><span class="p">,</span> <span class="n">bval</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bvecs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bvals</span><span class="p">)):</span>
+                    <span class="k">if</span> <span class="n">btens</span> <span class="o">==</span> <span class="s2">&quot;STE&quot;</span><span class="p">:</span>
+                        <span class="n">b_tensors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">b_tensor</span> <span class="o">*</span> <span class="n">bval</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">R</span> <span class="o">=</span> <span class="n">vec2vec_rotmat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]),</span> <span class="n">bvec</span><span class="p">)</span>
+                        <span class="n">b_tensors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">b_tensor</span><span class="p">),</span> <span class="n">R</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">*</span> <span class="n">bval</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">btens</span> <span class="o">=</span> <span class="n">b_tensors</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">btens</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="n">btens</span><span class="o">.</span><span class="n">shape</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="p">(</span><span class="n">gradients</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],),</span>
+                <span class="p">(</span><span class="n">gradients</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">gradients</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+            <span class="p">):</span>
+                <span class="n">b_tensors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bvals</span><span class="p">),</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">btens</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">gradients</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                    <span class="n">btens</span> <span class="o">=</span> <span class="n">btens</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">gradients</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">bvec</span><span class="p">,</span> <span class="n">bval</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bvecs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bvals</span><span class="p">)):</span>
+                    <span class="n">R</span> <span class="o">=</span> <span class="n">vec2vec_rotmat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]),</span> <span class="n">bvec</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">btens</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;LTE&quot;</span><span class="p">:</span>
+                        <span class="n">b_tensors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">linear_tensor</span><span class="p">),</span> <span class="n">R</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">*</span> <span class="n">bval</span>
+                        <span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">btens</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;PTE&quot;</span><span class="p">:</span>
+                        <span class="n">b_tensors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">planar_tensor</span><span class="p">),</span> <span class="n">R</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">*</span> <span class="n">bval</span>
+                        <span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">btens</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;STE&quot;</span><span class="p">:</span>
+                        <span class="n">b_tensors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">spherical_tensor</span> <span class="o">*</span> <span class="n">bval</span>
+                    <span class="k">elif</span> <span class="n">btens</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;CTE&quot;</span><span class="p">:</span>
+                        <span class="n">b_tensors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">cigar_tensor</span><span class="p">),</span> <span class="n">R</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">*</span> <span class="n">bval</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">btens</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2"> is an invalid value in btens. &quot;</span>
+                            <span class="o">+</span> <span class="s2">&quot;Array element options: &#39;LTE&#39;, &#39;PTE&#39;, &#39;STE&#39;, &quot;</span>
+                            <span class="o">+</span> <span class="s2">&quot;&#39;CTE&#39;.&quot;</span>
+                        <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">btens</span> <span class="o">=</span> <span class="n">b_tensors</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">btens</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="n">btens</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span>
+                <span class="n">gradients</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="mi">3</span><span class="p">,</span>
+                <span class="mi">3</span><span class="p">,</span>
+            <span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">btens</span> <span class="o">=</span> <span class="n">btens</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">btens</span><span class="si">}</span><span class="s2"> is an invalid value for btens. &quot;</span>
+                    <span class="o">+</span> <span class="s2">&quot;Please provide a string, an array of &quot;</span>
+                    <span class="o">+</span> <span class="s2">&quot;strings, or an array of exact b-tensors. &quot;</span>
+                    <span class="o">+</span> <span class="s2">&quot;String options: &#39;LTE&#39;, &#39;PTE&#39;, &#39;STE&#39;, &#39;CTE&#39;&quot;</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">btens</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@auto_attr</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">bvals</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">vector_norm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gradients</span><span class="p">)</span>
+
+    <span class="nd">@auto_attr</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tau</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">big_delta</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">small_delta</span> <span class="o">/</span> <span class="mf">3.0</span>
+
+    <span class="nd">@auto_attr</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">qvals</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tau</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">big_delta</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">small_delta</span> <span class="o">/</span> <span class="mf">3.0</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bvals</span> <span class="o">/</span> <span class="n">tau</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+
+    <span class="nd">@auto_attr</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gradient_strength</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tau</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">big_delta</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">small_delta</span> <span class="o">/</span> <span class="mf">3.0</span>
+        <span class="n">qvals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bvals</span> <span class="o">/</span> <span class="n">tau</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="n">gradient_strength</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">qvals</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">small_delta</span> <span class="o">*</span> <span class="n">WATER_GYROMAGNETIC_RATIO</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">gradient_strength</span>
+
+    <span class="nd">@auto_attr</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">b0s_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">mask_non_weighted_bvals</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bvals</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b0_threshold</span><span class="p">)</span>
+
+    <span class="nd">@auto_attr</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">bvecs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># To get unit vectors we divide by bvals, where bvals is 0 we divide by</span>
+        <span class="c1"># 1 to avoid making nans</span>
+        <span class="n">denom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bvals</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bvals</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">denom</span> <span class="o">=</span> <span class="n">denom</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">gradients</span> <span class="o">/</span> <span class="n">denom</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="p">[</span><span class="n">idx</span><span class="p">]</span>  <span class="c1"># convert in a list if integer.</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+            <span class="c1"># Get the lower bound of the slice</span>
+            <span class="n">slice_start</span> <span class="o">=</span> <span class="n">idx</span><span class="o">.</span><span class="n">start</span> <span class="k">if</span> <span class="n">idx</span><span class="o">.</span><span class="n">start</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span>
+            <span class="c1"># Check if it is different from b0_threshold</span>
+            <span class="k">if</span> <span class="n">slice_start</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">b0_threshold</span><span class="p">:</span>
+                <span class="c1"># Update b0_threshold and warn the user</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">b0_threshold</span> <span class="o">=</span> <span class="n">slice_start</span>
+                <span class="n">warn</span><span class="p">(</span>
+                    <span class="n">b0_threshold_update_slicing_message</span><span class="p">(</span><span class="n">slice_start</span><span class="p">),</span>
+                    <span class="ne">UserWarning</span><span class="p">,</span>
+                    <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="o">*</span><span class="n">idx</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bvals</span><span class="p">)))</span>
+
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span>
+            <span class="n">mask_non_weighted_bvals</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bvals</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">b0_threshold</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">mask</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="n">b0_threshold_empty_gradient_message</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bvals</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b0_threshold</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Apply the mask to select the desired b-values and b-vectors</span>
+        <span class="n">bvals_selected</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bvals</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="n">mask</span><span class="p">]</span>
+        <span class="n">bvecs_selected</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bvecs</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="p">:][</span><span class="n">mask</span><span class="p">,</span> <span class="p">:]</span>
+
+        <span class="c1"># Create a new MyGradientTable object with the selected b-values</span>
+        <span class="c1"># and b-vectors</span>
+        <span class="k">return</span> <span class="n">gradient_table_from_bvals_bvecs</span><span class="p">(</span>
+            <span class="n">bvals_selected</span><span class="p">,</span>
+            <span class="n">bvecs_selected</span><span class="p">,</span>
+            <span class="n">big_delta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">big_delta</span><span class="p">,</span>
+            <span class="n">small_delta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">small_delta</span><span class="p">,</span>
+            <span class="n">b0_threshold</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">b0_threshold</span><span class="p">,</span>
+            <span class="n">btens</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">btens</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># removing atol parameter as it&#39;s not in the constructor</span>
+        <span class="c1"># of GradientTable.</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use_logging</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">show</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">info</span> <span class="k">if</span> <span class="n">use_logging</span> <span class="k">else</span> <span class="nb">print</span>
+        <span class="n">show</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="fm">__str__</span><span class="p">())</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;B-values shape </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bvals</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;         min </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bvals</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">f</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;         max </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bvals</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">f</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;B-vectors shape </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bvecs</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;          min </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bvecs</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">f</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;          max </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bvecs</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">f</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">msg</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the number of gradients. Includes the b0s.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; bvals = np.array([1000, 1000, 1000, 1000, 2000, 2000, 2000, 2000, 0])</span>
+<span class="sd">        &gt;&gt;&gt; bvecs = generate_bvecs(bvals.shape[-1])</span>
+<span class="sd">        &gt;&gt;&gt; gtab = gradient_table(bvals, bvecs=bvecs)</span>
+<span class="sd">        &gt;&gt;&gt; len(gtab)</span>
+<span class="sd">        9</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bvals</span><span class="p">)</span>
+
+
+<span class="nd">@warning_for_keywords</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gradient_table_from_bvals_bvecs</span><span class="p">(</span>
+    <span class="n">bvals</span><span class="p">,</span> <span class="n">bvecs</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">b0_threshold</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">btens</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates a GradientTable from a bvals array and a bvecs array</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    bvals : array_like (N,)</span>
+<span class="sd">        The b-value, or magnitude, of each gradient direction.</span>
+<span class="sd">    bvecs : array_like (N, 3)</span>
+<span class="sd">        The direction, represented as a unit vector, of each gradient.</span>
+<span class="sd">    b0_threshold : float</span>
+<span class="sd">        Gradients with b-value less than or equal to `b0_threshold` are</span>
+<span class="sd">        considered to not have diffusion weighting. If its value is equal to or</span>
+<span class="sd">        larger than all values in b-vals, then it is assumed that no</span>
+<span class="sd">        thresholding is requested.</span>
+<span class="sd">    atol : float</span>
+<span class="sd">        Each vector in `bvecs` must be a unit vectors up to a tolerance of</span>
+<span class="sd">        `atol`.</span>
+<span class="sd">    btens : can be any of three options</span>
+<span class="sd">        1. a string specifying the shape of the encoding tensor for all volumes</span>
+<span class="sd">           in data. Options: &#39;LTE&#39;, &#39;PTE&#39;, &#39;STE&#39;, &#39;CTE&#39; corresponding to</span>
+<span class="sd">           linear, planar, spherical, and &quot;cigar-shaped&quot; tensor encoding.</span>
+<span class="sd">           Tensors are rotated so that linear and cigar tensors are aligned</span>
+<span class="sd">           with the corresponding gradient direction and the planar tensor&#39;s</span>
+<span class="sd">           normal is aligned with the corresponding gradient direction.</span>
+<span class="sd">           Magnitude is scaled to match the b-value.</span>
+<span class="sd">        2. an array of strings of shape (N,), (N, 1), or (1, N) specifying</span>
+<span class="sd">           encoding tensor shape for each volume separately. N corresponds to</span>
+<span class="sd">           the number volumes in data. Options for elements in array: &#39;LTE&#39;,</span>
+<span class="sd">           &#39;PTE&#39;, &#39;STE&#39;, &#39;CTE&#39; corresponding to linear, planar, spherical, and</span>
+<span class="sd">           &quot;cigar-shaped&quot; tensor encoding. Tensors are rotated so that linear</span>
+<span class="sd">           and cigar tensors are aligned with the corresponding gradient</span>
+<span class="sd">           direction and the planar tensor&#39;s normal is aligned with the</span>
+<span class="sd">           corresponding gradient direction. Magnitude is scaled to match the</span>
+<span class="sd">           b-value.</span>
+<span class="sd">        3. an array of shape (N,3,3) specifying the b-tensor of each volume</span>
+<span class="sd">           exactly. N corresponds to the number volumes in data. No rotation or</span>
+<span class="sd">           scaling is performed.</span>
+
+<span class="sd">    Other Parameters</span>
+<span class="sd">    ----------------</span>
+<span class="sd">    **kwargs : dict</span>
+<span class="sd">        Other keyword inputs are passed to GradientTable.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    gradients : GradientTable</span>
+<span class="sd">        A GradientTable with all the gradient information.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    GradientTable, gradient_table</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">bvals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bvals</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">bvecs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bvecs</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">dwi_mask</span> <span class="o">=</span> <span class="n">bvals</span> <span class="o">&gt;</span> <span class="n">b0_threshold</span>
+
+    <span class="c1"># check that bvals is (N,) array and bvecs is (N, 3) unit vectors</span>
+    <span class="k">if</span> <span class="n">bvals</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">bvecs</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">bvecs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">bvals</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;bvals and bvecs should be (N,) and (N, 3) arrays &quot;</span>
+            <span class="s2">&quot;respectively, where N is the number of diffusion &quot;</span>
+            <span class="s2">&quot;gradients&quot;</span>
+        <span class="p">)</span>
+    <span class="c1"># checking for negative bvals</span>
+    <span class="k">if</span> <span class="n">b0_threshold</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Negative bvals in the data are not feasible&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Upper bound for the b0_threshold</span>
+    <span class="k">if</span> <span class="n">b0_threshold</span> <span class="o">&gt;=</span> <span class="mi">200</span><span class="p">:</span>
+        <span class="n">warn</span><span class="p">(</span><span class="s2">&quot;b0_threshold has a value &gt; 199&quot;</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># If all b-values are smaller or equal to the b0 threshold, it is assumed</span>
+    <span class="c1"># that no thresholding is requested</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">mask_non_weighted_bvals</span><span class="p">(</span><span class="n">bvals</span><span class="p">,</span> <span class="n">b0_threshold</span><span class="p">)):</span>
+        <span class="c1"># checking for the correctness of bvals</span>
+        <span class="k">if</span> <span class="n">b0_threshold</span> <span class="o">&lt;</span> <span class="n">bvals</span><span class="o">.</span><span class="n">min</span><span class="p">():</span>
+            <span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;b0_threshold (value: </span><span class="si">{</span><span class="n">b0_threshold</span><span class="si">}</span><span class="s2">) is too low, increase your &quot;</span>
+                <span class="s2">&quot;b0_threshold. It should be higher than the lowest b0 value &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">bvals</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="n">bvecs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">bvecs</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">bvecs</span><span class="p">)</span>
+    <span class="n">bvecs_close_to_1</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">vector_norm</span><span class="p">(</span><span class="n">bvecs</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">atol</span>
+    <span class="k">if</span> <span class="n">bvecs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;bvecs should be (N, 3)&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">bvecs_close_to_1</span><span class="p">[</span><span class="n">dwi_mask</span><span class="p">]):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;The vectors in bvecs should be unit (The tolerance &quot;</span>
+            <span class="s2">&quot;can be modified as an input parameter)&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">bvecs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">bvecs_close_to_1</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">bvecs</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">bvals</span> <span class="o">=</span> <span class="n">bvals</span> <span class="o">*</span> <span class="n">bvecs_close_to_1</span>
+    <span class="n">gradients</span> <span class="o">=</span> <span class="n">bvals</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">bvecs</span>
+
+    <span class="n">grad_table</span> <span class="o">=</span> <span class="n">GradientTable</span><span class="p">(</span>
+        <span class="n">gradients</span><span class="p">,</span> <span class="n">b0_threshold</span><span class="o">=</span><span class="n">b0_threshold</span><span class="p">,</span> <span class="n">btens</span><span class="o">=</span><span class="n">btens</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span>
+    <span class="n">grad_table</span><span class="o">.</span><span class="n">bvals</span> <span class="o">=</span> <span class="n">bvals</span>
+    <span class="n">grad_table</span><span class="o">.</span><span class="n">bvecs</span> <span class="o">=</span> <span class="n">bvecs</span>
+    <span class="n">grad_table</span><span class="o">.</span><span class="n">b0s_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">dwi_mask</span>
+
+    <span class="k">return</span> <span class="n">grad_table</span>
+
+
+<span class="nd">@warning_for_keywords</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gradient_table_from_qvals_bvecs</span><span class="p">(</span>
+    <span class="n">qvals</span><span class="p">,</span> <span class="n">bvecs</span><span class="p">,</span> <span class="n">big_delta</span><span class="p">,</span> <span class="n">small_delta</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">b0_threshold</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-2</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A general function for creating diffusion MR gradients.</span>
+
+<span class="sd">    It reads, loads and prepares scanner parameters like the b-values and</span>
+<span class="sd">    b-vectors so that they can be useful during the reconstruction process.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    qvals : an array of shape (N,),</span>
+<span class="sd">        q-value given in 1/mm</span>
+
+<span class="sd">    bvecs : can be any of two options</span>
+
+<span class="sd">        1. an array of shape (N, 3) or (3, N) with the b-vectors.</span>
+<span class="sd">        2. a path for the file which contains an array like the previous.</span>
+
+<span class="sd">    big_delta : float or array of shape (N,)</span>
+<span class="sd">        acquisition pulse separation time in seconds</span>
+
+<span class="sd">    small_delta : float</span>
+<span class="sd">        acquisition pulse duration time in seconds</span>
+
+<span class="sd">    b0_threshold : float</span>
+<span class="sd">        All b-values with values less than or equal to `bo_threshold` are</span>
+<span class="sd">        considered as b0s i.e. without diffusion weighting.</span>
+
+<span class="sd">    atol : float</span>
+<span class="sd">        All b-vectors need to be unit vectors up to a tolerance.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    gradients : GradientTable</span>
+<span class="sd">        A GradientTable with all the gradient information.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; from dipy.core.gradients import gradient_table_from_qvals_bvecs</span>
+<span class="sd">    &gt;&gt;&gt; qvals = 30. * np.ones(7)</span>
+<span class="sd">    &gt;&gt;&gt; big_delta = .03  # pulse separation of 30ms</span>
+<span class="sd">    &gt;&gt;&gt; small_delta = 0.01  # pulse duration of 10ms</span>
+<span class="sd">    &gt;&gt;&gt; qvals[0] = 0</span>
+<span class="sd">    &gt;&gt;&gt; sq2 = np.sqrt(2) / 2</span>
+<span class="sd">    &gt;&gt;&gt; bvecs = np.array([[0, 0, 0],</span>
+<span class="sd">    ...                   [1, 0, 0],</span>
+<span class="sd">    ...                   [0, 1, 0],</span>
+<span class="sd">    ...                   [0, 0, 1],</span>
+<span class="sd">    ...                   [sq2, sq2, 0],</span>
+<span class="sd">    ...                   [sq2, 0, sq2],</span>
+<span class="sd">    ...                   [0, sq2, sq2]])</span>
+<span class="sd">    &gt;&gt;&gt; gt = gradient_table_from_qvals_bvecs(qvals, bvecs,</span>
+<span class="sd">    ...                                      big_delta, small_delta)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    1. Often b0s (b-values which correspond to images without diffusion</span>
+<span class="sd">       weighting) have 0 values however in some cases the scanner cannot</span>
+<span class="sd">       provide b0s of an exact 0 value and it gives a bit higher values</span>
+<span class="sd">       e.g. 6 or 12. This is the purpose of the b0_threshold in the __init__.</span>
+<span class="sd">    2. We assume that the minimum number of b-values is 7.</span>
+<span class="sd">    3. B-vectors should be unit vectors.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">qvals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">qvals</span><span class="p">)</span>
+    <span class="n">bvecs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bvecs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">bvecs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">bvecs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">and</span> <span class="n">bvecs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">bvecs</span> <span class="o">=</span> <span class="n">bvecs</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">bvals</span> <span class="o">=</span> <span class="p">(</span><span class="n">qvals</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">big_delta</span> <span class="o">-</span> <span class="n">small_delta</span> <span class="o">/</span> <span class="mf">3.0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gradient_table_from_bvals_bvecs</span><span class="p">(</span>
+        <span class="n">bvals</span><span class="p">,</span>
+        <span class="n">bvecs</span><span class="p">,</span>
+        <span class="n">big_delta</span><span class="o">=</span><span class="n">big_delta</span><span class="p">,</span>
+        <span class="n">small_delta</span><span class="o">=</span><span class="n">small_delta</span><span class="p">,</span>
+        <span class="n">b0_threshold</span><span class="o">=</span><span class="n">b0_threshold</span><span class="p">,</span>
+        <span class="n">atol</span><span class="o">=</span><span class="n">atol</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="nd">@warning_for_keywords</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gradient_table_from_gradient_strength_bvecs</span><span class="p">(</span>
+    <span class="n">gradient_strength</span><span class="p">,</span> <span class="n">bvecs</span><span class="p">,</span> <span class="n">big_delta</span><span class="p">,</span> <span class="n">small_delta</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">b0_threshold</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-2</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A general function for creating diffusion MR gradients.</span>
+
+<span class="sd">    It reads, loads and prepares scanner parameters like the b-values and</span>
+<span class="sd">    b-vectors so that they can be useful during the reconstruction process.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    gradient_strength : an array of shape (N,),</span>
+<span class="sd">        gradient strength given in T/mm</span>
+
+<span class="sd">    bvecs : can be any of two options</span>
+
+<span class="sd">        1. an array of shape (N, 3) or (3, N) with the b-vectors.</span>
+<span class="sd">        2. a path for the file which contains an array like the previous.</span>
+
+<span class="sd">    big_delta : float or array of shape (N,)</span>
+<span class="sd">        acquisition pulse separation time in seconds</span>
+
+<span class="sd">    small_delta : float</span>
+<span class="sd">        acquisition pulse duration time in seconds</span>
+
+<span class="sd">    b0_threshold : float</span>
+<span class="sd">        All b-values with values less than or equal to `bo_threshold` are</span>
+<span class="sd">        considered as b0s i.e. without diffusion weighting.</span>
+
+<span class="sd">    atol : float</span>
+<span class="sd">        All b-vectors need to be unit vectors up to a tolerance.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    gradients : GradientTable</span>
+<span class="sd">        A GradientTable with all the gradient information.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; from dipy.core.gradients import (</span>
+<span class="sd">    ...    gradient_table_from_gradient_strength_bvecs)</span>
+<span class="sd">    &gt;&gt;&gt; gradient_strength = .03e-3 * np.ones(7)  # clinical strength at 30 mT/m</span>
+<span class="sd">    &gt;&gt;&gt; big_delta = .03  # pulse separation of 30ms</span>
+<span class="sd">    &gt;&gt;&gt; small_delta = 0.01  # pulse duration of 10ms</span>
+<span class="sd">    &gt;&gt;&gt; gradient_strength[0] = 0</span>
+<span class="sd">    &gt;&gt;&gt; sq2 = np.sqrt(2) / 2</span>
+<span class="sd">    &gt;&gt;&gt; bvecs = np.array([[0, 0, 0],</span>
+<span class="sd">    ...                   [1, 0, 0],</span>
+<span class="sd">    ...                   [0, 1, 0],</span>
+<span class="sd">    ...                   [0, 0, 1],</span>
+<span class="sd">    ...                   [sq2, sq2, 0],</span>
+<span class="sd">    ...                   [sq2, 0, sq2],</span>
+<span class="sd">    ...                   [0, sq2, sq2]])</span>
+<span class="sd">    &gt;&gt;&gt; gt = gradient_table_from_gradient_strength_bvecs(</span>
+<span class="sd">    ...     gradient_strength, bvecs, big_delta, small_delta)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    1. Often b0s (b-values which correspond to images without diffusion</span>
+<span class="sd">       weighting) have 0 values however in some cases the scanner cannot</span>
+<span class="sd">       provide b0s of an exact 0 value and it gives a bit higher values</span>
+<span class="sd">       e.g. 6 or 12. This is the purpose of the b0_threshold in the __init__.</span>
+<span class="sd">    2. We assume that the minimum number of b-values is 7.</span>
+<span class="sd">    3. B-vectors should be unit vectors.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">gradient_strength</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">gradient_strength</span><span class="p">)</span>
+    <span class="n">bvecs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bvecs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">bvecs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">bvecs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">and</span> <span class="n">bvecs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">bvecs</span> <span class="o">=</span> <span class="n">bvecs</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">qvals</span> <span class="o">=</span> <span class="n">gradient_strength</span> <span class="o">*</span> <span class="n">small_delta</span> <span class="o">*</span> <span class="n">WATER_GYROMAGNETIC_RATIO</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+    <span class="n">bvals</span> <span class="o">=</span> <span class="p">(</span><span class="n">qvals</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">big_delta</span> <span class="o">-</span> <span class="n">small_delta</span> <span class="o">/</span> <span class="mf">3.0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gradient_table_from_bvals_bvecs</span><span class="p">(</span>
+        <span class="n">bvals</span><span class="p">,</span>
+        <span class="n">bvecs</span><span class="p">,</span>
+        <span class="n">big_delta</span><span class="o">=</span><span class="n">big_delta</span><span class="p">,</span>
+        <span class="n">small_delta</span><span class="o">=</span><span class="n">small_delta</span><span class="p">,</span>
+        <span class="n">b0_threshold</span><span class="o">=</span><span class="n">b0_threshold</span><span class="p">,</span>
+        <span class="n">atol</span><span class="o">=</span><span class="n">atol</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="gradient_table">
+<a class="viewcode-back" href="../../../scripts/compute_fa_md.html#micaflow.scripts.compute_fa_md.gradient_table">[docs]</a>
+<span class="nd">@warning_for_keywords</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gradient_table</span><span class="p">(</span>
+    <span class="n">bvals</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">bvecs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">big_delta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">small_delta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">b0_threshold</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">atol</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span>
+    <span class="n">btens</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A general function for creating diffusion MR gradients.</span>
+
+<span class="sd">    It reads, loads and prepares scanner parameters like the b-values and</span>
+<span class="sd">    b-vectors so that they can be useful during the reconstruction process.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    bvals : can be any of the four options</span>
+
+<span class="sd">        1. an array of shape (N,) or (1, N) or (N, 1) with the b-values.</span>
+<span class="sd">        2. a path for the file which contains an array like the above (1).</span>
+<span class="sd">        3. an array of shape (N, 4) or (4, N). Then this parameter is</span>
+<span class="sd">           considered to be a b-table which contains both bvals and bvecs. In</span>
+<span class="sd">           this case the next parameter is skipped.</span>
+<span class="sd">        4. a path for the file which contains an array like the one at (3).</span>
+
+<span class="sd">    bvecs : can be any of two options</span>
+
+<span class="sd">        1. an array of shape (N, 3) or (3, N) with the b-vectors.</span>
+<span class="sd">        2. a path for the file which contains an array like the previous.</span>
+
+<span class="sd">    big_delta : float</span>
+<span class="sd">        acquisition pulse separation time in seconds (default None)</span>
+
+<span class="sd">    small_delta : float</span>
+<span class="sd">        acquisition pulse duration time in seconds (default None)</span>
+
+<span class="sd">    b0_threshold : float</span>
+<span class="sd">        All b-values with values less than or equal to `bo_threshold` are</span>
+<span class="sd">        considered as b0s i.e. without diffusion weighting.</span>
+
+<span class="sd">    atol : float</span>
+<span class="sd">        All b-vectors need to be unit vectors up to a tolerance.</span>
+
+<span class="sd">    btens : can be any of three options</span>
+
+<span class="sd">        1. a string specifying the shape of the encoding tensor for all volumes</span>
+<span class="sd">           in data. Options: &#39;LTE&#39;, &#39;PTE&#39;, &#39;STE&#39;, &#39;CTE&#39; corresponding to</span>
+<span class="sd">           linear, planar, spherical, and &quot;cigar-shaped&quot; tensor encoding.</span>
+<span class="sd">           Tensors are rotated so that linear and cigar tensors are aligned</span>
+<span class="sd">           with the corresponding gradient direction and the planar tensor&#39;s</span>
+<span class="sd">           normal is aligned with the corresponding gradient direction.</span>
+<span class="sd">           Magnitude is scaled to match the b-value.</span>
+<span class="sd">        2. an array of strings of shape (N,), (N, 1), or (1, N) specifying</span>
+<span class="sd">           encoding tensor shape for each volume separately. N corresponds to</span>
+<span class="sd">           the number volumes in data. Options for elements in array: &#39;LTE&#39;,</span>
+<span class="sd">           &#39;PTE&#39;, &#39;STE&#39;, &#39;CTE&#39; corresponding to linear, planar, spherical, and</span>
+<span class="sd">           &quot;cigar-shaped&quot; tensor encoding. Tensors are rotated so that linear</span>
+<span class="sd">           and cigar tensors are aligned with the corresponding gradient</span>
+<span class="sd">           direction and the planar tensor&#39;s normal is aligned with the</span>
+<span class="sd">           corresponding gradient direction. Magnitude is scaled to match the</span>
+<span class="sd">           b-value.</span>
+<span class="sd">        3. an array of shape (N,3,3) specifying the b-tensor of each volume</span>
+<span class="sd">           exactly. N corresponds to the number volumes in data. No rotation or</span>
+<span class="sd">           scaling is performed.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    gradients : GradientTable</span>
+<span class="sd">        A GradientTable with all the gradient information.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; from dipy.core.gradients import gradient_table</span>
+<span class="sd">    &gt;&gt;&gt; bvals = 1500 * np.ones(7)</span>
+<span class="sd">    &gt;&gt;&gt; bvals[0] = 0</span>
+<span class="sd">    &gt;&gt;&gt; sq2 = np.sqrt(2) / 2</span>
+<span class="sd">    &gt;&gt;&gt; bvecs = np.array([[0, 0, 0],</span>
+<span class="sd">    ...                   [1, 0, 0],</span>
+<span class="sd">    ...                   [0, 1, 0],</span>
+<span class="sd">    ...                   [0, 0, 1],</span>
+<span class="sd">    ...                   [sq2, sq2, 0],</span>
+<span class="sd">    ...                   [sq2, 0, sq2],</span>
+<span class="sd">    ...                   [0, sq2, sq2]])</span>
+<span class="sd">    &gt;&gt;&gt; gt = gradient_table(bvals, bvecs=bvecs)</span>
+<span class="sd">    &gt;&gt;&gt; gt.bvecs.shape == bvecs.shape</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; gt = gradient_table(bvals, bvecs=bvecs.T)</span>
+<span class="sd">    &gt;&gt;&gt; gt.bvecs.shape == bvecs.T.shape</span>
+<span class="sd">    False</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    1. Often b0s (b-values which correspond to images without diffusion</span>
+<span class="sd">       weighting) have 0 values however in some cases the scanner cannot</span>
+<span class="sd">       provide b0s of an exact 0 value and it gives a bit higher values</span>
+<span class="sd">       e.g. 6 or 12. This is the purpose of the b0_threshold in the __init__.</span>
+<span class="sd">    2. We assume that the minimum number of b-values is 7.</span>
+<span class="sd">    3. B-vectors should be unit vectors.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># If you provided strings with full paths, we go and load those from</span>
+    <span class="c1"># the files:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bvals</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">bvals</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">read_bvals_bvecs</span><span class="p">(</span><span class="n">bvals</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bvecs</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">bvecs</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">read_bvals_bvecs</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">bvecs</span><span class="p">)</span>
+
+    <span class="n">bvals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bvals</span><span class="p">)</span>
+
+    <span class="c1"># If bvecs is None we expect bvals to be an (N, 4) or (4, N) array.</span>
+    <span class="k">if</span> <span class="n">bvecs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">bvals</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="n">bvecs</span> <span class="o">=</span> <span class="n">bvals</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:]</span>
+            <span class="n">bvals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">bvals</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">bvals</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="n">bvecs</span> <span class="o">=</span> <span class="n">bvals</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">T</span>
+            <span class="n">bvals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">bvals</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;input should be bvals and bvecs OR an (N, 4)&quot;</span>
+                <span class="s2">&quot; array containing both bvals and bvecs&quot;</span>
+            <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bvecs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bvecs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">bvecs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">bvecs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">bvecs</span> <span class="o">=</span> <span class="n">bvecs</span><span class="o">.</span><span class="n">T</span>
+    <span class="k">return</span> <span class="n">gradient_table_from_bvals_bvecs</span><span class="p">(</span>
+        <span class="n">bvals</span><span class="p">,</span>
+        <span class="n">bvecs</span><span class="p">,</span>
+        <span class="n">big_delta</span><span class="o">=</span><span class="n">big_delta</span><span class="p">,</span>
+        <span class="n">small_delta</span><span class="o">=</span><span class="n">small_delta</span><span class="p">,</span>
+        <span class="n">b0_threshold</span><span class="o">=</span><span class="n">b0_threshold</span><span class="p">,</span>
+        <span class="n">atol</span><span class="o">=</span><span class="n">atol</span><span class="p">,</span>
+        <span class="n">btens</span><span class="o">=</span><span class="n">btens</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="nd">@warning_for_keywords</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">reorient_bvecs</span><span class="p">(</span><span class="n">gtab</span><span class="p">,</span> <span class="n">affines</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reorient the directions in a GradientTable.</span>
+
+<span class="sd">    When correcting for motion, rotation of the diffusion-weighted volumes</span>
+<span class="sd">    might cause systematic bias in rotationally invariant measures, such as FA</span>
+<span class="sd">    and MD, and also cause characteristic biases in tractography, unless the</span>
+<span class="sd">    gradient directions are appropriately reoriented to compensate for this</span>
+<span class="sd">    effect :footcite:p:`Leemans2009`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    gtab : GradientTable</span>
+<span class="sd">        The nominal gradient table with which the data were acquired.</span>
+<span class="sd">    affines : list or ndarray of shape (4, 4, n) or (3, 3, n)</span>
+<span class="sd">        Each entry in this list or array contain either an affine</span>
+<span class="sd">        transformation (4,4) or a rotation matrix (3, 3).</span>
+<span class="sd">        In both cases, the transformations encode the rotation that was applied</span>
+<span class="sd">        to the image corresponding to one of the non-zero gradient directions</span>
+<span class="sd">        (ordered according to their order in `gtab.bvecs[~gtab.b0s_mask]`)</span>
+<span class="sd">    atol: see gradient_table()</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    gtab : a GradientTable class instance with the reoriented directions</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    .. footbibliography::</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">affines</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">affines</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">affines</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">affines</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">affines</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;reorient_bvecs has changed to require affines as</span>
+<span class="s2">        (4, 4, n) or (3, 3, n). Shape of (n, 4, 4) or (n, 3, 3)</span>
+<span class="s2">        is deprecated and will fail in the future.&quot;&quot;&quot;</span>
+        <span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">UserWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">affines</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">moveaxis</span><span class="p">(</span><span class="n">affines</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">new_bvecs</span> <span class="o">=</span> <span class="n">gtab</span><span class="o">.</span><span class="n">bvecs</span><span class="p">[</span><span class="o">~</span><span class="n">gtab</span><span class="o">.</span><span class="n">b0s_mask</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">new_bvecs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">affines</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">e_s</span> <span class="o">=</span> <span class="s2">&quot;Number of affine transformations must match number of &quot;</span>
+        <span class="n">e_s</span> <span class="o">+=</span> <span class="s2">&quot;non-zero gradients&quot;</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">e_s</span><span class="p">)</span>
+
+    <span class="c1"># moving axis to make life easier</span>
+    <span class="n">affines</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">moveaxis</span><span class="p">(</span><span class="n">affines</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">aff</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">affines</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">aff</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">):</span>
+            <span class="c1"># This must be an affine!</span>
+            <span class="c1"># Remove the translation component:</span>
+            <span class="n">aff</span> <span class="o">=</span> <span class="n">aff</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span>
+        <span class="c1"># Decompose into rotation and scaling components:</span>
+        <span class="n">R</span><span class="p">,</span> <span class="n">S</span> <span class="o">=</span> <span class="n">polar</span><span class="p">(</span><span class="n">aff</span><span class="p">)</span>
+        <span class="n">Rinv</span> <span class="o">=</span> <span class="n">inv</span><span class="p">(</span><span class="n">R</span><span class="p">)</span>
+        <span class="c1"># Apply the inverse of the rotation to the corresponding gradient</span>
+        <span class="c1"># direction:</span>
+        <span class="n">new_bvecs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Rinv</span><span class="p">,</span> <span class="n">new_bvecs</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+    <span class="n">return_bvecs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">gtab</span><span class="o">.</span><span class="n">bvecs</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">return_bvecs</span><span class="p">[</span><span class="o">~</span><span class="n">gtab</span><span class="o">.</span><span class="n">b0s_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_bvecs</span>
+    <span class="k">return</span> <span class="n">gradient_table</span><span class="p">(</span>
+        <span class="n">gtab</span><span class="o">.</span><span class="n">bvals</span><span class="p">,</span>
+        <span class="n">bvecs</span><span class="o">=</span><span class="n">return_bvecs</span><span class="p">,</span>
+        <span class="n">big_delta</span><span class="o">=</span><span class="n">gtab</span><span class="o">.</span><span class="n">big_delta</span><span class="p">,</span>
+        <span class="n">small_delta</span><span class="o">=</span><span class="n">gtab</span><span class="o">.</span><span class="n">small_delta</span><span class="p">,</span>
+        <span class="n">b0_threshold</span><span class="o">=</span><span class="n">gtab</span><span class="o">.</span><span class="n">b0_threshold</span><span class="p">,</span>
+        <span class="n">atol</span><span class="o">=</span><span class="n">atol</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="nd">@warning_for_keywords</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_bvecs</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">iters</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generates N bvectors.</span>
+
+<span class="sd">    Uses dipy.core.sphere.disperse_charges to model electrostatic repulsion on</span>
+<span class="sd">    a unit sphere.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    N : int</span>
+<span class="sd">        The number of bvectors to generate. This should be equal to the number</span>
+<span class="sd">        of bvals used.</span>
+<span class="sd">    iters : int</span>
+<span class="sd">        Number of iterations to run.</span>
+<span class="sd">    rng : numpy.random.Generator, optional</span>
+<span class="sd">        Numpy&#39;s random number generator. If None, the generator is created.</span>
+<span class="sd">        Default is None.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bvecs : (N,3) ndarray</span>
+<span class="sd">        The generated directions, represented as a unit vector, of each</span>
+<span class="sd">        gradient.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">rng</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()</span>
+    <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+    <span class="n">phi</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+    <span class="n">hsph_initial</span> <span class="o">=</span> <span class="n">HemiSphere</span><span class="p">(</span><span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">phi</span><span class="p">)</span>
+    <span class="n">hsph_updated</span><span class="p">,</span> <span class="n">potential</span> <span class="o">=</span> <span class="n">disperse_charges</span><span class="p">(</span><span class="n">hsph_initial</span><span class="p">,</span> <span class="n">iters</span><span class="p">)</span>
+    <span class="n">bvecs</span> <span class="o">=</span> <span class="n">hsph_updated</span><span class="o">.</span><span class="n">vertices</span>
+    <span class="k">return</span> <span class="n">bvecs</span>
+
+
+<span class="nd">@warning_for_keywords</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">round_bvals</span><span class="p">(</span><span class="n">bvals</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">bmag</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; &quot;This function rounds the b-values</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    bvals : ndarray</span>
+<span class="sd">        Array containing the b-values</span>
+
+<span class="sd">    bmag : int</span>
+<span class="sd">        The order of magnitude to round the b-values. If not given b-values</span>
+<span class="sd">        will be rounded relative to the order of magnitude</span>
+<span class="sd">        $bmag = (bmagmax - 1)$, where bmaxmag is the magnitude order of the</span>
+<span class="sd">        larger b-value.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    rbvals : ndarray</span>
+<span class="sd">        Array containing the rounded b-values</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">bmag</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">bmag</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">bvals</span><span class="p">)))</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="n">b</span> <span class="o">=</span> <span class="n">bvals</span> <span class="o">/</span> <span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="n">bmag</span><span class="p">)</span>  <span class="c1"># normalize b units</span>
+    <span class="k">return</span> <span class="n">b</span><span class="o">.</span><span class="n">round</span><span class="p">()</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span><span class="o">**</span><span class="n">bmag</span><span class="p">)</span>
+
+
+<span class="nd">@warning_for_keywords</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">unique_bvals_tolerance</span><span class="p">(</span><span class="n">bvals</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Gives the unique b-values of the data, within a tolerance gap</span>
+
+<span class="sd">    The b-values must be regrouped in clusters easily separated by a</span>
+<span class="sd">    distance greater than the tolerance gap. If all the b-values of a</span>
+<span class="sd">    cluster fit within the tolerance gap, the highest b-value is kept.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    bvals : ndarray</span>
+<span class="sd">        Array containing the b-values</span>
+
+<span class="sd">    tol : int</span>
+<span class="sd">        The tolerated gap between the b-values to extract</span>
+<span class="sd">        and the actual b-values.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ubvals : ndarray</span>
+<span class="sd">        Array containing the unique b-values using the median value</span>
+<span class="sd">        for each cluster</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">bvals</span><span class="p">)</span>
+    <span class="n">ubvals</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">lower_part</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">b</span> <span class="o">&lt;=</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">tol</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">upper_part</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">b</span> <span class="o">&lt;=</span> <span class="n">b</span><span class="p">[</span><span class="n">lower_part</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">+</span> <span class="n">tol</span><span class="p">,</span> <span class="n">b</span> <span class="o">&gt;</span> <span class="n">b</span><span class="p">[</span><span class="n">lower_part</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+    <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">ubvals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="n">lower_part</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">upper_part</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">b_index</span> <span class="o">=</span> <span class="n">upper_part</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">b_index</span> <span class="o">=</span> <span class="n">lower_part</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">while</span> <span class="n">b_index</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+        <span class="n">lower_part</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">b</span> <span class="o">&lt;=</span> <span class="n">b</span><span class="p">[</span><span class="n">b_index</span><span class="p">]</span> <span class="o">+</span> <span class="n">tol</span><span class="p">,</span> <span class="n">b</span> <span class="o">&gt;</span> <span class="n">b</span><span class="p">[</span><span class="n">b_index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">upper_part</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">b</span> <span class="o">&lt;=</span> <span class="n">b</span><span class="p">[</span><span class="n">lower_part</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">+</span> <span class="n">tol</span><span class="p">,</span> <span class="n">b</span> <span class="o">&gt;</span> <span class="n">b</span><span class="p">[</span><span class="n">lower_part</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">ubvals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="n">lower_part</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">upper_part</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">b_index</span> <span class="o">=</span> <span class="n">upper_part</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">b_index</span> <span class="o">=</span> <span class="n">lower_part</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="c1"># Checking for overlap with get_bval_indices</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ubval</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ubvals</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">indices_1</span> <span class="o">=</span> <span class="n">get_bval_indices</span><span class="p">(</span><span class="n">bvals</span><span class="p">,</span> <span class="n">ubval</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">)</span>
+        <span class="n">indices_2</span> <span class="o">=</span> <span class="n">get_bval_indices</span><span class="p">(</span><span class="n">bvals</span><span class="p">,</span> <span class="n">ubvals</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">intersect1d</span><span class="p">(</span><span class="n">indices_1</span><span class="p">,</span> <span class="n">indices_2</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;There is overlap in clustering of b-values.</span>
+<span class="s2">            The tolerance factor might be too high.&quot;&quot;&quot;</span>
+            <span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">UserWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ubvals</span><span class="p">)</span>
+
+
+<span class="nd">@warning_for_keywords</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_bval_indices</span><span class="p">(</span><span class="n">bvals</span><span class="p">,</span> <span class="n">bval</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get indices where the b-value is `bval`</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    bvals: ndarray</span>
+<span class="sd">        Array containing the b-values</span>
+
+<span class="sd">    bval: float or int</span>
+<span class="sd">        b-value to extract indices</span>
+
+<span class="sd">    tol: int</span>
+<span class="sd">        The tolerated gap between the b-values to extract</span>
+<span class="sd">        and the actual b-values.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Array of indices where the b-value is `bval`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">bvals</span> <span class="o">&lt;=</span> <span class="n">bval</span> <span class="o">+</span> <span class="n">tol</span><span class="p">,</span> <span class="n">bvals</span> <span class="o">&gt;=</span> <span class="n">bval</span> <span class="o">-</span> <span class="n">tol</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+
+
+<span class="nd">@warning_for_keywords</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">unique_bvals_magnitude</span><span class="p">(</span><span class="n">bvals</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">bmag</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rbvals</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;This function gives the unique rounded b-values of the data</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    bvals : ndarray</span>
+<span class="sd">        Array containing the b-values</span>
+
+<span class="sd">    bmag : int</span>
+<span class="sd">        The order of magnitude that the bvalues have to differ to be</span>
+<span class="sd">        considered an unique b-value. B-values are also rounded up to</span>
+<span class="sd">        this order of magnitude. Default: derive this value from the</span>
+<span class="sd">        maximal b-value provided: $bmag=log_{10}(max(bvals)) - 1$.</span>
+
+<span class="sd">    rbvals : bool, optional</span>
+<span class="sd">        If True function also returns all individual rounded b-values.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ubvals : ndarray</span>
+<span class="sd">        Array containing the rounded unique b-values</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">round_bvals</span><span class="p">(</span><span class="n">bvals</span><span class="p">,</span> <span class="n">bmag</span><span class="o">=</span><span class="n">bmag</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">rbvals</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="n">b</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+
+
+<span class="nd">@warning_for_keywords</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_multi_b</span><span class="p">(</span><span class="n">gtab</span><span class="p">,</span> <span class="n">n_bvals</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">non_zero</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bmag</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check if you have enough different b-values in your gradient table</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    gtab : GradientTable class instance.</span>
+<span class="sd">        Gradient table.</span>
+<span class="sd">    n_bvals : int</span>
+<span class="sd">        The number of different b-values you are checking for.</span>
+<span class="sd">    non_zero : bool</span>
+<span class="sd">        Whether to check only non-zero bvalues. In this case, we will require</span>
+<span class="sd">        at least `n_bvals` *non-zero* b-values (where non-zero is defined</span>
+<span class="sd">        depending on the `gtab` object&#39;s `b0_threshold` attribute)</span>
+<span class="sd">    bmag : int</span>
+<span class="sd">        The order of magnitude of the b-values used. The function will</span>
+<span class="sd">        normalize the b-values relative $10^{bmag}$. Default: derive this</span>
+<span class="sd">        value from the maximal b-value provided:</span>
+<span class="sd">        $bmag=log_{10}(max(bvals)) - 1$.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bool : Whether there are at least `n_bvals` different b-values in the</span>
+<span class="sd">    gradient table used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">bvals</span> <span class="o">=</span> <span class="n">gtab</span><span class="o">.</span><span class="n">bvals</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">non_zero</span><span class="p">:</span>
+        <span class="n">bvals</span> <span class="o">=</span> <span class="n">bvals</span><span class="p">[</span><span class="o">~</span><span class="n">gtab</span><span class="o">.</span><span class="n">b0s_mask</span><span class="p">]</span>
+
+    <span class="n">uniqueb</span> <span class="o">=</span> <span class="n">unique_bvals_magnitude</span><span class="p">(</span><span class="n">bvals</span><span class="p">,</span> <span class="n">bmag</span><span class="o">=</span><span class="n">bmag</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">uniqueb</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">n_bvals</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_btens_to_params_2d</span><span class="p">(</span><span class="n">btens_2d</span><span class="p">,</span> <span class="n">ztol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute trace, anisotropy and asymmetry parameters from a single b-tensor</span>
+
+<span class="sd">    Auxiliary function where calculation of `bval`, bdelta` and `b_eta` from a</span>
+<span class="sd">    (3,3) b-tensor takes place. The main function `btens_to_params` then wraps</span>
+<span class="sd">    around this to enable support of input (N, 3, 3) arrays, where N = number of</span>
+<span class="sd">    b-tensors</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    btens_2d : (3, 3) numpy.ndarray</span>
+<span class="sd">        input b-tensor</span>
+<span class="sd">    ztol : float</span>
+<span class="sd">        Any parameters smaller than this value are considered to be 0</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bval: float</span>
+<span class="sd">        b-value (trace)</span>
+<span class="sd">    bdelta: float</span>
+<span class="sd">        normalized tensor anisotropy</span>
+<span class="sd">    bdelta: float</span>
+<span class="sd">        tensor asymmetry</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Implementation following :footcite:t:`Topgaard2016`.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    .. footbibliography::</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">btens_2d</span><span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">btens_2d</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">ztol</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">evals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eig</span><span class="p">(</span><span class="n">btens_2d</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">bval</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">evals</span><span class="p">)</span>
+    <span class="n">bval_is_zero</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">bval</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">ztol</span>
+
+    <span class="k">if</span> <span class="n">bval_is_zero</span><span class="p">:</span>
+        <span class="n">bval</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">bdelta</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">b_eta</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">lambda_iso</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">bval</span>
+
+        <span class="n">diff_lambdas</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">evals</span> <span class="o">-</span> <span class="n">lambda_iso</span><span class="p">)</span>
+        <span class="n">evals_zzxxyy</span> <span class="o">=</span> <span class="n">evals</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">diff_lambdas</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+
+        <span class="n">lambda_zz</span> <span class="o">=</span> <span class="n">evals_zzxxyy</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">lambda_xx</span> <span class="o">=</span> <span class="n">evals_zzxxyy</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">lambda_yy</span> <span class="o">=</span> <span class="n">evals_zzxxyy</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+        <span class="n">bdelta</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">lambda_iso</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="n">lambda_zz</span> <span class="o">-</span> <span class="p">((</span><span class="n">lambda_yy</span> <span class="o">+</span> <span class="n">lambda_xx</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">bdelta</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">ztol</span><span class="p">:</span>
+            <span class="n">bdelta</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">yyxx_diff</span> <span class="o">=</span> <span class="n">lambda_yy</span> <span class="o">-</span> <span class="n">lambda_xx</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">yyxx_diff</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">np</span><span class="o">.</span><span class="n">spacing</span><span class="p">(</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">yyxx_diff</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">b_eta</span> <span class="o">=</span> <span class="n">yyxx_diff</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">lambda_iso</span> <span class="o">*</span> <span class="n">bdelta</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">spacing</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">b_eta</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">b_eta</span><span class="p">:</span>
+            <span class="n">b_eta</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">bval</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">bdelta</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">b_eta</span><span class="p">)</span>
+
+
+<span class="nd">@warning_for_keywords</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">btens_to_params</span><span class="p">(</span><span class="n">btens</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ztol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Compute trace, anisotropy and asymmetry parameters from b-tensors.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    btens : (3, 3) OR (N, 3, 3) numpy.ndarray</span>
+<span class="sd">        input b-tensor, or b-tensors, where N = number of b-tensors</span>
+<span class="sd">    ztol : float</span>
+<span class="sd">        Any parameters smaller than this value are considered to be 0</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bval: numpy.ndarray</span>
+<span class="sd">        b-value(s) (trace(s))</span>
+<span class="sd">    bdelta: numpy.ndarray</span>
+<span class="sd">        normalized tensor anisotropy(s)</span>
+<span class="sd">    b_eta: numpy.ndarray</span>
+<span class="sd">        tensor asymmetry(s)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    This function can be used to get b-tensor parameters directly from the</span>
+<span class="sd">    GradientTable `btens` attribute.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; lte = np.array([[1, 0, 0], [0, 0, 0], [0, 0, 0]])</span>
+<span class="sd">    &gt;&gt;&gt; bval, bdelta, b_eta = btens_to_params(lte)</span>
+<span class="sd">    &gt;&gt;&gt; print(&quot;bval={}; bdelta={}; b_eta={}&quot;.format(bdelta, bval, b_eta))</span>
+<span class="sd">    bval=[ 1.]; bdelta=[ 1.]; b_eta=[ 0.]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Bad input checks</span>
+    <span class="n">value_error_msg</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;`btens` must be a 2D or 3D numpy array, respectively&quot;</span>
+        <span class="s2">&quot; with (3, 3) or (N, 3, 3) shape, where N corresponds&quot;</span>
+        <span class="s2">&quot; to the number of b-tensors&quot;</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">btens</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">value_error_msg</span><span class="p">)</span>
+
+    <span class="n">nd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">btens</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">nd</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">btens_shape</span> <span class="o">=</span> <span class="n">btens</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">elif</span> <span class="n">nd</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">btens_shape</span> <span class="o">=</span> <span class="n">btens</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">value_error_msg</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">btens_shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">value_error_msg</span><span class="p">)</span>
+
+    <span class="c1"># Reshape so that loop below works when only one input b-tensor is provided</span>
+    <span class="k">if</span> <span class="n">nd</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">btens</span> <span class="o">=</span> <span class="n">btens</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+
+    <span class="c1"># Pre-allocate</span>
+    <span class="n">n_btens</span> <span class="o">=</span> <span class="n">btens</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">bval</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n_btens</span><span class="p">)</span>
+    <span class="n">bdelta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n_btens</span><span class="p">)</span>
+    <span class="n">b_eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n_btens</span><span class="p">)</span>
+
+    <span class="c1"># Loop over b-tensor(s)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">btens</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">i_btens</span> <span class="o">=</span> <span class="n">btens</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+        <span class="n">i_bval</span><span class="p">,</span> <span class="n">i_bdelta</span><span class="p">,</span> <span class="n">i_b_eta</span> <span class="o">=</span> <span class="n">_btens_to_params_2d</span><span class="p">(</span><span class="n">i_btens</span><span class="p">,</span> <span class="n">ztol</span><span class="p">)</span>
+        <span class="n">bval</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">i_bval</span>
+        <span class="n">bdelta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">i_bdelta</span>
+        <span class="n">b_eta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">i_b_eta</span>
+
+    <span class="k">return</span> <span class="n">bval</span><span class="p">,</span> <span class="n">bdelta</span><span class="p">,</span> <span class="n">b_eta</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">params_to_btens</span><span class="p">(</span><span class="n">bval</span><span class="p">,</span> <span class="n">bdelta</span><span class="p">,</span> <span class="n">b_eta</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute b-tensor from trace, anisotropy and asymmetry parameters.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    bval: int or float</span>
+<span class="sd">        b-value (&gt;= 0)</span>
+<span class="sd">    bdelta: int or float</span>
+<span class="sd">        normalized tensor anisotropy (&gt;= -0.5 and &lt;= 1)</span>
+<span class="sd">    b_eta: int or float</span>
+<span class="sd">        tensor asymmetry (&gt;= 0 and &lt;= 1)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    (3, 3) numpy.ndarray</span>
+<span class="sd">        output b-tensor</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Implements eq. 7.11. p. 231 in :footcite:p:`Topgaard2016`.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    .. footbibliography::</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Check input times are OK</span>
+    <span class="n">expected_input_types</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+    <span class="n">input_types_all_ok</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">bval</span><span class="p">,</span> <span class="n">expected_input_types</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bdelta</span><span class="p">,</span> <span class="n">expected_input_types</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">b_eta</span><span class="p">,</span> <span class="n">expected_input_types</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">input_types_all_ok</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">expected_input_types</span><span class="p">]</span>
+        <span class="n">it_msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;All input types should any of: </span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">it_msg</span><span class="p">)</span>
+
+    <span class="c1"># Check input values within expected ranges</span>
+    <span class="k">if</span> <span class="n">bval</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`bval` must be &gt;= 0&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">&lt;=</span> <span class="n">bdelta</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`delta` must be &gt;= -0.5 and &lt;= 1&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">b_eta</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`b_eta` must be &gt;= 0 and &lt;= 1&quot;</span><span class="p">)</span>
+
+    <span class="n">m1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]])</span>
+    <span class="n">m2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+    <span class="n">btens</span> <span class="o">=</span> <span class="n">bval</span> <span class="o">/</span> <span class="mi">3</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">+</span> <span class="n">bdelta</span> <span class="o">*</span> <span class="p">(</span><span class="n">m1</span> <span class="o">+</span> <span class="n">b_eta</span> <span class="o">*</span> <span class="n">m2</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">btens</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">ornt_mapping</span><span class="p">(</span><span class="n">ornt1</span><span class="p">,</span> <span class="n">ornt2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate the mapping needing to get from orn1 to orn2.&quot;&quot;&quot;</span>
+
+    <span class="n">mapping</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">ornt1</span><span class="p">),</span> <span class="mi">2</span><span class="p">),</span> <span class="s2">&quot;int&quot;</span><span class="p">)</span>
+    <span class="n">mapping</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">ornt1</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">ornt2</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+    <span class="n">mapping</span><span class="p">[</span><span class="n">B</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">A</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">mapping</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="n">sign</span> <span class="o">=</span> <span class="n">ornt2</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">ornt1</span><span class="p">[</span><span class="n">mapping</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">mapping</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">sign</span>
+    <span class="k">return</span> <span class="n">mapping</span>
+
+
+<span class="nd">@warning_for_keywords</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">reorient_vectors</span><span class="p">(</span><span class="n">bvecs</span><span class="p">,</span> <span class="n">current_ornt</span><span class="p">,</span> <span class="n">new_ornt</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Change the orientation of gradients or other vectors.</span>
+
+<span class="sd">    Moves vectors, storted along axis, from current_ornt to new_ornt. For</span>
+<span class="sd">    example the vector [x, y, z] in &quot;RAS&quot; will be [-x, -y, z] in &quot;LPS&quot;.</span>
+
+<span class="sd">    R: Right</span>
+<span class="sd">    A: Anterior</span>
+<span class="sd">    S: Superior</span>
+<span class="sd">    L: Left</span>
+<span class="sd">    P: Posterior</span>
+<span class="sd">    I: Inferior</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">current_ornt</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">current_ornt</span> <span class="o">=</span> <span class="n">orientation_from_string</span><span class="p">(</span><span class="n">current_ornt</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_ornt</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">new_ornt</span> <span class="o">=</span> <span class="n">orientation_from_string</span><span class="p">(</span><span class="n">new_ornt</span><span class="p">)</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="n">bvecs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">current_ornt</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="ow">or</span> <span class="n">new_ornt</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;orientations do not match&quot;</span><span class="p">)</span>
+
+    <span class="n">bvecs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bvecs</span><span class="p">)</span>
+    <span class="n">mapping</span> <span class="o">=</span> <span class="n">ornt_mapping</span><span class="p">(</span><span class="n">current_ornt</span><span class="p">,</span> <span class="n">new_ornt</span><span class="p">)</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">bvecs</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">mapping</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">axis</span><span class="p">)</span>
+    <span class="n">out_view</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">output</span><span class="o">.</span><span class="n">ndim</span><span class="p">)</span>
+    <span class="n">out_view</span> <span class="o">*=</span> <span class="n">mapping</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">output</span>
+
+
+<span class="nd">@warning_for_keywords</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">reorient_on_axis</span><span class="p">(</span><span class="n">bvecs</span><span class="p">,</span> <span class="n">current_ornt</span><span class="p">,</span> <span class="n">new_ornt</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">current_ornt</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">current_ornt</span> <span class="o">=</span> <span class="n">orientation_from_string</span><span class="p">(</span><span class="n">current_ornt</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_ornt</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">new_ornt</span> <span class="o">=</span> <span class="n">orientation_from_string</span><span class="p">(</span><span class="n">new_ornt</span><span class="p">)</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="n">bvecs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">current_ornt</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="ow">or</span> <span class="n">new_ornt</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;orientations do not match&quot;</span><span class="p">)</span>
+
+    <span class="n">mapping</span> <span class="o">=</span> <span class="n">ornt_mapping</span><span class="p">(</span><span class="n">current_ornt</span><span class="p">,</span> <span class="n">new_ornt</span><span class="p">)</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)]</span> <span class="o">*</span> <span class="n">bvecs</span><span class="o">.</span><span class="n">ndim</span>
+    <span class="n">order</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">mapping</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">shape</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">bvecs</span><span class="o">.</span><span class="n">ndim</span>
+    <span class="n">shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">sign</span> <span class="o">=</span> <span class="n">mapping</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">sign</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="n">shape</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">bvecs</span><span class="p">[</span><span class="n">order</span><span class="p">]</span>
+    <span class="n">output</span> <span class="o">*=</span> <span class="n">sign</span>
+    <span class="k">return</span> <span class="n">output</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">orientation_from_string</span><span class="p">(</span><span class="n">string_ornt</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return an array representation of an ornt string.&quot;&quot;&quot;</span>
+    <span class="n">orientation_dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;r&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="s2">&quot;l&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+        <span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="s2">&quot;p&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+        <span class="s2">&quot;s&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="s2">&quot;i&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="n">ornt</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">orientation_dict</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">string_ornt</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+    <span class="n">ornt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ornt</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">_check_ornt</span><span class="p">(</span><span class="n">ornt</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">string_ornt</span> <span class="o">+</span> <span class="s2">&quot; does not seem to be a valid orientation string&quot;</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ornt</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">orientation_to_string</span><span class="p">(</span><span class="n">ornt</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a string representation of a 3d ornt.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">_check_ornt</span><span class="p">(</span><span class="n">ornt</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">(</span><span class="n">ornt</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; does not seem to be a valid orientation&quot;</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="n">orientation_dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span>
+        <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span> <span class="s2">&quot;l&quot;</span><span class="p">,</span>
+        <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span>
+        <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span> <span class="s2">&quot;p&quot;</span><span class="p">,</span>
+        <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="s2">&quot;s&quot;</span><span class="p">,</span>
+        <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span> <span class="s2">&quot;i&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">ornt_string</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">ornt</span><span class="p">:</span>
+        <span class="n">ornt_string</span> <span class="o">+=</span> <span class="n">orientation_dict</span><span class="p">[(</span><span class="n">ii</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ii</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+    <span class="k">return</span> <span class="n">ornt_string</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_ornt</span><span class="p">(</span><span class="n">ornt</span><span class="p">):</span>
+    <span class="n">uniq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">ornt</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">uniq</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ornt</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">uniq</span><span class="p">))</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="n">uniq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">ornt</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="k">if</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">uniq</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)}:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">uniq</span><span class="p">))</span>
+        <span class="k">return</span> <span class="kc">True</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

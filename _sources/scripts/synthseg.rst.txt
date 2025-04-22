@@ -1,0 +1,127 @@
+Synthseg
+========
+
+synthseg - Neural Network-Based Brain MRI Segmentation
+
+Part of the micaflow processing pipeline for neuroimaging data.
+
+This module provides an interface to SynthSeg, a deep learning-based tool for automated 
+brain MRI segmentation that works across different MRI contrasts without retraining. 
+SynthSeg segments brain anatomical structures in T1w, T2w, FLAIR, and other MR contrasts, 
+providing both whole-brain segmentation and optional cortical parcellation.
+
+Features:
+--------
+- Contrast-agnostic segmentation working across different MRI acquisition types
+- Whole-brain anatomical structure segmentation with 37 labels
+- Optional cortical parcellation (up to 95 additional regions)
+- Multiple execution modes: standard, robust (higher quality), and fast
+- Volumetric analysis with CSV output for region-wise measurements
+- Quality control metrics for assessing segmentation reliability
+- GPU acceleration with optional CPU-only execution
+
+API Usage:
+---------
+micaflow synthseg 
+    --i <path/to/image.nii.gz>
+    --o <path/to/segmentation.nii.gz>
+    [--parc]
+    [--robust]
+    [--fast]
+    [--vol <path/to/volumes.csv>]
+    [--qc <path/to/qc_scores.csv>]
+    [--threads <num_threads>]
+
+Python Usage:
+-----------
+>>> from micaflow.scripts.synthseg import main
+>>> main({
+...     'i': 'input_image.nii.gz',
+...     'o': 'segmentation.nii.gz',
+...     'parc': True,
+...     'robust': False,
+...     'fast': True,
+...     'vol': 'volumes.csv',
+...     'threads': 4
+... })
+
+Command Line Usage
+-----------------
+
+.. code-block:: bash
+
+    micaflow synthseg [options]
+
+Source Code
+-----------
+
+View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/synthseg.py>`_
+
+Description
+-----------
+
+This script runs the SynthSeg neural network-based tool for brain MRI
+    segmentation. It provides automated segmentation of anatomical structures
+    even across different contrasts and acquisition types.
+
+Full Help
+---------
+
+.. code-block:: text
+
+    
+        ╔════════════════════════════════════════════════════════════════╗
+        ║                         SYNTHSEG                               ║
+        ╚════════════════════════════════════════════════════════════════╝
+        
+        This script runs the SynthSeg neural network-based tool for brain MRI
+        segmentation. It provides automated segmentation of anatomical structures
+        even across different contrasts and acquisition types.
+        
+        ────────────────────────── USAGE ──────────────────────────
+          micaflow synthseg [options]
+        
+        ─────────────────── REQUIRED ARGUMENTS ───────────────────
+          --i PATH       : Input image(s) to segment (file or folder)
+          --o PATH       : Output segmentation file(s) or folder
+        
+        ─────────────────── OPTIONAL ARGUMENTS ───────────────────
+          --parc         : Enable cortical parcellation
+          --robust       : Use robust mode (slower but better quality)
+          --fast         : Faster processing (less postprocessing)
+          --threads N    : Set number of CPU threads (default: 1)
+          --cpu          : Force CPU processing (instead of GPU)
+          --vol PATH     : Output volumetric CSV file
+          --qc PATH      : Output quality control scores CSV file
+          --post PATH    : Output posterior probability maps
+          --resample PATH: Output resampled images
+          --crop N [N ...]: Size of 3D patches to analyze (default: 192)
+          --ct           : Clip intensities for CT scans [0,80]
+          --v1           : Use SynthSeg 1.0 instead of 2.0
+        
+        ────────────────── EXAMPLE USAGE ────────────────────────
+        
+        # Basic segmentation
+        micaflow synthseg \
+          --i t1w_scan.nii.gz \
+          --o segmentation.nii.gz
+        
+        # With cortical parcellation
+        micaflow synthseg \
+          --i t1w_scan.nii.gz \
+          --o segmentation.nii.gz \
+          --parc
+        
+        # Batch processing with volume calculation
+        micaflow synthseg \
+          --i input_folder/ \
+          --o output_folder/ \
+          --vol volumes.csv
+        
+        ────────────────────────── NOTES ───────────────────────
+        • SynthSeg works with any MRI contrast without retraining
+        • GPU acceleration is used by default for faster processing
+        • The robust mode provides better quality but is slower
+        • For batch processing, input and output paths must be folders
+        
+    

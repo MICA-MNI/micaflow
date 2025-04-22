@@ -1,0 +1,436 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>micaflow.scripts.texture_generation &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pipeline.html">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scripts.html">Scripts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">micaflow.scripts.texture_generation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for micaflow.scripts.texture_generation</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">texture_generation - MRI Texture Feature Extraction</span>
+
+<span class="sd">Part of the micaflow processing pipeline for neuroimaging data.</span>
+
+<span class="sd">This module computes advanced texture features from MRI data that can be used for</span>
+<span class="sd">tissue characterization, lesion analysis, or radiomics applications. It performs</span>
+<span class="sd">automatic tissue segmentation and extracts quantitative imaging features including</span>
+<span class="sd">gradient magnitude and relative intensity maps, which capture local intensity variations</span>
+<span class="sd">and tissue contrast properties respectively.</span>
+
+<span class="sd">Features:</span>
+<span class="sd">--------</span>
+<span class="sd">- Automatic tissue segmentation into gray matter, white matter, and CSF</span>
+<span class="sd">- Gradient magnitude computation for edge and boundary detection</span>
+<span class="sd">- Relative intensity calculation for normalized tissue contrast</span>
+<span class="sd">- Masked processing to focus analysis on brain regions only</span>
+<span class="sd">- Output in standard NIfTI format compatible with other neuroimaging tools</span>
+<span class="sd">- Efficient implementation using ANTs image processing functions</span>
+
+<span class="sd">API Usage:</span>
+<span class="sd">---------</span>
+<span class="sd">micaflow texture_generation </span>
+<span class="sd">    --input &lt;path/to/image.nii.gz&gt;</span>
+<span class="sd">    --mask &lt;path/to/brain_mask.nii.gz&gt;</span>
+<span class="sd">    --output &lt;path/to/output_prefix&gt;</span>
+
+<span class="sd">Python Usage:</span>
+<span class="sd">-----------</span>
+<span class="sd">&gt;&gt;&gt; from micaflow.scripts.texture_generation import run_texture_pipeline</span>
+<span class="sd">&gt;&gt;&gt; run_texture_pipeline(</span>
+<span class="sd">...     input=&quot;preprocessed_t1w.nii.gz&quot;,</span>
+<span class="sd">...     mask=&quot;brain_mask.nii.gz&quot;,</span>
+<span class="sd">...     output_dir=&quot;output_texture_maps&quot;</span>
+<span class="sd">... )</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">string</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ants</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">colorama</span><span class="w"> </span><span class="kn">import</span> <span class="n">init</span><span class="p">,</span> <span class="n">Fore</span><span class="p">,</span> <span class="n">Style</span>
+
+<span class="n">init</span><span class="p">()</span>
+
+<div class="viewcode-block" id="print_help_message">
+<a class="viewcode-back" href="../../../scripts/texture_generation.html#micaflow.scripts.texture_generation.print_help_message">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">print_help_message</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Print a help message with formatted text.&quot;&quot;&quot;</span>
+    <span class="c1"># ANSI color codes</span>
+    <span class="n">CYAN</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">CYAN</span>
+    <span class="n">GREEN</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">GREEN</span>
+    <span class="n">YELLOW</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">YELLOW</span>
+    <span class="n">BLUE</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">BLUE</span>
+    <span class="n">MAGENTA</span> <span class="o">=</span> <span class="n">Fore</span><span class="o">.</span><span class="n">MAGENTA</span>
+    <span class="n">BOLD</span> <span class="o">=</span> <span class="n">Style</span><span class="o">.</span><span class="n">BRIGHT</span>
+    <span class="n">RESET</span> <span class="o">=</span> <span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span>
+    
+    <span class="n">help_text</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">╔════════════════════════════════════════════════════════════════╗</span>
+<span class="s2">    ║                    TEXTURE FEATURE EXTRACTION                  ║</span>
+<span class="s2">    ╚════════════════════════════════════════════════════════════════╝</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    </span>
+<span class="s2">    This script generates texture feature maps from neuroimaging data using</span>
+<span class="s2">    various computational approaches. The features include gradient magnitude,</span>
+<span class="s2">    relative intensity, and tissue segmentation.</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">────────────────────────── USAGE ──────────────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">      micaflow texture_generation </span><span class="si">{</span><span class="n">GREEN</span><span class="si">}</span><span class="s2">[options]</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">─────────────────── REQUIRED ARGUMENTS ───────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--input</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">-i</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">   : Path to the input image file (.nii.gz)</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--mask</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">-m</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">    : Path to the binary mask file (.nii.gz)</span>
+<span class="s2">      </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--output</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">-o</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2">  : Output directory for texture feature maps</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">──────────────────────── EXAMPLE USAGE ───────────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">      micaflow texture_generation </span><span class="se">\\</span>
+<span class="s2">        </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--input</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> t1w_preprocessed.nii.gz </span><span class="se">\\</span>
+<span class="s2">        </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--mask</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> brain_mask.nii.gz </span><span class="se">\\</span>
+<span class="s2">        </span><span class="si">{</span><span class="n">YELLOW</span><span class="si">}</span><span class="s2">--output</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span><span class="s2"> /path/to/output_dir</span>
+<span class="s2">    </span>
+<span class="s2">    </span><span class="si">{</span><span class="n">CYAN</span><span class="si">}{</span><span class="n">BOLD</span><span class="si">}</span><span class="s2">────────────────────────── NOTES ─────────────────────────</span><span class="si">{</span><span class="n">RESET</span><span class="si">}</span>
+<span class="s2">    - The script automatically segments the input into tissue types</span>
+<span class="s2">    - Computed features include gradient magnitude and relative intensity</span>
+<span class="s2">    - All features are saved as separate NIfTI files in the output directory</span>
+<span class="s2">    - Processing may take several minutes depending on image size</span>
+<span class="s2">    </span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">help_text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="write_nifti">
+<a class="viewcode-back" href="../../../scripts/texture_generation.html#micaflow.scripts.texture_generation.write_nifti">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_nifti</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+    <span class="n">output_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="nb">id</span> <span class="o">+</span> <span class="s1">&#39;_&#39;</span> <span class="o">+</span> <span class="nb">type</span> <span class="o">+</span> <span class="s1">&#39;.nii.gz&#39;</span><span class="p">)</span>
+    <span class="n">ants</span><span class="o">.</span><span class="n">image_write</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">output_fname</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="compute_RI">
+<a class="viewcode-back" href="../../../scripts/texture_generation.html#micaflow.scripts.texture_generation.compute_RI">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_RI</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">bg</span><span class="p">,</span> <span class="n">mask</span><span class="p">):</span>
+    <span class="n">ri</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">bgm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">image</span> <span class="o">&lt;</span> <span class="n">bg</span><span class="p">,</span> <span class="n">mask</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">bgm_ind</span> <span class="o">=</span> <span class="n">bgm</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">bgm</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">bgm</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span>
+    <span class="n">bgp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">image</span> <span class="o">&gt;</span> <span class="n">bg</span><span class="p">,</span> <span class="n">mask</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">bgp_ind</span> <span class="o">=</span> <span class="n">bgp</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">bgp</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">bgp</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span>
+
+    <span class="n">ri</span><span class="p">[</span><span class="n">bgm_ind</span><span class="p">]</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">bg</span> <span class="o">-</span> <span class="n">image</span><span class="p">[</span><span class="n">bgm_ind</span><span class="p">])</span> <span class="o">/</span> <span class="n">bg</span><span class="p">)</span>
+    <span class="n">ri</span><span class="p">[</span><span class="n">bgp_ind</span><span class="p">]</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">bg</span> <span class="o">-</span> <span class="n">image</span><span class="p">[</span><span class="n">bgp_ind</span><span class="p">])</span> <span class="o">/</span> <span class="n">bg</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ri</span></div>
+
+
+
+<div class="viewcode-block" id="peakfinder">
+<a class="viewcode-back" href="../../../scripts/texture_generation.html#micaflow.scripts.texture_generation.peakfinder">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">peakfinder</span><span class="p">(</span><span class="n">gm</span><span class="p">,</span> <span class="n">wm</span><span class="p">,</span> <span class="n">lower_q</span><span class="p">,</span> <span class="n">upper_q</span><span class="p">):</span>
+    <span class="n">gm_peak</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span><span class="n">threshold_percentile</span><span class="p">(</span><span class="n">gm</span><span class="p">,</span> <span class="n">lower_q</span><span class="p">,</span> <span class="n">upper_q</span><span class="p">))</span><span class="o">.</span><span class="n">most_common</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">wm_peak</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span><span class="n">threshold_percentile</span><span class="p">(</span><span class="n">wm</span><span class="p">,</span> <span class="n">lower_q</span><span class="p">,</span> <span class="n">upper_q</span><span class="p">))</span><span class="o">.</span><span class="n">most_common</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">bg</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">gm_peak</span> <span class="o">+</span> <span class="n">wm_peak</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">bg</span></div>
+
+
+
+<div class="viewcode-block" id="threshold_percentile">
+<a class="viewcode-back" href="../../../scripts/texture_generation.html#micaflow.scripts.texture_generation.threshold_percentile">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">threshold_percentile</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">lower_q</span><span class="p">,</span> <span class="n">upper_q</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+    <span class="n">lq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">lower_q</span><span class="p">)</span>
+    <span class="n">uq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">upper_q</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="n">lq</span><span class="p">,</span> <span class="n">x</span> <span class="o">&lt;=</span> <span class="n">uq</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">round</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="find_logger_basefilename">
+<a class="viewcode-back" href="../../../scripts/texture_generation.html#micaflow.scripts.texture_generation.find_logger_basefilename">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_logger_basefilename</span><span class="p">(</span><span class="n">logger</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Finds the logger base filename(s) currently there is only one&quot;&quot;&quot;</span>
+    <span class="n">log_file</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">handler</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">handlers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">log_file</span> <span class="o">=</span> <span class="n">handler</span><span class="o">.</span><span class="n">baseFilename</span>
+    <span class="k">return</span> <span class="n">log_file</span></div>
+
+
+
+<div class="viewcode-block" id="random_case_id">
+<a class="viewcode-back" href="../../../scripts/texture_generation.html#micaflow.scripts.texture_generation.random_case_id">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">random_case_id</span><span class="p">():</span>
+    <span class="n">letters</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choices</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_letters</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">16</span><span class="p">))</span>
+    <span class="n">digits</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choices</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">digits</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">16</span><span class="p">))</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">letters</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;_&#39;</span> <span class="o">+</span> <span class="n">digits</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">x</span></div>
+
+
+<div class="viewcode-block" id="noelTexturesPy">
+<a class="viewcode-back" href="../../../scripts/texture_generation.html#micaflow.scripts.texture_generation.noelTexturesPy">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">noelTexturesPy</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="nb">id</span><span class="p">,</span>
+        <span class="n">output_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="nb">input</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_id</span> <span class="o">=</span> <span class="nb">id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_outputdir</span> <span class="o">=</span> <span class="n">output_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="nb">input</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span>
+
+<div class="viewcode-block" id="noelTexturesPy.load_nifti_file">
+<a class="viewcode-back" href="../../../scripts/texture_generation.html#micaflow.scripts.texture_generation.noelTexturesPy.load_nifti_file">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_nifti_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># load nifti data to memory</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;loading nifti files&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">image_read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mask</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">image_read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="noelTexturesPy.segmentation">
+<a class="viewcode-back" href="../../../scripts/texture_generation.html#micaflow.scripts.texture_generation.noelTexturesPy.segmentation">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">segmentation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;computing GM, WM, CSF segmentation&#39;</span><span class="p">)</span>
+        <span class="n">segm</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">atropos</span><span class="p">(</span>
+            <span class="n">a</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_input</span><span class="p">,</span>
+            <span class="n">i</span><span class="o">=</span><span class="s1">&#39;Kmeans[3]&#39;</span><span class="p">,</span>
+            <span class="n">m</span><span class="o">=</span><span class="s1">&#39;[0.2,1x1x1]&#39;</span><span class="p">,</span>
+            <span class="n">c</span><span class="o">=</span><span class="s1">&#39;[3,0]&#39;</span><span class="p">,</span>
+            <span class="n">x</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_mask</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_segm</span> <span class="o">=</span> <span class="n">segm</span><span class="p">[</span><span class="s1">&#39;segmentation&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_segm</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;float32&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_wm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_segm</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;float32&#39;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="noelTexturesPy.gradient_magnitude">
+<a class="viewcode-back" href="../../../scripts/texture_generation.html#micaflow.scripts.texture_generation.noelTexturesPy.gradient_magnitude">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gradient_magnitude</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;computing gradient magnitude&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_grad_input</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">iMath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_input</span><span class="p">,</span> <span class="s1">&#39;Grad&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">ants</span><span class="o">.</span><span class="n">image_write</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_grad_input</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_outputdir</span> <span class="o">+</span> <span class="s1">&#39;_gradient-magnitude.nii&#39;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="noelTexturesPy.relative_intensity">
+<a class="viewcode-back" href="../../../scripts/texture_generation.html#micaflow.scripts.texture_generation.noelTexturesPy.relative_intensity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">relative_intensity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;computing relative intensity&#39;</span><span class="p">)</span>
+
+        <span class="n">input_n4_gm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input</span><span class="o">.</span><span class="n">new_image_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_gm</span><span class="p">)</span>
+        <span class="n">input_n4_wm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input</span><span class="o">.</span><span class="n">new_image_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_wm</span><span class="p">)</span>
+        <span class="n">bg_input</span> <span class="o">=</span> <span class="n">peakfinder</span><span class="p">(</span><span class="n">input_n4_gm</span><span class="p">,</span> <span class="n">input_n4_wm</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">99.5</span><span class="p">)</span>
+        <span class="n">input_ri</span> <span class="o">=</span> <span class="n">compute_RI</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_input</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">bg_input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input</span><span class="o">.</span><span class="n">new_image_like</span><span class="p">(</span><span class="n">input_ri</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ri</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">smooth_image</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">FWHM</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">ants</span><span class="o">.</span><span class="n">image_write</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ri</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_outputdir</span> <span class="o">+</span> <span class="s1">&#39;_relative-intensity.nii&#39;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="noelTexturesPy.file_processor">
+<a class="viewcode-back" href="../../../scripts/texture_generation.html#micaflow.scripts.texture_generation.noelTexturesPy.file_processor">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">file_processor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">load_nifti_file</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">segmentation</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gradient_magnitude</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relative_intensity</span><span class="p">()</span>
+        <span class="c1"># self.create_zip_archive()</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s1">&#39;pipeline processing time elapsed: </span><span class="si">{}</span><span class="s1"> seconds&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
+</div>
+
+
+<div class="viewcode-block" id="run_texture_pipeline">
+<a class="viewcode-back" href="../../../scripts/texture_generation.html#micaflow.scripts.texture_generation.run_texture_pipeline">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_texture_pipeline</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the neuroimaging texture feature extraction pipeline.</span>
+<span class="sd">    </span>
+<span class="sd">    This function initializes and executes a texture analysis pipeline on a neuroimaging volume.</span>
+<span class="sd">    The pipeline computes various texture features (e.g., gradient magnitude, relative intensity,</span>
+<span class="sd">    local binary patterns) from the input image within the regions defined by the mask.</span>
+<span class="sd">    Results are saved to the specified output directory.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input : str</span>
+<span class="sd">        Path to the input image file (typically a preprocessed MRI volume).</span>
+<span class="sd">    mask : str</span>
+<span class="sd">        Path to the binary mask file that defines regions of interest for texture analysis.</span>
+<span class="sd">    output_dir : str</span>
+<span class="sd">        Directory where the computed texture feature maps will be saved.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None</span>
+<span class="sd">        The function saves texture feature maps to the output directory but does not return values.</span>
+<span class="sd">        </span>
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The function relies on the noelTexturesPy class which implements multiple texture</span>
+<span class="sd">    feature extraction algorithms specifically designed for neuroimaging data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pipeline</span> <span class="o">=</span> <span class="n">noelTexturesPy</span><span class="p">(</span>
+        <span class="nb">id</span><span class="o">=</span><span class="s1">&#39;textures&#39;</span><span class="p">,</span>
+        <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>
+        <span class="nb">input</span><span class="o">=</span><span class="nb">input</span><span class="p">,</span>
+        <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">pipeline</span><span class="o">.</span><span class="n">file_processor</span><span class="p">()</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># Check if no arguments were provided or help was requested</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="s2">&quot;-h&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="ow">or</span> <span class="s2">&quot;--help&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">:</span>
+        <span class="n">print_help_message</span><span class="p">()</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Generate texture features from neuroimaging data&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--input&quot;</span><span class="p">,</span> <span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+                       <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to the input image file (.nii.gz)&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--mask&quot;</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+                      <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to the binary mask file (.nii.gz)&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--output&quot;</span><span class="p">,</span> <span class="s2">&quot;-o&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+                      <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Output directory for texture feature maps&quot;</span><span class="p">)</span>
+    
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    
+    <span class="n">run_texture_pipeline</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

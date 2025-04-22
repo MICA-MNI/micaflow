@@ -1,0 +1,347 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MICAflow Pipeline &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/tabs.css?v=a5c4661c" />
+      <link rel="stylesheet" type="text/css" href="_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=f281be69"></script>
+      <script src="_static/tabs.js?v=3030b3cb"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Examples" href="examples.html" />
+    <link rel="prev" title="Getting Started" href="getting_started.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Micaflow
+              <img src="_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">MICAflow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quality-control">Quality Control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="scripts.html">Scripts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">MICAflow Pipeline</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/pipeline.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="micaflow-pipeline">
+<span id="pipeline"></span><h1>MICAflow Pipeline<a class="headerlink" href="#micaflow-pipeline" title="Link to this heading"></a></h1>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>The MICAflow pipeline provides a comprehensive framework for processing structural and diffusion MRI data through a series of coordinated steps implemented as a Snakemake workflow.</p>
+<div class="sphinx-tabs docutils container">
+<div aria-label="Tabbed content" class="closeable" role="tablist"><button aria-controls="panel-0-0-0" aria-selected="true" class="sphinx-tabs-tab" id="tab-0-0-0" name="0-0" role="tab" tabindex="0">Pipeline Structure</button><button aria-controls="panel-0-0-1" aria-selected="false" class="sphinx-tabs-tab" id="tab-0-0-1" name="0-1" role="tab" tabindex="-1">Inputs &amp; Outputs</button><button aria-controls="panel-0-0-2" aria-selected="false" class="sphinx-tabs-tab" id="tab-0-0-2" name="0-2" role="tab" tabindex="-1">Running the Pipeline</button><button aria-controls="panel-0-0-3" aria-selected="false" class="sphinx-tabs-tab" id="tab-0-0-3" name="0-3" role="tab" tabindex="-1">Data Input Methods</button></div><div aria-labelledby="tab-0-0-0" class="sphinx-tabs-panel" id="panel-0-0-0" name="0-0" role="tabpanel" tabindex="0"><p>The pipeline is organized into several processing stages that are executed in a specific order, with dependencies managed automatically by Snakemake:</p>
+<ol class="arabic simple">
+<li><p><strong>Structural Processing:</strong>
+- Skull stripping of T1w and FLAIR images
+- Bias field correction
+- SynthSeg segmentation</p></li>
+<li><p><strong>Registration:</strong>
+- T1w to MNI152 space
+- FLAIR to T1w space
+- DWI to T1w space (if DWI data is available)</p></li>
+<li><p><strong>Texture Feature Generation:</strong>
+- Gradient magnitude maps
+- Relative intensity maps</p></li>
+<li><p><strong>Diffusion Processing (Optional):</strong>
+- Denoising
+- Motion correction
+- Susceptibility distortion correction
+- Computation of FA and MD maps</p></li>
+<li><p><strong>Quality Metrics:</strong>
+- Jaccard similarity for registration accuracy</p></li>
+</ol>
+</div><div aria-labelledby="tab-0-0-1" class="sphinx-tabs-panel" hidden="true" id="panel-0-0-1" name="0-1" role="tabpanel" tabindex="0"><p><strong>Required Inputs:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--subject</span></code>: Subject ID (e.g., sub-01)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--output</span></code>: Output directory</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--t1w-file</span></code>: Path to T1-weighted image file</p></li>
+</ul>
+<p><strong>Optional Inputs:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--session</span></code>: Session ID (e.g., ses-01)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--flair-file</span></code>: Path to FLAIR image file</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--dwi-file</span></code>: Diffusion weighted image</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--bval-file</span></code>: B-value file for DWI</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--bvec-file</span></code>: B-vector file for DWI</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--inverse-dwi-file</span></code>: Inverse (PA) DWI for distortion correction</p></li>
+</ul>
+<p><strong>Primary Outputs:</strong></p>
+<p>The pipeline generates the following directory structure:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>&lt;OUTPUT_DIR&gt;/
+└── &lt;SUBJECT&gt;/
+    └── &lt;SESSION&gt;/
+        ├── anat/                    # Preprocessed anatomical images
+        ├── dwi/                     # Preprocessed diffusion data (if available)
+        ├── metrics/                 # Quality assessment metrics
+        ├── textures/                # Texture feature maps
+        └── xfm/                     # Transformation files
+</pre></div>
+</div>
+</div><div aria-labelledby="tab-0-0-2" class="sphinx-tabs-panel" hidden="true" id="panel-0-0-2" name="0-2" role="tabpanel" tabindex="0"><p><strong>Command Line Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>pipeline<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--subject<span class="w"> </span>SUB001<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--session<span class="w"> </span>SES01<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>/path/to/output<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--data-directory<span class="w"> </span>/path/to/data<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--t1w-file<span class="w"> </span>/path/to/t1w.nii.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="o">[</span>options<span class="o">]</span>
+</pre></div>
+</div>
+<p><strong>Additional Options:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--threads</span> <span class="pre">N</span></code>: Number of threads to use (default: 1)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--cpu</span></code>: Force CPU computation instead of GPU</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--dry-run</span></code>: Show what would be executed without running commands</p></li>
+</ul>
+<p><strong>Pipeline Configuration:</strong></p>
+<p>The pipeline can also be configured using a YAML file:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>pipeline<span class="w"> </span>--config-file<span class="w"> </span>config.yaml
+</pre></div>
+</div>
+<p><strong>Example Configuration File (config.yaml):</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example configuration for micaflow pipeline</span>
+<span class="nt">subject</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;sub-01&quot;</span><span class="w">                             </span><span class="c1"># Subject ID</span>
+<span class="nt">session</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;ses-01&quot;</span><span class="w">                             </span><span class="c1"># Session ID</span>
+
+<span class="c1"># Input data paths</span>
+<span class="nt">t1w_file</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/data/bids/sub-01/ses-01/anat/sub-01_ses-01_T1w.nii.gz&quot;</span>
+<span class="nt">flair_file</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/data/bids/sub-01/ses-01/anat/sub-01_ses-01_FLAIR.nii.gz&quot;</span>
+<span class="nt">dwi_file</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/data/bids/sub-01/ses-01/dwi/sub-01_ses-01_dir-AP_dwi.nii.gz&quot;</span>
+<span class="nt">bval_file</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/data/bids/sub-01/ses-01/dwi/sub-01_ses-01_dir-AP_dwi.bval&quot;</span>
+<span class="nt">bvec_file</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/data/bids/sub-01/ses-01/dwi/sub-01_ses-01_dir-AP_dwi.bvec&quot;</span>
+<span class="nt">inverse_dwi_file</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/data/bids/sub-01/ses-01/dwi/sub-01_ses-01_dir-PA_dwi.nii.gz&quot;</span>
+
+<span class="c1"># Output settings</span>
+<span class="nt">output</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/results/micaflow&quot;</span>
+<span class="nt">data_directory</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/data/bids&quot;</span>
+
+<span class="c1"># Processing options</span>
+<span class="nt">threads</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span><span class="w">               </span><span class="c1"># Number of CPU threads to use</span>
+<span class="nt">cpu</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">                </span><span class="c1"># Force CPU processing (set to false for GPU)</span>
+<span class="nt">run_dwi</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">            </span><span class="c1"># Whether to process DWI data</span>
+
+<span class="c1"># Advanced options (optional)</span>
+<span class="nt">dry_run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w">           </span><span class="c1"># Just show commands without executing</span>
+<span class="nt">cleanup</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">            </span><span class="c1"># Remove temporary files after completion</span>
+</pre></div>
+</div>
+<p>This configuration can be adapted for different subjects and datasets by updating
+the paths and processing parameters accordingly.</p>
+</div><div aria-labelledby="tab-0-0-3" class="sphinx-tabs-panel" hidden="true" id="panel-0-0-3" name="0-3" role="tabpanel" tabindex="0"><p>MICAflow supports two approaches for providing input data to the pipeline:</p>
+<p><strong>1. BIDS Directory Approach:</strong></p>
+<p>When using a BIDS-compliant dataset, you can specify the root directory and the pipeline will
+automatically locate files based on subject and session IDs:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>pipeline<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--subject<span class="w"> </span>sub-01<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--session<span class="w"> </span>ses-01<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--data-directory<span class="w"> </span>/path/to/bids/dataset<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>/path/to/output
+</pre></div>
+</div>
+<p>In this case, the pipeline will look for files at standard BIDS locations:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>/path/to/bids/dataset/
+└── sub-01/
+    └── ses-01/
+        ├── anat/
+        │   ├── sub-01_ses-01_T1w.nii.gz
+        │   └── sub-01_ses-01_FLAIR.nii.gz
+        └── dwi/
+            ├── sub-01_ses-01_dwi.nii.gz
+            ├── sub-01_ses-01_dwi.bval
+            └── sub-01_ses-01_dwi.bvec
+</pre></div>
+</div>
+<p><strong>2. Direct File Path Approach:</strong></p>
+<p>For datasets that are not BIDS-compliant or when working with specific files,
+you can directly specify the path to each input file:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>pipeline<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--subject<span class="w"> </span>SUB001<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--session<span class="w"> </span>SES01<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--t1w-file<span class="w"> </span>/path/to/t1w.nii.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--flair-file<span class="w"> </span>/path/to/flair.nii.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dwi-file<span class="w"> </span>/path/to/dwi.nii.gz<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>/path/to/output
+</pre></div>
+</div>
+<p><strong>Advantages of Each Approach:</strong></p>
+<ul class="simple">
+<li><p><strong>BIDS Directory:</strong>
+- Simpler command line with fewer parameters
+- Automatic file discovery based on BIDS naming conventions
+- Better for batch processing multiple subjects with consistent naming</p></li>
+<li><p><strong>Direct File Paths:</strong>
+- Works with any directory structure
+- Flexible for non-standard file naming
+- Allows processing specific files from different locations</p></li>
+</ul>
+<p>Both approaches can be used in the YAML configuration file as well:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># BIDS Directory approach</span>
+<span class="nt">subject</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;sub-01&quot;</span>
+<span class="nt">session</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;ses-01&quot;</span>
+<span class="nt">data_directory</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/bids/dataset&quot;</span>
+
+<span class="c1"># OR Direct File Paths approach</span>
+<span class="nt">subject</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;SUB001&quot;</span>
+<span class="nt">session</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;SES01&quot;</span>
+<span class="nt">t1w_file</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/t1w.nii.gz&quot;</span>
+<span class="nt">flair_file</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/flair.nii.gz&quot;</span>
+<span class="nt">dwi_file</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/dwi.nii.gz&quot;</span>
+</pre></div>
+</div>
+</div></div>
+</section>
+<section id="implementation-details">
+<h2>Implementation Details<a class="headerlink" href="#implementation-details" title="Link to this heading"></a></h2>
+<p>The pipeline implementation follows a modular design where each processing step is encapsulated as a separate rule in the Snakefile:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Key pipeline rules from Snakefile</span>
+<span class="n">rule</span> <span class="n">skull_strip</span><span class="p">:</span>
+    <span class="c1"># Extract brain tissue from T1w/FLAIR images</span>
+
+<span class="n">rule</span> <span class="n">bias_field_correction</span><span class="p">:</span>
+    <span class="c1"># Correct intensity non-uniformities</span>
+
+<span class="n">rule</span> <span class="n">synthseg_t1w</span><span class="p">:</span>
+    <span class="c1"># AI-based segmentation of T1w images</span>
+
+<span class="n">rule</span> <span class="n">registration_t1w</span><span class="p">:</span>
+    <span class="c1"># Register FLAIR to T1w space</span>
+
+<span class="n">rule</span> <span class="n">registration_mni152</span><span class="p">:</span>
+    <span class="c1"># Register T1w to standard space</span>
+
+<span class="n">rule</span> <span class="n">run_texture</span><span class="p">:</span>
+    <span class="c1"># Generate texture feature maps</span>
+
+<span class="c1"># Additional DWI processing rules when enabled</span>
+<span class="k">if</span> <span class="n">RUN_DWI</span><span class="p">:</span>
+    <span class="n">rule</span> <span class="n">dwi_denoise</span><span class="p">:</span>
+        <span class="c1"># Remove noise from diffusion images</span>
+
+    <span class="n">rule</span> <span class="n">dwi_motion_correction</span><span class="p">:</span>
+        <span class="c1"># Correct for head motion in diffusion data</span>
+
+    <span class="c1"># ... additional DWI rules ...</span>
+</pre></div>
+</div>
+</section>
+<section id="quality-control">
+<h2>Quality Control<a class="headerlink" href="#quality-control" title="Link to this heading"></a></h2>
+<p>The pipeline includes quality assessment metrics to evaluate the performance of critical processing steps:</p>
+<ol class="arabic simple">
+<li><p><strong>Registration Accuracy</strong>: Jaccard similarity metrics between registered images</p></li>
+<li><p><strong>Transformation Files</strong>: All transformation matrices and warp fields are saved for inspection</p></li>
+<li><p><strong>Intermediate Results</strong>: Preprocessed images at each stage for quality checks</p></li>
+</ol>
+<p>For complete implementation details, refer to the <a class="reference external" href="https://github.com/yourusername/micaflow/blob/main/micaflow/resources/Snakefile">Snakefile</a> in the repository.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="getting_started.html" class="btn btn-neutral float-left" title="Getting Started" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="examples.html" class="btn btn-neutral float-right" title="Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
