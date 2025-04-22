@@ -19,7 +19,7 @@ MicaFlow is a comprehensive neuroimaging pipeline designed for processing struct
 
 ### Prerequisites
 
-- Python 3.9, 3.10, or 3.11
+- Python 3.10, 3.11, or 3.12
 
 ### Installation Steps
 
