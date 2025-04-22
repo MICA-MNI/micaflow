@@ -4,12 +4,9 @@ import sys
 
 def get_requirements():
     """Get requirements based on Python version"""
-    python_version = sys.version_info
-    
-    if python_version.major == 3 and python_version.minor >= 10 and python_version.minor <= 12:
-        req_file = "requirements.txt"
-    else:
-        print(f"Warning: Python version {python_version.major}.{python_version.minor} is not officially supported.")
+
+    req_file = "requirements.txt"
+
     
     print(f"Using requirements from: {req_file}")
     
