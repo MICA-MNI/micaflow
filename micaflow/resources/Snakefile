@@ -33,6 +33,9 @@ DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, RUN_DWI, CPU, FLAIR_FILE, T1W_FILE, D
         DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, CPU, 
         FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, THREADS
     )
+    
+CPU = "--cpu" if isinstance(CPU, bool) and CPU else ""
+
 print("flair_file: ", FLAIR_FILE)
 print("run_flair: ", RUN_FLAIR)
 def get_final_output():
@@ -281,7 +284,7 @@ if RUN_DWI:
         input:
             image = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_{wildcards.metric}.nii.gz"
         output:
-            normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_{{metric}}_normalized.nii.gz"
+            normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_{{metric}}_normalized.nii.gz"
         shell:
             """
             micaflow normalize \
@@ -451,7 +454,7 @@ if RUN_DWI:
         input:
             fa = rules.dwi_compute_fa_md.output.fa,
             md = rules.dwi_compute_fa_md.output.md,
-            reference = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_biascorrected_T1w.nii.gz",
+            reference = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_T1w-space_T1w.nii.gz",
             affine = rules.dwi_registration.output.fwd_affine,
             warp = rules.dwi_registration.output.fwd_field
         output:
