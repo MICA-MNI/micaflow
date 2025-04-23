@@ -15,9 +15,11 @@ DWI_FILE = config.get("dwi_file", "")
 BVAL_FILE = config.get("bval_file", "")
 BVEC_FILE = config.get("bvec_file", "")
 INVERSE_DWI_FILE = config.get("inverse_dwi_file", "")
-CPU = config.get("cpu", "")
-CPU = "--cpu" if CPU else ""
-print("CPU: ", CPU)
+RM_CEREBELLUM = config.get("rm_cerebellum", "")
+print("RM_CEREBELLUM: ", RM_CEREBELLUM)
+print(config)
+GPU = config.get("gpu", "")
+print("GPU: ", GPU)
 
 # Atlas paths
 ATLAS_DIR = os.path.join(workflow.basedir, "atlas")
@@ -29,12 +31,12 @@ ATLAS_SEG = os.path.join(ATLAS_DIR, "mni_icbm152_t1_tal_nlin_sym_09a_seg.nii")
 SCRIPT_DIR = os.path.join(os.path.dirname(workflow.basedir), "scripts")
 
 # Check paths
-DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, RUN_DWI, CPU, FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, THREADS, RUN_FLAIR = check_paths(
-        DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, CPU, 
+DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, RUN_DWI, GPU, FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, THREADS, RUN_FLAIR = check_paths(
+        DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, GPU, 
         FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, THREADS
     )
-    
-CPU = "--cpu" if isinstance(CPU, bool) and CPU else ""
+
+GPU = "--cpu" if GPU == False else ""
 
 print("flair_file: ", FLAIR_FILE)
 print("run_flair: ", RUN_FLAIR)
@@ -84,14 +86,29 @@ rule all:
 
 rule skull_strip:
     input:
-        image = lambda wildcards: T1W_FILE if wildcards.modality == "T1w" else FLAIR_FILE
+        image = lambda wildcards: T1W_FILE if wildcards.modality == "T1w" else FLAIR_FILE,
+        seg = lambda wildcards: (
+            rules.synthseg_t1w.output.seg if wildcards.modality == "T1w" else
+            rules.synthseg_flair.output.seg if wildcards.modality == "FLAIR" else
+            []
+        )
     output:
         brain = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_{{modality}}.nii.gz",
         mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_{{modality}}_mask.nii.gz"
+    params:
+        parcellation = lambda wildcards, input: f"--parcellation {input.seg}",
+        rm_cerebellum = "--remove-cerebellum" if RM_CEREBELLUM else ""
     resources:
         skull_strip_jobs=1  # Allows only one job of this type to run at a time
     shell:
-        "micaflow bet --input {input.image} --output {output.brain} --output-mask {output.mask} {CPU}"
+        """
+        micaflow bet \
+            --input {input.image} \
+            --output {output.brain} \
+            --output-mask {output.mask} \
+            {params.parcellation} \
+            {params.rm_cerebellum} 
+        """
 
 rule bias_field_correction:
     input:
@@ -109,7 +126,7 @@ rule synthseg_t1w:
         seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_synthseg_T1w.nii.gz"
     threads: THREADS
     shell:
-        "micaflow synthseg --i {input.image} --o {output.seg} --parc --robust --threads {threads} {CPU}"
+        "micaflow synthseg --i {input.image} --o {output.seg} --parc --robust --threads {threads} {GPU}"
 
 rule synthseg_flair:
     input:
@@ -119,7 +136,7 @@ rule synthseg_flair:
         seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_synthseg_FLAIR.nii.gz"
     threads: THREADS
     shell:
-        "micaflow synthseg --i {input.image} --o {output.seg} --parc --robust --threads {threads} {CPU}"
+        "micaflow synthseg --i {input.image} --o {output.seg} --parc --robust --threads {threads} {GPU}"
 
 rule registration_t1w:
     input:
@@ -361,34 +378,7 @@ if RUN_DWI:
                 --output {output.corrected}
             """
 
-    rule dwi_skull_strip:
-        input:
-            image = rules.dwi_topup.output.corrected
-        output:
-            image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_DWI.nii.gz",
-            mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_DWI_mask.nii.gz"
-        shell:
-            """
-            micaflow bet \
-                --input {input.image} \
-                --output {output.image} \
-                --output-mask {output.mask} \
-                {CPU}
-            """
 
-    rule dwi_bias_correction:
-        input:
-            image = rules.dwi_apply_topup.output.corrected,
-            mask = rules.dwi_skull_strip.output.mask
-        output:
-            corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_denoised_bias-corrected_DWI.nii.gz"
-        shell:
-            """
-            micaflow bias_correction \
-                --input {input.image} \
-                --mask {input.mask} \
-                --output {output.corrected}
-            """
 
     rule synthseg_dwi:
         input:
@@ -405,7 +395,40 @@ if RUN_DWI:
                 --parc \
                 --robust \
                 --threads {threads} \
-                {CPU}
+                {GPU}
+            """
+
+    rule dwi_skull_strip:
+        input:
+            image = rules.dwi_topup.output.corrected,
+            seg = rules.synthseg_dwi.output.seg
+        output:
+            image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_DWI.nii.gz",
+            mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_DWI_mask.nii.gz"
+        params:
+            rm_cerebellum = "--remove-cerebellum" if RM_CEREBELLUM else ""
+        shell:
+            """
+            micaflow bet \
+                --input {input.image} \
+                --output {output.image} \
+                --output-mask {output.mask} \
+                --parcellation {input.seg} \
+                {params.rm_cerebellum} 
+            """
+
+    rule dwi_bias_correction:
+        input:
+            image = rules.dwi_apply_topup.output.corrected,
+            mask = rules.dwi_skull_strip.output.mask
+        output:
+            corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_denoised_bias-corrected_DWI.nii.gz"
+        shell:
+            """
+            micaflow bias_correction \
+                --input {input.image} \
+                --mask {input.mask} \
+                --output {output.corrected}
             """
 
     rule dwi_registration:
