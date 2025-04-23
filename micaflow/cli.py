@@ -53,7 +53,7 @@ def print_extended_help():
     
     {CYAN}{BOLD}──────────────── PIPELINE REQUIRED PARAMETERS ────────────{RESET}
       {YELLOW}--subject{RESET} SUBJECT_ID           Subject ID
-      {YELLOW}--out-dir{RESET} OUTPUT_DIR           Output directory 
+      {YELLOW}--output{RESET} OUTPUT_DIR           Output directory 
       {YELLOW}--t1w-file{RESET} T1W_FILE            T1-weighted image file
     
     {CYAN}{BOLD}──────────────── PIPELINE OPTIONAL PARAMETERS ────────────{RESET}
@@ -74,19 +74,19 @@ def print_extended_help():
     {BLUE}# Process a single subject with T1w only{RESET}
     micaflow {GREEN}pipeline{RESET} {YELLOW}--subject{RESET} sub-001 {YELLOW}--session{RESET} ses-01 \\
       {YELLOW}--data-directory{RESET} /data {YELLOW}--t1w-file{RESET} sub-001_ses-01_T1w.nii.gz \\
-      {YELLOW}--out-dir{RESET} /output {YELLOW}--cores{RESET} 4
+      {YELLOW}--output{RESET} /output {YELLOW}--cores{RESET} 4
     
     {BLUE}# Process with FLAIR{RESET}
     micaflow {GREEN}pipeline{RESET} {YELLOW}--subject{RESET} sub-001 {YELLOW}--session{RESET} ses-01 \\
       {YELLOW}--data-directory{RESET} /data {YELLOW}--t1w-file{RESET} sub-001_ses-01_T1w.nii.gz \\
-      {YELLOW}--flair-file{RESET} sub-001_ses-01_FLAIR.nii.gz {YELLOW}--out-dir{RESET} /output {YELLOW}--cores{RESET} 4
+      {YELLOW}--flair-file{RESET} sub-001_ses-01_FLAIR.nii.gz {YELLOW}--output{RESET} /output {YELLOW}--cores{RESET} 4
     
     {BLUE}# Process with diffusion data{RESET}
     micaflow {GREEN}pipeline{RESET} {YELLOW}--subject{RESET} sub-001 {YELLOW}--session{RESET} ses-01 \\
       {YELLOW}--data-directory{RESET} /data {YELLOW}--t1w-file{RESET} sub-001_ses-01_T1w.nii.gz \\
       {YELLOW}--run-dwi{RESET} {YELLOW}--dwi-file{RESET} sub-001_ses-01_dwi.nii.gz \\
       {YELLOW}--bval-file{RESET} sub-001_ses-01_dwi.bval {YELLOW}--bvec-file{RESET} sub-001_ses-01_dwi.bvec \\
-      {YELLOW}--inverse-dwi-file{RESET} sub-001_ses-01_acq-PA_dwi.nii.gz {YELLOW}--out-dir{RESET} /output {YELLOW}--cores{RESET} 4
+      {YELLOW}--inverse-dwi-file{RESET} sub-001_ses-01_acq-PA_dwi.nii.gz {YELLOW}--output{RESET} /output {YELLOW}--cores{RESET} 4
     
     {CYAN}{BOLD}─────────────────── EXAMPLE MODULE USAGE ────────────────{RESET}
 
@@ -365,16 +365,13 @@ def main():
         "calculate_dice",
         help="Calculate DICE between two segmentations",
     )
-    dice_parser.add_argument(
-        "--input", "-i", required=True, help="First input volume"
-    )
+    dice_parser.add_argument("--input", "-i", required=True, help="First input volume")
     dice_parser.add_argument(
         "--reference", "-r", required=True, help="Reference volume to compare against"
     )
     dice_parser.add_argument(
         "--output", "-o", required=True, help="Output CSV file path"
     )
-
 
     # Compute FA/MD command
     compute_fa_md_parser = subparsers.add_parser(
@@ -599,7 +596,8 @@ def main():
         # Add any additional snakemake arguments
         if args.snakemake_args:
             cmd.extend(args.snakemake_args)
-
+        else:
+            cmd.extend(["--quiet"])
         print(f"Executing: {' '.join(cmd)}")
 
         # Execute the snakemake command
@@ -762,9 +760,7 @@ def main():
 
         # Run the calculate_dice script
         try:
-            print(
-                f"Calculating DICE between {args.input} and {args.reference}..."
-            )
+            print(f"Calculating DICE between {args.input} and {args.reference}...")
             subprocess.run(
                 ["python", "-m", "micaflow.scripts.calculate_dice"] + dice_args,
                 check=True,
