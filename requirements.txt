@@ -139,3 +139,4 @@ yte
 colorama
 lamareg
 nnunetv2
+nilearn
