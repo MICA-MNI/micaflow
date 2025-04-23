@@ -4,7 +4,7 @@ bet - Brain Extraction Tool using HD-BET
 Part of the micaflow processing pipeline for neuroimaging data.
 
 This module provides brain extraction (skull stripping) functionality using the High-Definition
-Brain Extraction Tool (HD-BET), a deep learning-based approach that accurately segments the 
+Brain Extraction Tool (HD-BET), a deep learning-based approach that accurately segments the
 brain from surrounding tissues in MR images. HD-BET offers superior performance over traditional
 methods, particularly for clinical and non-standard MR images.
 
@@ -18,7 +18,7 @@ Features:
 
 API Usage:
 ---------
-micaflow bet 
+micaflow bet
     --input <path/to/image.nii.gz>
     --output <path/to/brain.nii.gz>
     --output-mask <path/to/brain_mask.nii.gz>
@@ -43,8 +43,12 @@ import os
 import shutil
 import sys
 from colorama import init, Fore, Style
+import nibabel as nib
+from nilearn.image import resample_to_img
+import numpy as np
 
 init()
+
 
 def print_help_message():
     # ANSI color codes
@@ -55,7 +59,7 @@ def print_help_message():
     MAGENTA = Fore.MAGENTA
     BOLD = Style.BRIGHT
     RESET = Style.RESET_ALL
-    
+
     help_text = f"""
     {CYAN}{BOLD}╔════════════════════════════════════════════════════════════════╗
     ║                           HD-BET                               ║
@@ -97,26 +101,57 @@ if __name__ == "__main__":
     if len(sys.argv) == 1 or "-h" in sys.argv or "--help" in sys.argv:
         print_help_message()
         sys.exit(0)
-        
-    parser = argparse.ArgumentParser(description="Perform brain extraction using HD-BET")
+
+    parser = argparse.ArgumentParser(
+        description="Perform brain extraction using HD-BET"
+    )
     parser.add_argument("--input", "-i", required=True, help="Input MR image file")
     parser.add_argument(
         "--output", "-o", required=True, help="Output brain-extracted image file"
     )
     parser.add_argument(
-        "--output-mask", "-m", required=True, help="Output brain-extracted mask image file"
+        "--output-mask",
+        "-m",
+        required=True,
+        help="Output brain-extracted mask image file",
     )
-    parser.add_argument("--cpu", action="store_true", help="Use CPU instead of GPU")
+    parser.add_argument(
+        "--parcellation",
+        "-p",
+        help="Parcellation file for the input image (optional)",
+    )
+    parser.add_argument(
+        "--remove-cerebellum",
+        "-r",
+        action="store_true",
+        help="Remove cerebellum from the input image (optional)",
+    )
+
     args = parser.parse_args()
     input_abs_path = os.path.abspath(args.input)
+    input_img = nib.load(args.input)
+    synthseg_img = nib.load(args.parcellation)
+    input_brain = input_img.get_fdata()
 
-    # Get the directory where this script is located
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    # Create path to HD_BET entry_point.py relative to this script's location
-    hdbet_script = os.path.join(script_dir, "HD_BET", "entry_point.py")
-
-    subprocess.run(
-        f"python3 {hdbet_script} -i {input_abs_path} -o {args.output} --save_bet_mask{' -device cpu --disable_tta' if args.cpu else ''}",
-        shell=True,
+    # Resample synthseg to match input dimensions and space
+    # Using nearest interpolation to preserve label values
+    resampled_synthseg_img = resample_to_img(
+        synthseg_img, input_img, interpolation="nearest"
     )
-    shutil.move(args.output.replace(".nii.gz", "") + "_bet" + ".nii.gz", args.output_mask)
+    synthseg_brain = resampled_synthseg_img.get_fdata()
+
+    mask = synthseg_brain > 0
+    print("mask.shape", mask.shape)
+    print("input_brain.shape", input_brain.shape)
+    if args.remove_cerebellum:
+        # If removing cerebellum, exclude these labels from the mask
+        cerebellum_labels = [7, 8, 46, 47, 16, 15, 24]
+        for label in cerebellum_labels:
+            mask = mask & (synthseg_brain != label)
+
+    # Apply the mask to the input image
+    input_brain[~mask] = 0
+    input_brain = nib.Nifti1Image(input_brain, nib.load(args.input).affine)
+    input_brain.to_filename(args.output)
+    mask = nib.Nifti1Image(mask.astype(np.int8), nib.load(args.input).affine)
+    mask.to_filename(args.output_mask)

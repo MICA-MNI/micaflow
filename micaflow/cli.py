@@ -207,6 +207,9 @@ def main():
         nargs=argparse.REMAINDER,
         help="Additional arguments to pass to Snakemake",
     )
+    pipeline_parser.add_argument(
+        "--rm-cerebellum", action="store_true", help="Remove cerebellum from images"
+    )
 
     # SynthSeg command
     synthseg_parser = subparsers.add_parser(
@@ -330,6 +333,14 @@ def main():
     )
     bet_parser.add_argument(
         "--output-mask", help="Path to the output brain mask (.nii.gz)"
+    )
+    bet_parser.add_argument(
+        "--parcellation", help="Parcellation file for the input image (optional)"
+    )
+    bet_parser.add_argument(
+        "--remove-cerebellum",
+        action="store_true",
+        help="Remove cerebellum from the input image (optional)",
     )
     bet_parser.add_argument("--cpu", action="store_true", help="Use CPU instead of GPU")
 
@@ -570,6 +581,8 @@ def main():
             "bvec_file",
             "inverse_dwi_file",
             "threads",
+            "rm_cerebellum",
+            "cpu",
         ]:
             if getattr(args, param.replace("-", "_"), None):
                 config[param] = getattr(args, param.replace("-", "_"))
