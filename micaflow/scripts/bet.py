@@ -1,17 +1,15 @@
 """
-bet - Brain Extraction Tool using HD-BET
+bet - Brain Extraction Tool using SynthSeg
 
 Part of the micaflow processing pipeline for neuroimaging data.
 
-This module provides brain extraction (skull stripping) functionality using the High-Definition
-Brain Extraction Tool (HD-BET), a deep learning-based approach that accurately segments the
-brain from surrounding tissues in MR images. HD-BET offers superior performance over traditional
+This module provides brain extraction (skull stripping) functionality using the SynthSeg-generated mask, a deep learning-based approach that accurately segments the
+brain from surrounding tissues in MR images. SynthSeg offers superior performance over traditional
 methods, particularly for clinical and non-standard MR images.
 
 Features:
 --------
 - Deep learning-based brain extraction with state-of-the-art accuracy
-- Support for both CPU and GPU execution modes
 - Compatible with various MRI modalities (T1w, T2w, FLAIR)
 - Produces both skull-stripped images and binary brain masks
 - Robust to imaging artifacts and pathologies
@@ -22,7 +20,8 @@ micaflow bet
     --input <path/to/image.nii.gz>
     --output <path/to/brain.nii.gz>
     --output-mask <path/to/brain_mask.nii.gz>
-    [--cpu]
+    --parcellation <path/to/parcellation.nii.gz>
+    [--remove-cerebellum]
 
 Python Usage:
 -----------
@@ -32,7 +31,7 @@ Python Usage:
 ...     input_file="t1w.nii.gz",
 ...     output_file="brain.nii.gz",
 ...     mask_file="brain_mask.nii.gz",
-...     use_cpu=False
+...     parcellation_file="parcellation.nii.gz",
 ... )
 
 """
@@ -62,11 +61,11 @@ def print_help_message():
 
     help_text = f"""
     {CYAN}{BOLD}╔════════════════════════════════════════════════════════════════╗
-    ║                           HD-BET                               ║
+    ║                            BET                                 ║
     ╚════════════════════════════════════════════════════════════════╝{RESET}
     
     This script performs brain extraction (skull stripping) on MRI images 
-    using the HD-BET deep learning tool. It accurately segments the brain 
+    using SynthSeg. It accurately segments the brain 
     from surrounding tissues.
     
     {CYAN}{BOLD}────────────────────────── USAGE ──────────────────────────{RESET}
@@ -76,20 +75,22 @@ def print_help_message():
       {YELLOW}--input{RESET}, {YELLOW}-i{RESET}      : Path to the input MR image (.nii.gz)
       {YELLOW}--output{RESET}, {YELLOW}-o{RESET}     : Path for the output brain-extracted image (.nii.gz)
       {YELLOW}--output-mask{RESET}, {YELLOW}-m{RESET}: Path for the output brain mask (.nii.gz)
+      {YELLOW}--parcellation{RESET}, {YELLOW}-p{RESET}: Path to the parcellation file (.nii.gz)
     
     {CYAN}{BOLD}─────────────────── OPTIONAL ARGUMENTS ───────────────────{RESET}
-      {YELLOW}--cpu{RESET}            : Use CPU instead of GPU for computation (slower but works without CUDA)
+      {YELLOW}--remove-cerebellum{RESET}, {YELLOW}-r{RESET}: Remove cerebellum from the input image (optional)
+      {YELLOW}--input-mask{RESET}                : Path to the input mask image (.nii.gz) (optional)
     
     {CYAN}{BOLD}────────────────── EXAMPLE USAGE ────────────────────────{RESET}
     
-    {GREEN}# Run HD-BET with GPU{RESET}
-    micaflow bet {YELLOW}--input{RESET} t1w.nii.gz {YELLOW}--output{RESET} t1w_brain.nii.gz {YELLOW}--output-mask{RESET} t1w_brain_mask.nii.gz
-    
-    {GREEN}# Run HD-BET with CPU{RESET}
-    micaflow bet {YELLOW}--input{RESET} t1w.nii.gz {YELLOW}--output{RESET} t1w_brain.nii.gz {YELLOW}--output-mask{RESET} t1w_brain_mask.nii.gz {YELLOW}--cpu{RESET}
+    {GREEN}# Run BET{RESET}
+    micaflow bet {YELLOW}--input{RESET} t1w.nii.gz {YELLOW}--output{RESET} t1w_brain.nii.gz {YELLOW}--output-mask{RESET} t1w_brain_mask.nii.gz {YELLOW}--parcellation{RESET} parcellation.nii.gz
+    {GREEN}# Run BET with cerebellum removal{RESET}
+    micaflow bet {YELLOW}--input{RESET} t1w.nii.gz {YELLOW}--output{RESET} t1w_brain.nii.gz {YELLOW}--output-mask{RESET} t1w_brain_mask.nii.gz {YELLOW}--parcellation{RESET} parcellation.nii.gz {YELLOW}--remove-cerebellum{RESET}
+    {GREEN}# Run BET with input mask{RESET}
+    micaflow bet {YELLOW}--input{RESET} t1w.nii.gz {YELLOW}--output{RESET} t1w_brain.nii.gz {YELLOW}--output-mask{RESET} t1w_brain_mask.nii.gz {YELLOW}--input-mask{RESET} input_mask.nii.gz
     
     {CYAN}{BOLD}────────────────────────── NOTES ─────────────────────────{RESET}
-    - GPU acceleration is used by default for faster processing
     - The output is a brain-extracted image and a binary brain mask
     
     """
@@ -106,13 +107,13 @@ if __name__ == "__main__":
         description="Perform brain extraction using HD-BET"
     )
     parser.add_argument("--input", "-i", required=True, help="Input MR image file")
+    parser.add_argument("--input-mask", help="Input mask image file (optional)")
     parser.add_argument(
         "--output", "-o", required=True, help="Output brain-extracted image file"
     )
     parser.add_argument(
         "--output-mask",
         "-m",
-        required=True,
         help="Output brain-extracted mask image file",
     )
     parser.add_argument(
@@ -130,28 +131,38 @@ if __name__ == "__main__":
     args = parser.parse_args()
     input_abs_path = os.path.abspath(args.input)
     input_img = nib.load(args.input)
-    synthseg_img = nib.load(args.parcellation)
-    input_brain = input_img.get_fdata()
+    if args.input_mask:
+        # If an input mask is provided, load it and apply it to the input image
+        print("Using input mask")
+        input_mask = nib.load(args.input_mask)
+        input_brain = input_img.get_fdata()
+        input_mask = nib.load(args.input_mask).get_fdata().astype(bool)
+        input_brain[~input_mask] = 0
+        input_brain = nib.Nifti1Image(input_brain, nib.load(args.input).affine)
+        input_brain.to_filename(args.output)
+    else:
+        synthseg_img = nib.load(args.parcellation)
+        input_brain = input_img.get_fdata()
 
-    # Resample synthseg to match input dimensions and space
-    # Using nearest interpolation to preserve label values
-    resampled_synthseg_img = resample_to_img(
-        synthseg_img, input_img, interpolation="nearest"
-    )
-    synthseg_brain = resampled_synthseg_img.get_fdata()
+        # Resample synthseg to match input dimensions and space
+        # Using nearest interpolation to preserve label values
+        resampled_synthseg_img = resample_to_img(
+            synthseg_img, input_img, interpolation="nearest"
+        )
+        synthseg_brain = resampled_synthseg_img.get_fdata()
 
-    mask = synthseg_brain > 0
-    print("mask.shape", mask.shape)
-    print("input_brain.shape", input_brain.shape)
-    if args.remove_cerebellum:
-        # If removing cerebellum, exclude these labels from the mask
-        cerebellum_labels = [7, 8, 46, 47, 16, 15, 24]
-        for label in cerebellum_labels:
-            mask = mask & (synthseg_brain != label)
+        mask = synthseg_brain > 0
+        print("mask.shape", mask.shape)
+        print("input_brain.shape", input_brain.shape)
+        if args.remove_cerebellum:
+            # If removing cerebellum, exclude these labels from the mask
+            cerebellum_labels = [7, 8, 46, 47, 16, 15, 24]
+            for label in cerebellum_labels:
+                mask = mask & (synthseg_brain != label)
 
-    # Apply the mask to the input image
-    input_brain[~mask] = 0
-    input_brain = nib.Nifti1Image(input_brain, nib.load(args.input).affine)
-    input_brain.to_filename(args.output)
-    mask = nib.Nifti1Image(mask.astype(np.int8), nib.load(args.input).affine)
-    mask.to_filename(args.output_mask)
+        # Apply the mask to the input image
+        input_brain[~mask] = 0
+        input_brain = nib.Nifti1Image(input_brain, nib.load(args.input).affine)
+        input_brain.to_filename(args.output)
+        mask = nib.Nifti1Image(mask.astype(np.int8), nib.load(args.input).affine)
+        mask.to_filename(args.output_mask)

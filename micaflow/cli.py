@@ -64,7 +64,7 @@ def print_extended_help():
       {YELLOW}--bval-file{RESET} BVAL_FILE          B-value file for DWI
       {YELLOW}--bvec-file{RESET} BVEC_FILE          B-vector file for DWI
       {YELLOW}--inverse-dwi-file{RESET} INV_FILE    Inverse (PA) DWI for distortion correction
-      {YELLOW}--cpu{RESET}                          Force CPU computation
+      {YELLOW}--gpu{RESET}                          Use GPU for computation
       {YELLOW}--cores{RESET} N                      Number of CPU cores to use (default: 1)
       {YELLOW}--dry-run{RESET}, {YELLOW}-n{RESET}                  Dry run (don't execute commands)
       {YELLOW}--config-file{RESET} FILE             Path to a YAML configuration file.
@@ -188,7 +188,7 @@ def main():
     pipeline_parser.add_argument("--bvec-file", help="Path to bvec file")
     pipeline_parser.add_argument("--inverse-dwi-file", help="Path to inverse DWI file")
     pipeline_parser.add_argument(
-        "--cpu", action="store_true", help="Use CPU computation"
+        "--gpu", action="store_true", help="Use GPU computation"
     )
     pipeline_parser.add_argument(
         "--threads", type=int, default=1, help="Number of threads to use"
@@ -335,6 +335,9 @@ def main():
         "--output-mask", help="Path to the output brain mask (.nii.gz)"
     )
     bet_parser.add_argument(
+        "--input-mask", help="Path to the input brain mask (.nii.gz) (optional)"
+    )
+    bet_parser.add_argument(
         "--parcellation", help="Parcellation file for the input image (optional)"
     )
     bet_parser.add_argument(
@@ -342,7 +345,6 @@ def main():
         action="store_true",
         help="Remove cerebellum from the input image (optional)",
     )
-    bet_parser.add_argument("--cpu", action="store_true", help="Use CPU instead of GPU")
 
     # Bias Correction Tool command
     bias_corr_parser = subparsers.add_parser(
@@ -582,13 +584,10 @@ def main():
             "inverse_dwi_file",
             "threads",
             "rm_cerebellum",
-            "cpu",
+            "gpu",
         ]:
             if getattr(args, param.replace("-", "_"), None):
                 config[param] = getattr(args, param.replace("-", "_"))
-
-        if args.cpu:
-            config["cpu"] = "True"
 
         # Add config parameters to command
         if len(config) > 0:
@@ -609,8 +608,6 @@ def main():
         # Add any additional snakemake arguments
         if args.snakemake_args:
             cmd.extend(args.snakemake_args)
-        else:
-            cmd.extend(["--quiet"])
         print(f"Executing: {' '.join(cmd)}")
 
         # Execute the snakemake command

@@ -15,9 +15,8 @@ DWI_FILE = config.get("dwi_file", "")
 BVAL_FILE = config.get("bval_file", "")
 BVEC_FILE = config.get("bvec_file", "")
 INVERSE_DWI_FILE = config.get("inverse_dwi_file", "")
-RM_CEREBELLUM = config.get("rm_cerebellum", "")
-print("RM_CEREBELLUM: ", RM_CEREBELLUM)
-print(config)
+RM_CEREBELLUM = config.get("rm_cerebellum", False)
+
 GPU = config.get("gpu", "")
 print("GPU: ", GPU)
 
@@ -472,11 +471,30 @@ if RUN_DWI:
                 --output-fa {output.fa} \
                 --output-md {output.md}
             """
-
-    rule dwi_fa_md_registration:
+    rule fa_md_skull_strip:
         input:
             fa = rules.dwi_compute_fa_md.output.fa,
             md = rules.dwi_compute_fa_md.output.md,
+            mask = rules.dwi_skull_strip.output.mask
+        output:
+            fa_image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_brain-extracted_FA.nii.gz",
+            md_image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_brain-extracted_MD.nii.gz"
+        shell:
+            """
+            micaflow bet \
+                --input {input.fa} \
+                --output {output.fa_image} \
+                --input-mask {input.mask} 
+            
+            micaflow bet \
+                --input {input.md} \
+                --output {output.md_image} \
+                --input-mask {input.mask} 
+            """
+    rule dwi_fa_md_registration:
+        input:
+            fa = rules.fa_md_skull_strip.output.fa_image,
+            md = rules.fa_md_skull_strip.output.md_image,
             reference = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_T1w-space_T1w.nii.gz",
             affine = rules.dwi_registration.output.fwd_affine,
             warp = rules.dwi_registration.output.fwd_field
@@ -517,3 +535,4 @@ if RUN_DWI:
                 --reference {input.atlas} \
                 --output {output.metrics}
             """
+

@@ -7,3 +7,4 @@ work/*
 /.snakemake/
 /.vscode/
 /micaflow.egg-info
+/micaflow/resources/.snakemake
