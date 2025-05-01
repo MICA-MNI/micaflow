@@ -14,7 +14,6 @@ def get_snakefile_path():
 
 
 def print_extended_help():
-    """Print an extended help message with examples."""
     # ANSI color codes
     CYAN = Fore.CYAN
     GREEN = Fore.GREEN
@@ -39,9 +38,9 @@ def print_extended_help():
     {CYAN}{BOLD}─────────────────── AVAILABLE COMMANDS ───────────────────{RESET}
       {GREEN}pipeline{RESET}          : Run the full processing pipeline (default)
       {GREEN}apply_warp{RESET}        : Apply transformation to warp an image to a reference space
-      {GREEN}bet{RESET}               : Run HD-BET brain extraction
+      {GREEN}bet{RESET}               : Run brain extraction
       {GREEN}bias_correction{RESET}   : Run N4 Bias Field Correction
-      {GREEN}calculate_dice{RESET} : Calculate DICE score between two segmentations
+      {GREEN}calculate_dice{RESET}    : Calculate DICE score between two segmentations
       {GREEN}compute_fa_md{RESET}     : Compute Fractional Anisotropy and Mean Diffusivity maps
       {GREEN}coregister{RESET}        : Coregister a moving image to a reference image
       {GREEN}denoise{RESET}           : Denoise diffusion-weighted images using Patch2Self
@@ -67,7 +66,10 @@ def print_extended_help():
       {YELLOW}--gpu{RESET}                          Use GPU for computation
       {YELLOW}--cores{RESET} N                      Number of CPU cores to use (default: 1)
       {YELLOW}--dry-run{RESET}, {YELLOW}-n{RESET}                  Dry run (don't execute commands)
-      {YELLOW}--config-file{RESET} FILE             Path to a YAML configuration file.
+      {YELLOW}--config-file{RESET} FILE             Path to a YAML configuration file
+      {YELLOW}--extract-brain{RESET}                Generate brain-extracted versions of all outputs in a dedicated directory
+      {YELLOW}--keep-temp{RESET}                    Keep temporary processing files (useful for debugging)
+      {YELLOW}--rm-cerebellum{RESET}                Remove cerebellum from brain extraction outputs
     
     {CYAN}{BOLD}────────────────── EXAMPLE PIPELINE USAGE ───────────────{RESET}
 
@@ -76,23 +78,28 @@ def print_extended_help():
       {YELLOW}--data-directory{RESET} /data {YELLOW}--t1w-file{RESET} sub-001_ses-01_T1w.nii.gz \\
       {YELLOW}--output{RESET} /output {YELLOW}--cores{RESET} 4
     
-    {BLUE}# Process with FLAIR{RESET}
+    {BLUE}# Process with FLAIR and brain extraction{RESET}
     micaflow {GREEN}pipeline{RESET} {YELLOW}--subject{RESET} sub-001 {YELLOW}--session{RESET} ses-01 \\
       {YELLOW}--data-directory{RESET} /data {YELLOW}--t1w-file{RESET} sub-001_ses-01_T1w.nii.gz \\
-      {YELLOW}--flair-file{RESET} sub-001_ses-01_FLAIR.nii.gz {YELLOW}--output{RESET} /output {YELLOW}--cores{RESET} 4
+      {YELLOW}--flair-file{RESET} sub-001_ses-01_FLAIR.nii.gz {YELLOW}--output{RESET} /output \\
+      {YELLOW}--extract-brain{RESET} {YELLOW}--cores{RESET} 4
     
-    {BLUE}# Process with diffusion data{RESET}
+    {BLUE}# Process with diffusion data, keep temporary files and remove cerebellum{RESET}
     micaflow {GREEN}pipeline{RESET} {YELLOW}--subject{RESET} sub-001 {YELLOW}--session{RESET} ses-01 \\
       {YELLOW}--data-directory{RESET} /data {YELLOW}--t1w-file{RESET} sub-001_ses-01_T1w.nii.gz \\
-      {YELLOW}--run-dwi{RESET} {YELLOW}--dwi-file{RESET} sub-001_ses-01_dwi.nii.gz \\
+      {YELLOW}--dwi-file{RESET} sub-001_ses-01_dwi.nii.gz \\
       {YELLOW}--bval-file{RESET} sub-001_ses-01_dwi.bval {YELLOW}--bvec-file{RESET} sub-001_ses-01_dwi.bvec \\
-      {YELLOW}--inverse-dwi-file{RESET} sub-001_ses-01_acq-PA_dwi.nii.gz {YELLOW}--output{RESET} /output {YELLOW}--cores{RESET} 4
+      {YELLOW}--inverse-dwi-file{RESET} sub-001_ses-01_acq-PA_dwi.nii.gz \\
+      {YELLOW}--output{RESET} /output {YELLOW}--keep-temp{RESET} {YELLOW}--rm-cerebellum{RESET} {YELLOW}--cores{RESET} 4
     
     {CYAN}{BOLD}─────────────────── EXAMPLE MODULE USAGE ────────────────{RESET}
 
     {BLUE}# Run brain extraction{RESET}
     micaflow {GREEN}bet{RESET} {YELLOW}--input{RESET} t1w.nii.gz {YELLOW}--output{RESET} brain.nii.gz {YELLOW}--output-mask{RESET} mask.nii.gz
       
+    {BLUE}# Run brain extraction with cerebellum removal{RESET}
+    micaflow {GREEN}bet{RESET} {YELLOW}--input{RESET} t1w.nii.gz {YELLOW}--output{RESET} brain.nii.gz {YELLOW}--output-mask{RESET} mask.nii.gz {YELLOW}--remove-cerebellum{RESET}
+    
     {BLUE}# Run SynthSeg segmentation{RESET}
     micaflow {GREEN}synthseg{RESET} {YELLOW}--i{RESET} t1w.nii.gz {YELLOW}--o{RESET} segmentation.nii.gz {YELLOW}--parc{RESET}
       
@@ -100,11 +107,26 @@ def print_extended_help():
     micaflow {GREEN}apply_warp{RESET} {YELLOW}--moving{RESET} t1w.nii.gz {YELLOW}--reference{RESET} template.nii.gz \\
       {YELLOW}--warp{RESET} warp.nii.gz {YELLOW}--affine{RESET} transform.mat {YELLOW}--output{RESET} warped.nii.gz
     
+    {CYAN}{BOLD}───────────────── OUTPUT DIRECTORY STRUCTURE ────────────{RESET}
+    output/
+    └── <subject>/
+        └── <session>/
+            ├── anat/                 # Anatomical images (bias-corrected)
+            ├── brain-extracted/      # Brain-extracted images (with --extract-brain)
+            ├── dwi/                  # Processed diffusion data and DTI metrics
+            ├── metrics/              # Quality metrics and DICE scores
+            ├── temp/                 # Temporary files (preserved with --keep-temp)
+            ├── textures/             # Texture features
+            └── xfm/                  # Transformation matrices and warps
+    
     {CYAN}{BOLD}────────────────────────── NOTES ───────────────────────{RESET}
     {MAGENTA}•{RESET} For help on a specific module: micaflow [command] --help
     {MAGENTA}•{RESET} The pipeline uses Snakemake for workflow management
     {MAGENTA}•{RESET} Config file can be used to specify parameters instead of command line options
     {MAGENTA}•{RESET} Each module can be run independently with its own set of parameters
+    {MAGENTA}•{RESET} Use --extract-brain to generate skull-stripped versions of all outputs in a dedicated directory
+    {MAGENTA}•{RESET} Use --keep-temp to preserve intermediate files (useful for debugging)
+    {MAGENTA}•{RESET} Use --rm-cerebellum to remove cerebellum from brain extraction outputs
     
     For more detailed help on any command, use: micaflow {GREEN}[command]{RESET} {YELLOW}--help{RESET}
     """
@@ -209,6 +231,12 @@ def main():
     )
     pipeline_parser.add_argument(
         "--rm-cerebellum", action="store_true", help="Remove cerebellum from images"
+    )
+    pipeline_parser.add_argument(
+        "--keep-temp", action="store_true", help="Keep temporary files after processing"
+    )
+    pipeline_parser.add_argument(
+        "--extract-brain", action="store_true", help="Keep brain-extracted images"
     )
 
     # SynthSeg command
@@ -585,6 +613,8 @@ def main():
             "threads",
             "rm_cerebellum",
             "gpu",
+            "keep_temp",
+            "extract_brain",
         ]:
             if getattr(args, param.replace("-", "_"), None):
                 config[param] = getattr(args, param.replace("-", "_"))

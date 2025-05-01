@@ -1,7 +1,9 @@
 import os
+import datetime  # Add this import
 from pathlib import Path
+import shutil
 from micaflow.scripts.util_bids_pathing import check_paths
-
+import json
 
 # Default parameters
 SUBJECT = config.get("subject", "")
@@ -16,6 +18,7 @@ BVAL_FILE = config.get("bval_file", "")
 BVEC_FILE = config.get("bvec_file", "")
 INVERSE_DWI_FILE = config.get("inverse_dwi_file", "")
 RM_CEREBELLUM = config.get("rm_cerebellum", False)
+KEEP_TEMP = config.get("keep_temp", False)  # New parameter to control temp directory cleanup
 
 GPU = config.get("gpu", "")
 print("GPU: ", GPU)
@@ -29,22 +32,85 @@ ATLAS_SEG = os.path.join(ATLAS_DIR, "mni_icbm152_t1_tal_nlin_sym_09a_seg.nii")
 
 SCRIPT_DIR = os.path.join(os.path.dirname(workflow.basedir), "scripts")
 
-# Check paths
-DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, RUN_DWI, GPU, FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, THREADS, RUN_FLAIR = check_paths(
-        DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, GPU, 
-        FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, THREADS
-    )
+# Define temp directory
+TEMP_DIR = f"{OUT_DIR}/{SUBJECT}/{SESSION}/temp"
+os.makedirs(TEMP_DIR, exist_ok=True)
+print(f"Temporary directory: {TEMP_DIR}")
+
+
+# Define paths cache file - specific to this subject/session
+paths_cache_file = f"{OUT_DIR}/{SUBJECT}/{SESSION}/paths_checked.json"
+os.makedirs(os.path.dirname(paths_cache_file), exist_ok=True)
+
+# Check if paths have been checked before
+if os.path.exists(paths_cache_file):
+    # Load saved paths from cache
+    with open(paths_cache_file, "r") as f:
+        paths_data = json.load(f)
+    
+    # Restore variables from cache
+    DATA_DIRECTORY = paths_data["DATA_DIRECTORY"]
+    OUT_DIR = paths_data["OUT_DIR"]
+    SUBJECT = paths_data["SUBJECT"]
+    SESSION = paths_data["SESSION"]
+    RUN_DWI = paths_data["RUN_DWI"]
+    GPU = paths_data["GPU"]
+    FLAIR_FILE = paths_data["FLAIR_FILE"]
+    T1W_FILE = paths_data["T1W_FILE"]
+    DWI_FILE = paths_data["DWI_FILE"]
+    BVAL_FILE = paths_data["BVAL_FILE"]
+    BVEC_FILE = paths_data["BVEC_FILE"]
+    INVERSE_DWI_FILE = paths_data["INVERSE_DWI_FILE"]
+    THREADS = paths_data["THREADS"]
+    RUN_FLAIR = paths_data["RUN_FLAIR"]
+    
+    print("[INFO] Loaded paths from cache file:", paths_cache_file)
+else:
+    # Run the check_paths function
+    DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, RUN_DWI, GPU, FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, THREADS, RUN_FLAIR = check_paths(
+            DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, GPU, 
+            FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, THREADS
+        )
+    
+    # Save the results to cache file
+    paths_data = {
+        "DATA_DIRECTORY": DATA_DIRECTORY,
+        "OUT_DIR": OUT_DIR,
+        "SUBJECT": SUBJECT,
+        "SESSION": SESSION,
+        "RUN_DWI": RUN_DWI,
+        "GPU": GPU,
+        "FLAIR_FILE": FLAIR_FILE,
+        "T1W_FILE": T1W_FILE,
+        "DWI_FILE": DWI_FILE,
+        "BVAL_FILE": BVAL_FILE,
+        "BVEC_FILE": BVEC_FILE,
+        "INVERSE_DWI_FILE": INVERSE_DWI_FILE,
+        "THREADS": THREADS,
+        "RUN_FLAIR": RUN_FLAIR
+    }
+    
+    with open(paths_cache_file, "w") as f:
+        json.dump(paths_data, f, indent=2)
+    
+    print("[INFO] Path checking complete. Results saved to:", paths_cache_file)
+
 
 GPU = "--cpu" if GPU == False else ""
 
 print("flair_file: ", FLAIR_FILE)
 print("run_flair: ", RUN_FLAIR)
+print("keep_temp: ", KEEP_TEMP)
+
+# Add a parameter for deep FCD processing
+EXTRACT_BRAIN = config.get("extract_brain", False)  # Default to False
+
+
 def get_final_output():
     outputs = []
+    # All existing outputs...
     outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-T1w_gradient-magnitude.nii")
     outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-T1w_relative-intensity.nii")
-    # outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-T1w_gradient-magnitude.nii")
-    # outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-T1w_relative-intensity.nii")
     outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_T1w-to-MNI152-space_DICE.csv")
     outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_T1w-space_T1w.nii.gz"))
     
@@ -56,8 +122,6 @@ def get_final_output():
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_FLAIR-to-T1w-space_DICE.csv")
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-FLAIR_gradient-magnitude.nii")
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-FLAIR_relative-intensity.nii")
-        # outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-FLAIR_gradient-magnitude.nii")
-        # outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-FLAIR_relative-intensity.nii")
         outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_T1w-space_FLAIR.nii.gz"))
         
         # Add normalized FLAIR images 
@@ -74,31 +138,96 @@ def get_final_output():
         # Add normalized FA and MD maps
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_FA_normalized.nii.gz")
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_MD_normalized.nii.gz")
-
+        
+    if EXTRACT_BRAIN:
+        # Add existing brain-extracted outputs
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_MNI152-space_T1w.nii.gz")
+        # Add normalized version
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_MNI152-space_T1w_normalized.nii.gz")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_T1w-space_T1w_normalized.nii.gz")
+        
+        if RUN_FLAIR:
+            outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_MNI152-space_FLAIR.nii.gz")
+            outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_MNI152-space_FLAIR_normalized.nii.gz")
+            outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_T1w-space_FLAIR_normalized.nii.gz")
+        
+        if RUN_DWI:
+            outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_T1w-space_FA.nii.gz")
+            outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_T1w-space_MD.nii.gz")
+            outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_T1w-space_FA_normalized.nii.gz")
+            outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_T1w-space_MD_normalized.nii.gz")
+            
+    # Add the cleanup flag file
+    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/cleanup_complete.txt")
+    
     return outputs
 
 
 rule all:
     input:
-        get_final_output(),
-        
+        get_final_output()
 
+# Define synthseg_t1w first since other rules depend on it
+rule synthseg_t1w:
+    input:
+        image = T1W_FILE
+    output:
+        seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_synthseg_T1w.nii.gz"
+    threads: THREADS
+    shell:
+        "micaflow synthseg --i {input.image} --o {output.seg} --parc --robust --threads {threads} {GPU}"
+
+# Now define the FLAIR-specific synthseg rule if needed
+if RUN_FLAIR:
+    rule synthseg_flair:
+        input:
+            image = FLAIR_FILE,
+            t1w_seg = rules.synthseg_t1w.output.seg
+        output:
+            seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_synthseg_FLAIR.nii.gz"
+        threads: THREADS
+        shell:
+            "micaflow synthseg --i {input.image} --o {output.seg} --parc --robust --threads {threads} {GPU}"
+
+# Now define skull_strip rules that depend on synthseg rules
 rule skull_strip:
     input:
         image = lambda wildcards: T1W_FILE if wildcards.modality == "T1w" else FLAIR_FILE,
         seg = lambda wildcards: (
             rules.synthseg_t1w.output.seg if wildcards.modality == "T1w" else
-            rules.synthseg_flair.output.seg if wildcards.modality == "FLAIR" else
+            rules.synthseg_flair.output.seg if RUN_FLAIR and wildcards.modality == "FLAIR" else
             []
         )
     output:
-        brain = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_{{modality}}.nii.gz",
+        brain = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_brain-extracted_{{modality}}.nii.gz",
         mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_{{modality}}_mask.nii.gz"
     params:
         parcellation = lambda wildcards, input: f"--parcellation {input.seg}",
         rm_cerebellum = "--remove-cerebellum" if RM_CEREBELLUM else ""
     resources:
-        skull_strip_jobs=1  # Allows only one job of this type to run at a time
+        skull_strip_jobs=1
+    shell:
+        """
+        micaflow bet \
+            --input {input.image} \
+            --output {output.brain} \
+            --output-mask {output.mask} \
+            {params.parcellation} \
+            {params.rm_cerebellum} 
+        """
+
+rule skull_strip_t1w:
+    input:
+        image = T1W_FILE,
+        seg = rules.synthseg_t1w.output.seg
+    output:
+        brain = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_brain-extracted_T1w.nii.gz",
+        mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_T1w-space_mask.nii.gz"
+    params:
+        parcellation = lambda wildcards, input: f"--parcellation {input.seg}",
+        rm_cerebellum = "--remove-cerebellum" if RM_CEREBELLUM else ""
+    resources:
+        skull_strip_jobs=1
     shell:
         """
         micaflow bet \
@@ -111,53 +240,87 @@ rule skull_strip:
 
 rule bias_field_correction:
     input:
-        image = rules.skull_strip.output.brain,
-        mask = rules.skull_strip.output.mask
+        image = T1W_FILE,
+        mask = rules.skull_strip_t1w.output.mask
     output:
-        corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{{modality}}-space_{{modality}}.nii.gz"
+        corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_T1w-space_T1w.nii.gz"
     shell:
         "micaflow bias_correction -i {input.image} -o {output.corrected} -m {input.mask}"
 
-rule synthseg_t1w:
-    input:
-        image = T1W_FILE
-    output:
-        seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_synthseg_T1w.nii.gz"
-    threads: THREADS
-    shell:
-        "micaflow synthseg --i {input.image} --o {output.seg} --parc --robust --threads {threads} {GPU}"
+# Place these rules in a conditional block to only run when FLAIR is available
+if RUN_FLAIR:
 
-rule synthseg_flair:
-    input:
-        image = FLAIR_FILE,
-        t1w_seg = rules.synthseg_t1w.output.seg
-    output:
-        seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_synthseg_FLAIR.nii.gz"
-    threads: THREADS
-    shell:
-        "micaflow synthseg --i {input.image} --o {output.seg} --parc --robust --threads {threads} {GPU}"
+    rule registration_t1w:
+        input:
+            fixed = rules.synthseg_t1w.output.seg,
+            moving = rules.synthseg_flair.output.seg
+        output:
+            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_T1w-space_FLAIR.nii.gz",
+            fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdfield.nii.gz",
+            bak_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_bakfield.nii.gz",
+            fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdaffine.mat",
+            bak_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_bakaffine.mat"
+        shell:
+            """
+            micaflow coregister \
+                --fixed-file {input.fixed} \
+                --moving-file {input.moving} \
+                --output {output.warped} \
+                --warp-file {output.fwd_field} \
+                --affine-file {output.fwd_affine} \
+                --rev-warp-file {output.bak_field} \
+                --rev-affine-file {output.bak_affine}
+            """
 
-rule registration_t1w:
-    input:
-        fixed = rules.synthseg_t1w.output.seg,
-        moving = rules.synthseg_flair.output.seg
-    output:
-        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_T1w-space_FLAIR.nii.gz",
-        fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdfield.nii.gz",
-        bak_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_bakfield.nii.gz",
-        fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdaffine.mat",
-        bak_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_bakaffine.mat"
-    shell:
-        """
-        micaflow coregister \
-            --fixed-file {input.fixed} \
-            --moving-file {input.moving} \
-            --output {output.warped} \
-            --warp-file {output.fwd_field} \
-            --affine-file {output.fwd_affine} \
-            --rev-warp-file {output.bak_field} \
-            --rev-affine-file {output.bak_affine}
-        """
+    # Modify the skull_strip rule to properly handle different modalities
+    rule skull_strip_flair:
+        input:
+            image = FLAIR_FILE,
+            seg = rules.synthseg_flair.output.seg
+        output:
+            brain = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_brain-extracted_FLAIR.nii.gz",
+            mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_FLAIR_mask.nii.gz"
+        params:
+            parcellation = lambda wildcards, input: f"--parcellation {input.seg}",
+            rm_cerebellum = "--remove-cerebellum" if RM_CEREBELLUM else ""
+        resources:
+            skull_strip_jobs=1  # Allows only one job of this type to run at a time
+        shell:
+            """
+            micaflow bet \
+                --input {input.image} \
+                --output {output.brain} \
+                --output-mask {output.mask} \
+                {params.parcellation} \
+                {params.rm_cerebellum} 
+            """
+
+    rule bias_field_correction_flair:
+        input:
+            image = FLAIR_FILE,
+            mask = rules.skull_strip_flair.output.mask
+        output:
+            corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_FLAIR-space_FLAIR.nii.gz"
+        shell:
+            "micaflow bias_correction -i {input.image} -o {output.corrected} -m {input.mask}"
+
+    rule apply_warp_flair_to_t1w:
+        input:
+            moving = rules.bias_field_correction_flair.output.corrected,
+            warp = rules.registration_t1w.output.fwd_field,
+            affine = rules.registration_t1w.output.fwd_affine,
+            reference = rules.bias_field_correction.output.corrected
+        output:
+            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_T1w-space_FLAIR.nii.gz"
+        shell:
+            """
+            micaflow apply_warp \
+                --moving {input.moving} \
+                --reference {input.reference} \
+                --affine {input.affine} \
+                --warp {input.warp} \
+                --output {output.warped}
+            """
 
 rule registration_mni152:
     input:
@@ -181,29 +344,13 @@ rule registration_mni152:
             --rev-affine-file {output.bak_affine}
         """
 
-rule apply_warp_flair_to_t1w:
-    input:
-        moving = rules.bias_field_correction.output.corrected,
-        warp = rules.registration_t1w.output.fwd_field,
-        affine = rules.registration_t1w.output.fwd_affine,
-        reference = rules.bias_field_correction.output.corrected
-    output:
-        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_T1w-space_{{modality}}.nii.gz"
-    wildcard_constraints:
-        modality="FLAIR"
-    shell:
-        """
-        micaflow apply_warp \
-            --moving {input.moving} \
-            --reference {input.reference} \
-            --affine {input.affine} \
-            --warp {input.warp} \
-            --output {output.warped}
-        """
-
 rule apply_warp_to_mni:
     input:
-        moving = lambda wildcards: rules.bias_field_correction.output.corrected if wildcards.modality == "T1w" else rules.apply_warp_flair_to_t1w.output.warped,
+        moving = lambda wildcards: (
+            rules.bias_field_correction.output.corrected if wildcards.modality == "T1w" 
+            else rules.apply_warp_flair_to_t1w.output.warped if RUN_FLAIR and wildcards.modality == "FLAIR"
+            else None
+        ),
         warp = rules.registration_mni152.output.fwd_field,
         affine = rules.registration_mni152.output.fwd_affine,
         reference = ATLAS
@@ -211,15 +358,19 @@ rule apply_warp_to_mni:
         warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_MNI152-space_{{modality}}.nii.gz"
     wildcard_constraints:
         modality="T1w|FLAIR"
-    shell:
-        """
-        micaflow apply_warp \
-            --moving {input.moving} \
-            --reference {input.reference} \
-            --affine {input.affine} \
-            --warp {input.warp} \
-            --output {output.warped}
-        """
+    run:
+        if wildcards.modality == "FLAIR" and not RUN_FLAIR:
+            # Create an empty file if FLAIR not available
+            shell("touch {output.warped}")
+        else:
+            shell(""" 
+            micaflow apply_warp \
+                --moving {input.moving} \
+                --reference {input.reference} \
+                --affine {input.affine} \
+                --warp {input.warp} \
+                --output {output.warped}
+            """)
 
 rule run_texture:
     input:
@@ -317,7 +468,7 @@ if RUN_DWI:
             bval = BVAL_FILE,
             bvec = BVEC_FILE
         output:
-            denoised = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_denoised_DWI.nii.gz"
+            denoised = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_DWI.nii.gz"
         shell:
             """
             micaflow denoise \
@@ -333,7 +484,7 @@ if RUN_DWI:
             bval = BVAL_FILE,
             bvec = BVEC_FILE
         output:
-            corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_denoised_motioncorrected_DWI.nii.gz"
+            corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_motioncorrected_DWI.nii.gz"
         shell:
             """
             micaflow motion_correction \
@@ -351,7 +502,7 @@ if RUN_DWI:
             b0_bvec = BVEC_FILE     # You might need separate variables for these
         output:
             warp = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_SDC-warp.nii.gz",
-            corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_corrected-b0_DWI.nii.gz"
+            corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_corrected-b0_DWI.nii.gz"
         shell:
             """
             micaflow SDC \
@@ -367,7 +518,7 @@ if RUN_DWI:
             warp = rules.dwi_topup.output.warp,
             affine = DWI_FILE  # Using the direct path
         output:
-            corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_SDC-DWI.nii.gz"
+            corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_SDC-DWI.nii.gz"
         shell:
             """
             micaflow apply_SDC \
@@ -382,7 +533,8 @@ if RUN_DWI:
     rule synthseg_dwi:
         input:
             image = rules.dwi_topup.output.corrected,
-            flair_seg = rules.synthseg_flair.output.seg
+            # Use T1w seg if FLAIR is not available
+            seg = lambda wildcards: rules.synthseg_flair.output.seg if RUN_FLAIR else rules.synthseg_t1w.output.seg
         output:
             seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_synthseg_DWI.nii.gz"
         threads: THREADS
@@ -402,7 +554,7 @@ if RUN_DWI:
             image = rules.dwi_topup.output.corrected,
             seg = rules.synthseg_dwi.output.seg
         output:
-            image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_DWI.nii.gz",
+            image = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_brain-extracted_DWI.nii.gz",
             mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_DWI_mask.nii.gz"
         params:
             rm_cerebellum = "--remove-cerebellum" if RM_CEREBELLUM else ""
@@ -421,7 +573,7 @@ if RUN_DWI:
             image = rules.dwi_apply_topup.output.corrected,
             mask = rules.dwi_skull_strip.output.mask
         output:
-            corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_denoised_bias-corrected_DWI.nii.gz"
+            corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_bias-corrected_DWI.nii.gz"
         shell:
             """
             micaflow bias_correction \
@@ -471,30 +623,10 @@ if RUN_DWI:
                 --output-fa {output.fa} \
                 --output-md {output.md}
             """
-    rule fa_md_skull_strip:
+    rule dwi_fa_md_registration:
         input:
             fa = rules.dwi_compute_fa_md.output.fa,
             md = rules.dwi_compute_fa_md.output.md,
-            mask = rules.dwi_skull_strip.output.mask
-        output:
-            fa_image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_brain-extracted_FA.nii.gz",
-            md_image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_brain-extracted_MD.nii.gz"
-        shell:
-            """
-            micaflow bet \
-                --input {input.fa} \
-                --output {output.fa_image} \
-                --input-mask {input.mask} 
-            
-            micaflow bet \
-                --input {input.md} \
-                --output {output.md_image} \
-                --input-mask {input.mask} 
-            """
-    rule dwi_fa_md_registration:
-        input:
-            fa = rules.fa_md_skull_strip.output.fa_image,
-            md = rules.fa_md_skull_strip.output.md_image,
             reference = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_T1w-space_T1w.nii.gz",
             affine = rules.dwi_registration.output.fwd_affine,
             warp = rules.dwi_registration.output.fwd_field
@@ -535,4 +667,110 @@ if RUN_DWI:
                 --reference {input.atlas} \
                 --output {output.metrics}
             """
+if EXTRACT_BRAIN:
+    # Remove the separate directory creation rule and handle directory creation within each rule
+    
+    # Generalized rule with wildcards to handle all modalities
+    rule skullstripping_native_BE:
+        input:
+            # Select proper input based on modality
+            image = lambda wildcards: (
+                rules.dwi_compute_fa_md.output.fa if wildcards.modality == "FA" else
+                rules.dwi_compute_fa_md.output.md if wildcards.modality == "MD" else
+                rules.bias_field_correction.output.corrected if wildcards.modality == "T1w" else
+                rules.apply_warp_flair_to_t1w.output.warped if wildcards.modality == "FLAIR" else
+                None
+            ),
+            mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_T1w-space_mask.nii.gz"
+        output:
+            brain = f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_T1w-space_{{modality}}.nii.gz"
+        wildcard_constraints:
+            modality = "FA|MD|T1w|FLAIR"
+        run:
+            # Ensure output directory exists
+            os.makedirs(os.path.dirname(output.brain), exist_ok=True)
+            
+            # Skip FLAIR processing if not available
+            if wildcards.modality == "FLAIR" and not RUN_FLAIR:
+                shell("touch {output.brain}")
+            # Skip FA/MD processing if DWI not available
+            elif wildcards.modality in ["FA", "MD"] and not RUN_DWI:
+                shell("touch {output.brain}")
+            else:
+                shell("""
+                micaflow bet \
+                    --input {input.image} \
+                    --output {output.brain} \
+                    --input-mask {input.mask}
+                """)
+    
+    # Generalized rule with wildcards to handle all modalities
+    rule skullstripping_MNI152_BE:
+        input:
+            # Select proper input based on modality
+            image = lambda wildcards: (
+                rules.dwi_compute_fa_md.output.fa if wildcards.modality == "FA" else
+                rules.dwi_compute_fa_md.output.md if wildcards.modality == "MD" else
+                rules.apply_warp_to_mni.output.warped if wildcards.modality in ["T1w", "FLAIR"] else
+                None
+            ),
+            mask = ATLAS_MASK
+        output:
+            brain = f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_MNI152-space_{{modality}}.nii.gz"
+        wildcard_constraints:
+            modality = "FA|MD|T1w|FLAIR"
+        run:
+            # Ensure output directory exists
+            os.makedirs(os.path.dirname(output.brain), exist_ok=True)
+            
+            # Skip FLAIR processing if not available
+            if wildcards.modality == "FLAIR" and not RUN_FLAIR:
+                shell("touch {output.brain}")
+            # Skip FA/MD processing if DWI not available
+            elif wildcards.modality in ["FA", "MD"] and not RUN_DWI:
+                shell("touch {output.brain}")
+            else:
+                shell("""
+                micaflow bet \
+                    --input {input.image} \
+                    --output {output.brain} \
+                    --input-mask {input.mask}
+                """)
 
+    rule normalize_brain_extracted:
+        input:
+            image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{{space}}-space_{{modality}}.nii.gz"
+        output:
+            normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{{space}}-space_{{modality}}_normalized.nii.gz"
+        wildcard_constraints:
+            space = "T1w|MNI152",
+            modality = "T1w|FLAIR|FA|MD"
+        shell:
+            """
+            micaflow normalize \
+                --input {input.image} \
+                --output {output.normalized} \
+                --lower-percentile 1.0 \
+                --upper-percentile 99.0 \
+                --min-value 0 \
+                --max-value 100
+            """
+rule cleanup:
+    input:
+        # All final outputs except the cleanup marker
+        lambda wildcards: [output for output in get_final_output() if not output.endswith("cleanup_complete.txt")]
+    output:
+        cleanup_marker = temp(f"{OUT_DIR}/{SUBJECT}/{SESSION}/cleanup_complete.txt")
+    run:
+        if not KEEP_TEMP and os.path.exists(TEMP_DIR):
+            print(f"Cleaning up temporary directory: {TEMP_DIR}")
+            shutil.rmtree(TEMP_DIR)
+            with open(output.cleanup_marker, "w") as f:
+                f.write(f"Cleanup completed on: {datetime.datetime.now()}\n")
+                f.write(f"Temp directory removed: {TEMP_DIR}\n")
+        else:
+            with open(output.cleanup_marker, "w") as f:
+                f.write(f"Cleanup skipped on: {datetime.datetime.now()}\n")
+                f.write(f"Temp directory kept: {TEMP_DIR}\n")
+                if KEEP_TEMP:
+                    f.write("Reason: keep_temp flag was set to True\n")

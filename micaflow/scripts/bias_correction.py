@@ -164,18 +164,57 @@ def run_bias_field_correction(image_path, output_path, mask_path=None, mode="aut
         str: Path to the output corrected image.
     """
     # If auto mode, determine if image is 3D or 4D
+    img = ants.image_read(image_path)
     if mode == "auto":
-        img = ants.image_read(image_path)
         dims = img.shape
         mode = "4d" if (len(dims) > 3 and dims[3] > 1) else "3d"
     
+    # Check if mask needs resampling
+    temp_mask_path = None
+    if mask_path:
+        mask_img = ants.image_read(mask_path)
+        
+        # Check if they're in the same physical space
+        same_spacing = np.allclose(img.spacing[:3], mask_img.spacing[:3], rtol=1e-6)
+        same_origin = np.allclose(img.origin[:3], mask_img.origin[:3], rtol=1e-6)
+        same_direction = np.allclose(img.direction[:3,:3], mask_img.direction[:3,:3], rtol=1e-6)
+        
+        if not (same_spacing and same_origin and same_direction):
+            print(f"Warning: Mask and input image have different physical properties:")
+            print(f"  Image spacing: {img.spacing[:3]}")
+            print(f"  Mask spacing: {mask_img.spacing[:3]}")
+            print("Resampling mask to match input image...")
+            
+            # Create a temporary file for the resampled mask
+            import tempfile
+            import os
+            
+            temp_dir = tempfile.gettempdir()
+            temp_mask_path = os.path.join(temp_dir, f"resampled_mask_{os.path.basename(mask_path)}")
+            
+            # Resample mask to match input image
+            resampled_mask = ants.resample_image_to_target(
+                mask_img, 
+                img, 
+                interp_type='nearestNeighbor'
+            )
+            ants.image_write(resampled_mask, temp_mask_path)
+            
+            # Use the resampled mask instead
+            mask_path = temp_mask_path
+    
     # Process according to mode
-    if mode == "4d":
-        if not mask_path:
-            raise ValueError("4D images require a mask. Please provide a mask with --mask.")
-        return bias_field_correction_4d(image_path, mask_path, output_path)
-    else:  # 3d
-        return bias_field_correction_3d(image_path, output_path, mask_path)
+    try:
+        if mode == "4d":
+            if not mask_path:
+                raise ValueError("4D images require a mask. Please provide a mask with --mask.")
+            return bias_field_correction_4d(image_path, mask_path, output_path)
+        else:  # 3d
+            return bias_field_correction_3d(image_path, output_path, mask_path)
+    finally:
+        # Clean up temporary files
+        if temp_mask_path and os.path.exists(temp_mask_path):
+            os.remove(temp_mask_path)
 
 
 if __name__ == "__main__":

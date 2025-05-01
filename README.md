@@ -7,11 +7,13 @@ MicaFlow is a comprehensive neuroimaging pipeline designed for processing struct
 
 - **Structural MRI Processing**: T1w and FLAIR image processing
 - **Diffusion MRI Processing**: Complete pipeline for DWI processing
-- **Brain Extraction**: HD-BET for robust skull stripping
+- **Brain Extraction**: SynthSeg-based brain extraction with optional cerebellum removal
 - **Deep Learning Segmentation**: SynthSeg for brain segmentation and parcellation
 - **Image Registration**: Multi-modal coregistration and spatial normalization to standard spaces
 - **Texture Features**: Advanced texture feature generation
 - **Quality Control**: Built-in QC metrics and visualization
+- **Brain-Extracted Outputs**: Optional dedicated directory for all skull-stripped images
+- **Temporary File Management**: Option to preserve intermediate files for debugging
 - **Modular Design**: Components can be used independently or as a complete pipeline
 - **Flexible Configuration**: Via command line arguments or YAML configuration files
 
@@ -120,7 +122,8 @@ micaflow texture_generation --input image.nii.gz --mask mask.nii.gz --output tex
 
 The pipeline performs the following processing steps:
 
-1. **Brain Extraction**: Using HD-BET for T1w, FLAIR, and DWI
+1. **Brain Extraction**: Using SynthSeg-based segmentation for T1w, FLAIR, and DWI
+   - Optionally remove cerebellum with `--rm-cerebellum`
 2. **Bias Field Correction**: Using N4 bias field correction
 3. **Brain Segmentation**: Using SynthSeg for T1w and FLAIR
 4. **Registration**: 
@@ -133,7 +136,11 @@ The pipeline performs the following processing steps:
    - Tensor fitting and DTI metrics calculation
    - Registration to T1w space
 6. **Texture Feature Generation**: On normalized images
-7. **Quality Control**: Calculating quality metrics
+7. **Brain-Extracted Outputs** (if `--extract-brain` enabled):
+   - Creates skull-stripped versions of all outputs in dedicated directory
+   - Normalized versions also created
+8. **Quality Control**: Calculating quality metrics
+9. **Cleanup**: Removes temporary files (unless `--keep-temp` is specified)
 
 ## Output Structure
 

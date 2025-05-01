@@ -1,39 +1,41 @@
 """
-bet - Brain Extraction Tool using SynthSeg
+bet - Brain Extraction Tool
 
 Part of the micaflow processing pipeline for neuroimaging data.
 
-This module provides brain extraction (skull stripping) functionality using the SynthSeg-generated mask, a deep learning-based approach that accurately segments the
-brain from surrounding tissues in MR images. SynthSeg offers superior performance over traditional
-methods, particularly for clinical and non-standard MR images.
+This module provides brain extraction (skull stripping) functionality using SynthSeg-generated 
+segmentations or provided input masks. It accurately segments the brain from surrounding tissues 
+in MR images and offers options for cerebellum removal.
 
 Features:
 --------
-- Deep learning-based brain extraction with state-of-the-art accuracy
+- Brain extraction based on SynthSeg parcellation or input mask
+- Optional cerebellum removal for specific analyses
 - Compatible with various MRI modalities (T1w, T2w, FLAIR)
 - Produces both skull-stripped images and binary brain masks
-- Robust to imaging artifacts and pathologies
+- Automatic resampling when input mask dimensions don't match the input image
 
 API Usage:
 ---------
 micaflow bet
     --input <path/to/image.nii.gz>
     --output <path/to/brain.nii.gz>
-    --output-mask <path/to/brain_mask.nii.gz>
-    --parcellation <path/to/parcellation.nii.gz>
+    [--output-mask <path/to/brain_mask.nii.gz>]
+    [--input-mask <path/to/input_mask.nii.gz>]
+    [--parcellation <path/to/parcellation.nii.gz>]
     [--remove-cerebellum]
 
 Python Usage:
 -----------
 >>> import subprocess
->>> from micaflow.scripts.bet import run_hdbet
->>> run_hdbet(
-...     input_file="t1w.nii.gz",
-...     output_file="brain.nii.gz",
-...     mask_file="brain_mask.nii.gz",
-...     parcellation_file="parcellation.nii.gz",
-... )
-
+>>> subprocess.run([
+...     "micaflow", "bet",
+...     "--input", "t1w.nii.gz",
+...     "--output", "brain.nii.gz",
+...     "--output-mask", "brain_mask.nii.gz",
+...     "--parcellation", "parcellation.nii.gz",
+...     "--remove-cerebellum"
+... ])
 """
 
 import subprocess
@@ -74,12 +76,13 @@ def print_help_message():
     {CYAN}{BOLD}─────────────────── REQUIRED ARGUMENTS ───────────────────{RESET}
       {YELLOW}--input{RESET}, {YELLOW}-i{RESET}      : Path to the input MR image (.nii.gz)
       {YELLOW}--output{RESET}, {YELLOW}-o{RESET}     : Path for the output brain-extracted image (.nii.gz)
-      {YELLOW}--output-mask{RESET}, {YELLOW}-m{RESET}: Path for the output brain mask (.nii.gz)
-      {YELLOW}--parcellation{RESET}, {YELLOW}-p{RESET}: Path to the parcellation file (.nii.gz)
+      
     
     {CYAN}{BOLD}─────────────────── OPTIONAL ARGUMENTS ───────────────────{RESET}
       {YELLOW}--remove-cerebellum{RESET}, {YELLOW}-r{RESET}: Remove cerebellum from the input image (optional)
       {YELLOW}--input-mask{RESET}                : Path to the input mask image (.nii.gz) (optional)
+      {YELLOW}--output-mask{RESET}, {YELLOW}-m{RESET}: Path for the output brain mask (.nii.gz) (optional)
+      {YELLOW}--parcellation{RESET}, {YELLOW}-p{RESET}: Path to the parcellation file (.nii.gz) (optional)
     
     {CYAN}{BOLD}────────────────── EXAMPLE USAGE ────────────────────────{RESET}
     
@@ -134,11 +137,26 @@ if __name__ == "__main__":
     if args.input_mask:
         # If an input mask is provided, load it and apply it to the input image
         print("Using input mask")
-        input_mask = nib.load(args.input_mask)
+        input_mask_img = nib.load(args.input_mask)
         input_brain = input_img.get_fdata()
-        input_mask = nib.load(args.input_mask).get_fdata().astype(bool)
+
+        # Check if mask and image have the same shape and affine
+        shapes_match = input_img.shape == input_mask_img.shape
+        affines_match = np.allclose(input_img.affine, input_mask_img.affine, rtol=1e-5)
+
+        if not (shapes_match and affines_match):
+            print(f"Warning: Mask and input image do not match in shape or physical space.")
+            print(f"  Image shape: {input_img.shape}, mask shape: {input_mask_img.shape}")
+            print(f"  Image affine:\n{input_img.affine}\n  Mask affine:\n{input_mask_img.affine}")
+            print("Resampling mask to match input image...")
+            from nilearn.image import resample_to_img
+            resampled_mask_img = resample_to_img(input_mask_img, input_img, interpolation="nearest")
+            input_mask = resampled_mask_img.get_fdata().astype(bool)
+        else:
+            input_mask = input_mask_img.get_fdata().astype(bool)
+
         input_brain[~input_mask] = 0
-        input_brain = nib.Nifti1Image(input_brain, nib.load(args.input).affine)
+        input_brain = nib.Nifti1Image(input_brain, input_img.affine)
         input_brain.to_filename(args.output)
     else:
         synthseg_img = nib.load(args.parcellation)

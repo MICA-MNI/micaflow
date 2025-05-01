@@ -9,4 +9,6 @@ bvec_file: "image_AP_dwi.bvec"  # Path to bvec file
 inverse_dwi_file: "image_PA_dwi.nii.gz"  # Path to inverse DWI image
 output: "outputs"  # Output directory where results will be stored
 data_directory: "/path/to/bidsdata"  # Path to your BIDS-compatible data directory
-cpu: true
+extract_brain: false         # Generate brain-extracted outputs in dedicated directory (true/false)
+keep_temp: false             # Keep temporary processing files (true/false)
+rm_cerebellum: false         # Remove cerebellum during brain extraction (true/false)

@@ -1,11 +1,13 @@
 # Default configuration for micaflow pipeline
-subject: "sub-HC131"  # Subject ID (e.g., sub-01, sub-02, etc.)
-session: "ses-01"   # Session ID (e.g., ses-01, ses-02, etc.)
+subject: "sub-HC131"         # Subject ID (e.g., sub-01, sub-02, etc.)
+session: "ses-01"            # Session ID (e.g., ses-01, ses-02, etc.)
 flair_file: "/path/to/image_FLAIR.nii.gz"  # Path to FLAIR image
-t1w_file: "/path/to/image_T1w.nii.gz"  # Path to T1w image
-dwi_file: "/path/to/image_AP_dwi.nii.gz"  # Path to DWI image
-bval_file: "/path/to/image_AP_dwi.bval"  # Path to bval file
-bvec_file: "/path/to/image_AP_dwi.bvec"  # Path to bvec file
+t1w_file: "/path/to/image_T1w.nii.gz"      # Path to T1w image
+dwi_file: "/path/to/image_AP_dwi.nii.gz"   # Path to DWI image
+bval_file: "/path/to/image_AP_dwi.bval"    # Path to bval file
+bvec_file: "/path/to/image_AP_dwi.bvec"    # Path to bvec file
 inverse_dwi_file: "/path/to/image_PA_dwi.nii.gz"  # Path to inverse DWI image
-output: "outputs"  # Output directory where results will be stored
-cpu: true
+output: "outputs"            # Output directory where results will be stored
+extract_brain: false         # Generate brain-extracted outputs in dedicated directory (true/false)
+keep_temp: false             # Keep temporary processing files (true/false)
+rm_cerebellum: false         # Remove cerebellum during brain extraction (true/false)
