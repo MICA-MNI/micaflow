@@ -3,10 +3,10 @@ calculate_dice - Segmentation Overlap Measurement Tool
 
 Part of the micaflow processing pipeline for neuroimaging data.
 
-This module calculates the DICE between 
-two segmentation volumes. The DICE score is a statistic used for comparing the 
-similarity and diversity of sample sets, with values ranging from 0 (no overlap) to 
-1 (perfect overlap). It is particularly useful for evaluating the quality of 
+This module calculates the DICE between
+two segmentation volumes. The DICE score is a statistic used for comparing the
+similarity and diversity of sample sets, with values ranging from 0 (no overlap) to
+1 (perfect overlap). It is particularly useful for evaluating the quality of
 segmentations against a ground truth or comparing results from different methods.
 
 Features:
@@ -18,7 +18,7 @@ Features:
 
 API Usage:
 ---------
-micaflow calculate_dice 
+micaflow calculate_dice
     --input <path/to/segmentation.nii.gz>
     --reference <path/to/ground_truth.nii.gz>
     --output <path/to/results.csv>
@@ -37,13 +37,16 @@ Python Usage:
 ... )
 
 """
+
 import csv
 import nibabel as nib
 import argparse
 import sys
 from colorama import init, Fore, Style
+from lamareg.scripts.dice_compare import compare_parcellations_dice
 
 init()
+
 
 def print_help_message():
     """Print a help message with formatted text."""
@@ -55,7 +58,7 @@ def print_help_message():
     MAGENTA = Fore.MAGENTA
     BOLD = Style.BRIGHT
     RESET = Style.RESET_ALL
-    
+
     help_text = f"""
     {CYAN}{BOLD}╔════════════════════════════════════════════════════════════════╗
     ║                     DICE SCORE CALCULATOR                      ║
@@ -84,7 +87,6 @@ def print_help_message():
     - Values range from 0 (no overlap) to 1 (perfect overlap)
     """
     print(help_text)
-from lamar.scripts.dice_compare import compare_parcellations_dice
 
 
 if __name__ == "__main__":
@@ -92,12 +94,16 @@ if __name__ == "__main__":
     if len(sys.argv) == 1 or "-h" in sys.argv or "--help" in sys.argv:
         print_help_message()
         sys.exit(0)
-    
-    parser = argparse.ArgumentParser(description="Calculate overlap metrics between two volumes")
+
+    parser = argparse.ArgumentParser(
+        description="Calculate overlap metrics between two volumes"
+    )
     parser.add_argument("--input", "-i", required=True, help="First input volume")
-    parser.add_argument("--reference", "-r", required=True, help="Reference volume to compare against")
+    parser.add_argument(
+        "--reference", "-r", required=True, help="Reference volume to compare against"
+    )
     parser.add_argument("--output", "-o", required=True, help="Output CSV file path")
-    
+
     args = parser.parse_args()
-    
+
     compare_parcellations_dice(args.input, args.reference, args.output)
