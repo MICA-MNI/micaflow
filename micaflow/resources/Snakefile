@@ -684,7 +684,7 @@ rule transform_mask_to_mni:
             --affine {input.affine} \
             --warp {input.warp} \
             --output {output.mni_mask} \
-            --interpolation NearestNeighbor
+            --interpolation nearestNeighbor
         """
 
 if EXTRACT_BRAIN:
