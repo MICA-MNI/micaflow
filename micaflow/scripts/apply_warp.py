@@ -46,7 +46,7 @@ import ants
 import argparse
 import sys
 from colorama import init, Fore, Style
-from lamar.scripts.apply_warp import apply_warp
+from lamareg.scripts.apply_warp import apply_warp
 
 init()
 

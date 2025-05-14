@@ -3,9 +3,9 @@ synthseg - Neural Network-Based Brain MRI Segmentation
 
 Part of the micaflow processing pipeline for neuroimaging data.
 
-This module provides an interface to SynthSeg, a deep learning-based tool for automated 
-brain MRI segmentation that works across different MRI contrasts without retraining. 
-SynthSeg segments brain anatomical structures in T1w, T2w, FLAIR, and other MR contrasts, 
+This module provides an interface to SynthSeg, a deep learning-based tool for automated
+brain MRI segmentation that works across different MRI contrasts without retraining.
+SynthSeg segments brain anatomical structures in T1w, T2w, FLAIR, and other MR contrasts,
 providing both whole-brain segmentation and optional cortical parcellation.
 
 Features:
@@ -20,7 +20,7 @@ Features:
 
 API Usage:
 ---------
-micaflow synthseg 
+micaflow synthseg
     --i <path/to/image.nii.gz>
     --o <path/to/segmentation.nii.gz>
     [--parc]
@@ -50,8 +50,10 @@ import os
 import sys
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from colorama import init, Fore, Style
-from lamar.scripts.synthseg import main
+from lamareg.scripts.synthseg import main
+
 init()
+
 
 def print_extended_help():
     """Print extended help message with examples and usage instructions."""
@@ -63,7 +65,7 @@ def print_extended_help():
     MAGENTA = Fore.MAGENTA
     BOLD = Style.BRIGHT
     RESET = Style.RESET_ALL
-    
+
     help_text = f"""
     {CYAN}{BOLD}╔════════════════════════════════════════════════════════════════╗
     ║                         SYNTHSEG                               ║
@@ -120,36 +122,88 @@ def print_extended_help():
     {MAGENTA}•{RESET} For batch processing, input and output paths must be folders
     """
     print(help_text)
-    
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     # Check if help flags are provided or no arguments
-  if len(sys.argv) == 1 or '-h' in sys.argv or '--help' in sys.argv:
-      print_extended_help()
-      sys.exit(0)
+    if len(sys.argv) == 1 or "-h" in sys.argv or "--help" in sys.argv:
+        print_extended_help()
+        sys.exit(0)
 
-  # parse arguments
-  parser = ArgumentParser(
-      description="SynthSeg: Deep learning tool for brain MRI segmentation", 
-      epilog="For more details see: https://github.com/BBillot/SynthSeg",
-      formatter_class=RawDescriptionHelpFormatter
-  )
+    # parse arguments
+    parser = ArgumentParser(
+        description="SynthSeg: Deep learning tool for brain MRI segmentation",
+        epilog="For more details see: https://github.com/BBillot/SynthSeg",
+        formatter_class=RawDescriptionHelpFormatter,
+    )
 
-  # input/outputs
-  parser.add_argument("--i", help="Image(s) to segment. Can be a path to an image or to a folder.")
-  parser.add_argument("--o", help="Segmentation output(s). Must be a folder if --i designates a folder.")
-  parser.add_argument("--parc", action="store_true", help="(optional) Whether to perform cortex parcellation.")
-  parser.add_argument("--robust", action="store_true", help="(optional) Whether to use robust predictions (slower).")
-  parser.add_argument("--fast", action="store_true", help="(optional) Bypass some postprocessing for faster predictions.")
-  parser.add_argument("--ct", action="store_true", help="(optional) Clip intensities to [0,80] for CT scans.")
-  parser.add_argument("--vol", help="(optional) Path to output CSV file with volumes (mm3) for all regions and subjects.")
-  parser.add_argument("--qc", help="(optional) Path to output CSV file with qc scores for all subjects.")
-  parser.add_argument("--post", help="(optional) Posteriors output(s). Must be a folder if --i designates a folder.")
-  parser.add_argument("--resample", help="(optional) Resampled image(s). Must be a folder if --i designates a folder.")
-  parser.add_argument("--crop", nargs='+', type=int, help="(optional) Size of 3D patches to analyse. Default is 192.")
-  parser.add_argument("--threads", type=int, default=1, help="(optional) Number of cores to be used. Default is 1.")
-  parser.add_argument("--cpu", action="store_true", help="(optional) Enforce running with CPU rather than GPU.")
-  parser.add_argument("--v1", action="store_true", help="(optional) Use SynthSeg 1.0 (updated 25/06/22).")
+    # input/outputs
+    parser.add_argument(
+        "--i", help="Image(s) to segment. Can be a path to an image or to a folder."
+    )
+    parser.add_argument(
+        "--o",
+        help="Segmentation output(s). Must be a folder if --i designates a folder.",
+    )
+    parser.add_argument(
+        "--parc",
+        action="store_true",
+        help="(optional) Whether to perform cortex parcellation.",
+    )
+    parser.add_argument(
+        "--robust",
+        action="store_true",
+        help="(optional) Whether to use robust predictions (slower).",
+    )
+    parser.add_argument(
+        "--fast",
+        action="store_true",
+        help="(optional) Bypass some postprocessing for faster predictions.",
+    )
+    parser.add_argument(
+        "--ct",
+        action="store_true",
+        help="(optional) Clip intensities to [0,80] for CT scans.",
+    )
+    parser.add_argument(
+        "--vol",
+        help="(optional) Path to output CSV file with volumes (mm3) for all regions and subjects.",
+    )
+    parser.add_argument(
+        "--qc",
+        help="(optional) Path to output CSV file with qc scores for all subjects.",
+    )
+    parser.add_argument(
+        "--post",
+        help="(optional) Posteriors output(s). Must be a folder if --i designates a folder.",
+    )
+    parser.add_argument(
+        "--resample",
+        help="(optional) Resampled image(s). Must be a folder if --i designates a folder.",
+    )
+    parser.add_argument(
+        "--crop",
+        nargs="+",
+        type=int,
+        help="(optional) Size of 3D patches to analyse. Default is 192.",
+    )
+    parser.add_argument(
+        "--threads",
+        type=int,
+        default=1,
+        help="(optional) Number of cores to be used. Default is 1.",
+    )
+    parser.add_argument(
+        "--cpu",
+        action="store_true",
+        help="(optional) Enforce running with CPU rather than GPU.",
+    )
+    parser.add_argument(
+        "--v1",
+        action="store_true",
+        help="(optional) Use SynthSeg 1.0 (updated 25/06/22).",
+    )
 
-  # parse commandline
-  args = vars(parser.parse_args())
-  main(args)
+    # parse commandline
+    args = vars(parser.parse_args())
+    main(args)

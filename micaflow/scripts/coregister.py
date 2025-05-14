@@ -3,10 +3,10 @@ coregister - Image Registration for Aligning Neuroimaging Data
 
 Part of the micaflow processing pipeline for neuroimaging data.
 
-This module performs comprehensive image registration between two images using the 
-Advanced Normalization Tools (ANTs) SyNRA algorithm, which combines rigid, affine, 
-and symmetric normalization transformations. It aligns a moving image with a fixed 
-reference space, enabling spatial normalization of neuroimaging data for group analysis, 
+This module performs comprehensive image registration between two images using the
+Advanced Normalization Tools (ANTs) SyNRA algorithm, which combines rigid, affine,
+and symmetric normalization transformations. It aligns a moving image with a fixed
+reference space, enabling spatial normalization of neuroimaging data for group analysis,
 multimodal integration, or atlas-based analyses.
 
 Features:
@@ -19,7 +19,7 @@ Features:
 
 API Usage:
 ---------
-micaflow coregister 
+micaflow coregister
     --fixed-file <path/to/reference.nii.gz>
     --moving-file <path/to/source.nii.gz>
     --output <path/to/registered.nii.gz>
@@ -42,12 +42,14 @@ Python Usage:
 ... )
 
 """
+
 import argparse
 import sys
 from colorama import init, Fore, Style
-from lamar.scripts.coregister import ants_linear_nonlinear_registration
+from lamareg.scripts.coregister import ants_linear_nonlinear_registration
 
 init()
+
 
 def print_help_message():
     """Print a help message with examples."""
@@ -59,7 +61,7 @@ def print_help_message():
     MAGENTA = Fore.MAGENTA
     BOLD = Style.BRIGHT
     RESET = Style.RESET_ALL
-    
+
     help_text = f"""
     {CYAN}{BOLD}╔════════════════════════════════════════════════════════════════╗
     ║                      IMAGE COREGISTRATION                      ║
@@ -103,7 +105,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 1 or "-h" in sys.argv or "--help" in sys.argv:
         print_help_message()
         sys.exit(0)
-    
+
     parser = argparse.ArgumentParser(
         description="Run linear + nonlinear (SyN) registration using ANTsPy."
     )
@@ -112,7 +114,8 @@ if __name__ == "__main__":
         "--moving-file", required=True, help="Path to the moving image."
     )
     parser.add_argument(
-        "--output", required=True,
+        "--output",
+        required=True,
         help="Output path for the registered image.",
     )
     parser.add_argument(
