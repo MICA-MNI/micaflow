@@ -667,6 +667,26 @@ if RUN_DWI:
                 --reference {input.atlas} \
                 --output {output.metrics}
             """
+
+rule transform_mask_to_mni:
+    input:
+        mask = rules.skull_strip_t1w.output.mask,
+        warp = rules.registration_mni152.output.fwd_field,
+        affine = rules.registration_mni152.output.fwd_affine,
+        reference = ATLAS
+    output:
+        mni_mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_MNI152-space_brain_mask.nii.gz"
+    shell:
+        """
+        micaflow apply_warp \
+            --moving {input.mask} \
+            --reference {input.reference} \
+            --affine {input.affine} \
+            --warp {input.warp} \
+            --output {output.mni_mask} \
+            --interpolation NearestNeighbor
+        """
+
 if EXTRACT_BRAIN:
     # Remove the separate directory creation rule and handle directory creation within each rule
     
@@ -755,25 +775,6 @@ if EXTRACT_BRAIN:
                 --min-value 0 \
                 --max-value 100
             """
-            
-rule transform_mask_to_mni:
-    input:
-        mask = rules.skull_strip_t1w.output.mask,
-        warp = rules.registration_mni152.output.fwd_field,
-        affine = rules.registration_mni152.output.fwd_affine,
-        reference = ATLAS
-    output:
-        mni_mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_MNI152-space_brain_mask.nii.gz"
-    shell:
-        """
-        micaflow apply_warp \
-            --moving {input.mask} \
-            --reference {input.reference} \
-            --affine {input.affine} \
-            --warp {input.warp} \
-            --output {output.mni_mask} \
-            --interpolation NearestNeighbor
-        """
 
 rule cleanup:
     input:
