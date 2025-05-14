@@ -272,7 +272,6 @@ if RUN_FLAIR:
                 --rev-affine-file {output.bak_affine}
             """
 
-    # Modify the skull_strip rule to properly handle different modalities
     rule skull_strip_flair:
         input:
             image = FLAIR_FILE,
@@ -320,6 +319,20 @@ if RUN_FLAIR:
                 --affine {input.affine} \
                 --warp {input.warp} \
                 --output {output.warped}
+            """
+
+    rule calculate_metrics_FLAIR:
+        input:
+            image = rules.registration_t1w.output.warped,
+            atlas = rules.synthseg_t1w.output.seg
+        output:
+            metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_FLAIR-to-T1w-space_DICE.csv"
+        shell:
+            """
+            micaflow calculate_dice \
+                --input {input.image} \
+                --reference {input.atlas} \
+                --output {output.metrics}
             """
 
 rule registration_mni152:
@@ -417,19 +430,6 @@ rule calculate_metrics_T1w:
             --output {output.metrics}
         """
 
-rule calculate_metrics_FLAIR:
-    input:
-        image = rules.registration_t1w.output.warped,
-        atlas = rules.synthseg_t1w.output.seg
-    output:
-        metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_FLAIR-to-T1w-space_DICE.csv"
-    shell:
-        """
-        micaflow calculate_dice \
-            --input {input.image} \
-            --reference {input.atlas} \
-            --output {output.metrics}
-        """
 rule normalize_anatomical:
     input:
         image = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{wildcards.space}-space_{wildcards.modality}.nii.gz"
