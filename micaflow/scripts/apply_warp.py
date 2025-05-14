@@ -9,12 +9,12 @@ using both affine and non-linear (warp field) transformations. It's commonly use
 - Register images across modalities (e.g., T1w to FLAIR)
 - Apply previously calculated transformations to derived images (e.g., segmentations)
 
-The module leverages ANTsPy to apply the transformations in the correct order (warp 
+The module leverages ANTsPy to apply the transformations in the correct order (warp
 field first, then affine) to achieve accurate spatial registration.
 
 API Usage:
 ---------
-micaflow apply_warp 
+micaflow apply_warp
     --moving <path/to/source_image.nii.gz>
     --reference <path/to/target_space.nii.gz>
     --affine <path/to/transform.mat>
@@ -31,16 +31,17 @@ Python Usage:
 ...     moving_img=moving_img,
 ...     reference_img=reference_img,
 ...     affine_file="transform.mat",
-...     warp_file="warpfield.nii.gz", 
+...     warp_file="warpfield.nii.gz",
 ...     out_file="registered_t1w.nii.gz"
 ... )
 
 References:
 ----------
-1. Avants BB, Tustison NJ, Song G, et al. A reproducible evaluation of ANTs 
-   similarity metric performance in brain image registration. NeuroImage. 
+1. Avants BB, Tustison NJ, Song G, et al. A reproducible evaluation of ANTs
+   similarity metric performance in brain image registration. NeuroImage.
    2011;54(3):2033-2044. doi:10.1016/j.neuroimage.2010.09.025
 """
+
 import ants
 import argparse
 import sys
@@ -48,6 +49,7 @@ from colorama import init, Fore, Style
 from lamar.scripts.apply_warp import apply_warp
 
 init()
+
 
 def print_help_message():
     """Print a help message with examples."""
@@ -59,7 +61,7 @@ def print_help_message():
     MAGENTA = Fore.MAGENTA
     BOLD = Style.BRIGHT
     RESET = Style.RESET_ALL
-    
+
     help_text = f"""
     {CYAN}{BOLD}╔════════════════════════════════════════════════════════════════╗
     ║                        APPLY WARP                              ║
@@ -76,6 +78,7 @@ def print_help_message():
     
     {CYAN}{BOLD}────────────────────────── OPTIONAL ARGUMENTS ──────────────────────────{RESET}
       {YELLOW}--output{RESET}     : Output path for the warped image (default: warped_image.nii.gz)
+      {YELLOW}--interpolation{RESET} : Interpolation method (default: linear)
     
     {CYAN}{BOLD}────────────────────────── EXAMPLE USAGE ──────────────────────────{RESET}
     
@@ -88,7 +91,7 @@ def print_help_message():
       followed by the affine transformation.
     {MAGENTA}•{RESET} This is the standard order in ANTs for composite transformations.
     """
-    
+
     print(help_text)
 
 
@@ -117,12 +120,24 @@ def main():
     parser.add_argument(
         "--output", default="warped_image.nii.gz", help="Output warped image filename."
     )
+    parser.add_argument(
+        "--interpolation",
+        default="linear",
+        help="Interpolation method (default: linear).",
+    )
     args = parser.parse_args()
     # Load images and transforms
     moving_img = ants.image_read(args.moving)
     reference_img = ants.image_read(args.reference)
-    
-    apply_warp(moving_img, reference_img, args.affine, args.warp, args.output)
+
+    apply_warp(
+        moving_img,
+        reference_img,
+        args.affine,
+        args.warp,
+        args.output,
+        args.interpolation,
+    )
 
 
 if __name__ == "__main__":

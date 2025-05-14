@@ -714,7 +714,7 @@ if EXTRACT_BRAIN:
                 rules.apply_warp_to_mni.output.warped if wildcards.modality in ["T1w", "FLAIR"] else
                 None
             ),
-            mask = ATLAS_MASK
+            mask = rules.transform_mask_to_mni.output.mni_mask
         output:
             brain = f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_MNI152-space_{{modality}}.nii.gz"
         wildcard_constraints:
@@ -755,6 +755,26 @@ if EXTRACT_BRAIN:
                 --min-value 0 \
                 --max-value 100
             """
+            
+rule transform_mask_to_mni:
+    input:
+        mask = rules.skull_strip_t1w.output.mask,
+        warp = rules.registration_mni152.output.fwd_field,
+        affine = rules.registration_mni152.output.fwd_affine,
+        reference = ATLAS
+    output:
+        mni_mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_MNI152-space_brain_mask.nii.gz"
+    shell:
+        """
+        micaflow apply_warp \
+            --moving {input.mask} \
+            --reference {input.reference} \
+            --affine {input.affine} \
+            --warp {input.warp} \
+            --output {output.mni_mask} \
+            --interpolation NearestNeighbor
+        """
+
 rule cleanup:
     input:
         # All final outputs except the cleanup marker

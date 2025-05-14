@@ -348,6 +348,11 @@ def main():
     apply_warp_parser.add_argument(
         "--output", required=True, help="Output path for the warped image"
     )
+    apply_warp_parser.add_argument(
+        "--interpolation",
+        default="linear",
+        help="Interpolation method (default: linear).",
+    )
 
     # Brain Extraction Tool command
     bet_parser = subparsers.add_parser("bet", help="Run HD-BET brain extraction")
