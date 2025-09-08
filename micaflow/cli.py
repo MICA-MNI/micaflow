@@ -502,7 +502,11 @@ def main():
         "--b0-output", 
         help="Path to save the extracted shell volume when processing DWI data (.nii.gz)"
     )
-
+    coreg_parser.add_argument(
+        "--output-segmentation",
+        help="Optional path to save the output segmentation image alongside the registered image."
+    )
+    
     # Denoise command
     denoise_parser = subparsers.add_parser(
         "denoise", help="Denoise diffusion-weighted images using Patch2Self"

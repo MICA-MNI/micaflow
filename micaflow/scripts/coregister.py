@@ -164,6 +164,8 @@ if __name__ == "__main__":
                         help="Index of the shell channel to use for DWI images.")
     parser.add_argument("--b0-output", default=None,
                         help="Optional path to save the extracted shell volume when processing DWI data.")
+    parser.add_argument("--output-segmentation", default=None,
+                        help="Optional path to save the output segmentation image alongside the registered image.")
     args = parser.parse_args()
 
     # Process DWI shell extraction if requested
@@ -235,7 +237,7 @@ if __name__ == "__main__":
             output_image=args.output,
             input_parc=args.moving_segmentation,
             reference_parc=args.fixed_segmentation,
-            output_parc=args.output.replace('.nii.gz', '_parc.nii.gz'),
+            output_parc=args.output_segmentation,
             affine_file=args.affine_file,
             warp_file=args.warp_file,
             inverse_warp_file=args.rev_warp_file,
@@ -253,7 +255,6 @@ if __name__ == "__main__":
         # Generate paths for segmentations
         moving_segmentation = args.moving_file.replace('.nii.gz', '_parc.nii.gz')
         fixed_segmentation = args.fixed_file.replace('.nii.gz', '_parc.nii.gz')
-        output_segmentation = args.output.replace('.nii.gz', '_parc.nii.gz')
         
         lamareg(
             input_image=args.moving_file,
@@ -261,7 +262,7 @@ if __name__ == "__main__":
             output_image=args.output,
             input_parc=moving_segmentation,
             reference_parc=fixed_segmentation,
-            output_parc=output_segmentation,
+            output_parc=args.output_segmentation,
             affine_file=args.affine_file,
             warp_file=args.warp_file,
             inverse_warp_file=args.rev_warp_file,

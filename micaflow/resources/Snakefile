@@ -291,7 +291,8 @@ if RUN_FLAIR:
             fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdfield.nii.gz",
             bak_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_bakfield.nii.gz",
             fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdaffine.mat",
-            bak_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_bakaffine.mat"
+            bak_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_bakaffine.mat",
+            output_segmentation = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_seg.nii.gz"
         threads: THREADS
         shell:
             """
@@ -306,7 +307,8 @@ if RUN_FLAIR:
                 --rev-warp-file {output.bak_field} \
                 --rev-affine-file {output.bak_affine} \
                 --ants-threads {threads} \
-                --synthseg-threads {threads}
+                --synthseg-threads {threads} \
+                --output-segmentation {output.output_segmentation}
             """
 
     rule apply_warp_flair_to_t1w:
@@ -329,7 +331,7 @@ if RUN_FLAIR:
 
     rule calculate_metrics_FLAIR:
         input:
-            image = rules.registration_t1w.output.warped,
+            image = rules.registration_t1w.output.output_segmentation,
             atlas = rules.synthseg_t1w.output.seg
         output:
             metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_FLAIR-to-T1w-space_DICE.csv"
@@ -352,7 +354,8 @@ rule registration_mni152:
         fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_fwdfield.nii.gz",
         bak_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_bakfield.nii.gz",
         fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_fwdaffine.mat",
-        bak_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_bakaffine.mat"
+        bak_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_bakaffine.mat",
+        output_segmentation = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_seg.nii.gz"
     threads: THREADS
     shell:
         """
@@ -367,7 +370,8 @@ rule registration_mni152:
             --rev-warp-file {output.bak_field} \
             --rev-affine-file {output.bak_affine} \
             --ants-threads {threads} \
-            --synthseg-threads {threads}
+            --synthseg-threads {threads} \
+            --output-segmentation {output.output_segmentation}
         """
 
 rule apply_warp_to_mni:
@@ -431,7 +435,7 @@ rule run_texture_T1w:
 
 rule calculate_metrics_T1w:
     input:
-        image = rules.registration_mni152.output.warped,
+        image = rules.registration_mni152.output.output_segmentation,
         atlas = ATLAS_SEG
     output:
         metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_T1w-to-MNI152-space_DICE.csv"
@@ -605,7 +609,8 @@ if RUN_DWI:
             fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_fwdaffine.mat",
             rev_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_revfield.nii.gz",
             rev_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_revaffine.mat",
-            b0_temp = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0_temp.nii.gz"
+            b0_temp = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0_temp.nii.gz",
+            output_segmentation = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_seg.nii.gz"
         threads: THREADS
         shell:
             """
@@ -622,7 +627,8 @@ if RUN_DWI:
                 --ants-threads {threads} \
                 --synthseg-threads {threads} \
                 --shell-channel -1 \
-                --b0-output {output.b0_temp}
+                --b0-output {output.b0_temp} \
+                --output-segmentation {output.output_segmentation}
             """
     
     rule dwi_compute_fa_md:
@@ -677,7 +683,7 @@ if RUN_DWI:
 
     rule calculate_metrics_DWI:
         input:
-            image = rules.dwi_registration.output.warped,
+            image = rules.dwi_registration.output.output_segmentation,
             atlas = rules.synthseg_t1w.output.seg
         output:
             metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_DWI-to-T1w-space_DICE.csv"
