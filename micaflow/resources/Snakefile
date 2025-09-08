@@ -249,35 +249,6 @@ rule bias_field_correction:
 
 # Place these rules in a conditional block to only run when FLAIR is available
 if RUN_FLAIR:
-
-    rule registration_t1w:
-        input:
-            fixed_seg = rules.synthseg_t1w.output.seg,
-            moving_seg = rules.synthseg_flair.output.seg,
-            anatomical_fixed = rules.bias_field_correction.output.corrected,
-            anatomical_moving = rules.bias_field_correction_flair.output.corrected
-        output:
-            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_T1w-space_FLAIR.nii.gz",
-            fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdfield.nii.gz",
-            bak_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_bakfield.nii.gz",
-            fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdaffine.mat",
-            bak_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_bakaffine.mat"
-        shell:
-            """
-            micaflow coregister \
-                --fixed-file {input.anatomical_fixed} \
-                --moving-file {input.anatomical_moving} \
-                --fixed-segmentation {input.fixed_seg} \
-                --moving-segmentation {input.moving_seg} \
-                --output {output.warped} \
-                --warp-file {output.fwd_field} \
-                --affine-file {output.fwd_affine} \
-                --rev-warp-file {output.bak_field} \
-                --rev-affine-file {output.bak_affine} \
-                --ants-threads {threads} \
-                --synthseg-threads {threads}
-            """
-
     rule skull_strip_flair:
         input:
             image = FLAIR_FILE,
@@ -308,6 +279,34 @@ if RUN_FLAIR:
             corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_FLAIR-space_FLAIR.nii.gz"
         shell:
             "micaflow bias_correction -i {input.image} -o {output.corrected} -m {input.mask}"
+            
+    rule registration_t1w:
+        input:
+            fixed_seg = rules.synthseg_t1w.output.seg,
+            moving_seg = rules.synthseg_flair.output.seg,
+            anatomical_fixed = rules.bias_field_correction.output.corrected,
+            anatomical_moving = rules.bias_field_correction_flair.output.corrected
+        output:
+            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_T1w-space_FLAIR.nii.gz",
+            fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdfield.nii.gz",
+            bak_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_bakfield.nii.gz",
+            fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdaffine.mat",
+            bak_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_bakaffine.mat"
+        shell:
+            """
+            micaflow coregister \
+                --fixed-file {input.anatomical_fixed} \
+                --moving-file {input.anatomical_moving} \
+                --fixed-segmentation {input.fixed_seg} \
+                --moving-segmentation {input.moving_seg} \
+                --output {output.warped} \
+                --warp-file {output.fwd_field} \
+                --affine-file {output.fwd_affine} \
+                --rev-warp-file {output.bak_field} \
+                --rev-affine-file {output.bak_affine} \
+                --ants-threads {threads} \
+                --synthseg-threads {threads}
+            """
 
     rule apply_warp_flair_to_t1w:
         input:
