@@ -253,8 +253,8 @@ if RUN_FLAIR:
     rule registration_t1w:
         input:
             fixed_seg = rules.synthseg_t1w.output.seg,
-            moving_seg = rules.synthseg_flair.output.seg
-            anatomical_fixed = rules.bias_field_correction.output.corrected
+            moving_seg = rules.synthseg_flair.output.seg,
+            anatomical_fixed = rules.bias_field_correction.output.corrected,
             anatomical_moving = rules.bias_field_correction_flair.output.corrected
         output:
             warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_T1w-space_FLAIR.nii.gz",
@@ -344,7 +344,7 @@ if RUN_FLAIR:
 rule registration_mni152:
     input:
         image_seg = rules.synthseg_t1w.output.seg,
-        fixed_seg = ATLAS_SEG
+        fixed_seg = ATLAS_SEG,
         image = rules.bias_field_correction.output.corrected,
         fixed = ATLAS
     output:
