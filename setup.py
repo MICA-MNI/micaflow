@@ -19,7 +19,7 @@ def get_requirements():
 
 setup(
     name="micaflow",
-    version="0.1.0",
+    version="0.2.0",
     description="Clinical and research MRI processing workflow",
     author="MICA Lab",
     packages=find_packages(),

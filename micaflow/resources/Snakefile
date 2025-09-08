@@ -252,8 +252,10 @@ if RUN_FLAIR:
 
     rule registration_t1w:
         input:
-            fixed = rules.synthseg_t1w.output.seg,
-            moving = rules.synthseg_flair.output.seg
+            fixed_seg = rules.synthseg_t1w.output.seg,
+            moving_seg = rules.synthseg_flair.output.seg
+            anatomical_fixed = rules.bias_field_correction.output.corrected
+            anatomical_moving = rules.bias_field_correction_flair.output.corrected
         output:
             warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_T1w-space_FLAIR.nii.gz",
             fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdfield.nii.gz",
@@ -263,13 +265,17 @@ if RUN_FLAIR:
         shell:
             """
             micaflow coregister \
-                --fixed-file {input.fixed} \
-                --moving-file {input.moving} \
+                --fixed-file {input.anatomical_fixed} \
+                --moving-file {input.anatomical_moving} \
+                --fixed-segmentation {input.fixed_seg} \
+                --moving-segmentation {input.moving_seg} \
                 --output {output.warped} \
                 --warp-file {output.fwd_field} \
                 --affine-file {output.fwd_affine} \
                 --rev-warp-file {output.bak_field} \
-                --rev-affine-file {output.bak_affine}
+                --rev-affine-file {output.bak_affine} \
+                --ants-threads {threads} \
+                --synthseg-threads {threads}
             """
 
     rule skull_strip_flair:
@@ -337,8 +343,10 @@ if RUN_FLAIR:
 
 rule registration_mni152:
     input:
-        image = rules.synthseg_t1w.output.seg,
-        fixed = ATLAS_SEG
+        image_seg = rules.synthseg_t1w.output.seg,
+        fixed_seg = ATLAS_SEG
+        image = rules.bias_field_correction.output.corrected,
+        fixed = ATLAS
     output:
         warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_MNI152-space_T1w.nii.gz",
         fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_fwdfield.nii.gz",
@@ -350,11 +358,15 @@ rule registration_mni152:
         micaflow coregister \
             --fixed-file {input.fixed} \
             --moving-file {input.image} \
+            --fixed-segmentation {input.fixed_seg} \
+            --moving-segmentation {input.image_seg} \
             --output {output.warped} \
             --warp-file {output.fwd_field} \
             --affine-file {output.fwd_affine} \
             --rev-warp-file {output.bak_field} \
-            --rev-affine-file {output.bak_affine}
+            --rev-affine-file {output.bak_affine} \
+            --ants-threads {threads} \
+            --synthseg-threads {threads}
         """
 
 rule apply_warp_to_mni:
@@ -584,8 +596,10 @@ if RUN_DWI:
 
     rule dwi_registration:
         input:
-            moving = rules.synthseg_dwi.output.seg,
-            fixed = rules.synthseg_t1w.output.seg
+            moving_seg = rules.synthseg_dwi.output.seg,
+            fixed_seg = rules.synthseg_t1w.output.seg,
+            moving = rules.dwi_bias_correction.output.corrected,
+            fixed = rules.bias_field_correction.output.corrected
         output:
             warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_T1w-space_DWI.nii.gz",
             fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_fwdfield.nii.gz",
@@ -597,11 +611,15 @@ if RUN_DWI:
             micaflow coregister \
                 --fixed-file {input.fixed} \
                 --moving-file {input.moving} \
+                --fixed-segmentation {input.fixed_seg} \
+                --moving-segmentation {input.moving_seg} \
                 --output {output.warped} \
                 --warp-file {output.fwd_field} \
                 --affine-file {output.fwd_affine} \
                 --rev-warp-file {output.rev_field} \
-                --rev-affine-file {output.rev_affine}
+                --rev-affine-file {output.rev_affine} \
+                --ants-threads {threads} \
+                --synthseg-threads {threads}
             """
     
     rule dwi_compute_fa_md:

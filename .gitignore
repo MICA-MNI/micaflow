@@ -8,3 +8,4 @@ work/*
 /.vscode/
 /micaflow.egg-info
 /micaflow/resources/.snakemake
+/build
