@@ -170,8 +170,6 @@ if __name__ == "__main__":
     if args.shell_channel is not None and args.b0_output is not None:
         print(f"Extracting shell channel {args.shell_channel} from DWI image...")
         import ants
-        import os
-        import numpy as np
         
         # Read the full DWI image
         moving_image = ants.image_read(args.moving_file)
@@ -182,17 +180,38 @@ if __name__ == "__main__":
             num_volumes = moving_image.components
             print(f"Found 4D image with {num_volumes} volumes")
             
-            # Make sure the requested shell channel is valid
-            if args.shell_channel >= num_volumes:
-                print(f"Warning: Requested shell channel {args.shell_channel} exceeds available volumes. Using volume 0 instead.")
-                shell_index = 0
+            # Handle negative indexing for shell_channel
+            if args.shell_channel < 0:
+                # Convert negative index to positive (e.g. -1 -> last volume)
+                adjusted_index = num_volumes + args.shell_channel
+                # Check if still in valid range
+                if adjusted_index < 0:
+                    print(f"Warning: Adjusted shell channel {adjusted_index} is out of range. Using volume 0 instead.")
+                    shell_index = 0
+                else:
+                    shell_index = adjusted_index
+                    print(f"Using negative index {args.shell_channel} which maps to volume {shell_index}")
             else:
-                shell_index = args.shell_channel
-                
+                # Make sure the requested shell channel is valid
+                if args.shell_channel >= num_volumes:
+                    print(f"Warning: Requested shell channel {args.shell_channel} exceeds available volumes. Using volume 0 instead.")
+                    shell_index = 0
+                else:
+                    shell_index = args.shell_channel
+            
             # Extract the specified volume
             print(f"Extracting volume {shell_index}")
+            
+            # Use proper ANTs API to extract a single volume
+            import numpy as np
+            # Create start and size arrays for indexing
+            starts = [0, 0, 0, shell_index]
+            sizes = list(moving_image.shape[:3]) + [1]  # Take one volume along 4th dimension
+            
+            # Extract the volume using ANTs getitem function
+            extracted_array = moving_image.numpy()[..., shell_index]
             extracted_volume = ants.from_numpy(
-                moving_image[:,:,:,shell_index].numpy(),
+                extracted_array,
                 origin=moving_image.origin[:3],
                 spacing=moving_image.spacing[:3],
                 direction=moving_image.direction[:3,:3]
