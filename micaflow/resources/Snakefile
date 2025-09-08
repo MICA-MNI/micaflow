@@ -279,7 +279,7 @@ if RUN_FLAIR:
             corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_FLAIR-space_FLAIR.nii.gz"
         shell:
             "micaflow bias_correction -i {input.image} -o {output.corrected} -m {input.mask}"
-            
+
     rule registration_t1w:
         input:
             fixed_seg = rules.synthseg_t1w.output.seg,
@@ -292,6 +292,7 @@ if RUN_FLAIR:
             bak_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_bakfield.nii.gz",
             fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdaffine.mat",
             bak_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_bakaffine.mat"
+        threads: THREADS
         shell:
             """
             micaflow coregister \
@@ -352,6 +353,7 @@ rule registration_mni152:
         bak_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_bakfield.nii.gz",
         fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_fwdaffine.mat",
         bak_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_bakaffine.mat"
+    threads: THREADS
     shell:
         """
         micaflow coregister \
@@ -605,6 +607,7 @@ if RUN_DWI:
             fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_fwdaffine.mat",
             rev_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_revfield.nii.gz",
             rev_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_revaffine.mat"
+        threads: THREADS
         shell:
             """
             micaflow coregister \

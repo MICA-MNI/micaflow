@@ -165,7 +165,14 @@ if __name__ == "__main__":
     if args.fixed_segmentation and args.moving_segmentation:
         print("Using previously generated segmentation images.")
         from lamareg.scripts.lamar import lamareg
-        
+        import ants
+        fixed = ants.image_read(args.fixed_file)
+        moving = ants.image_read(args.moving_file)
+        if fixed.dimension != moving.dimension:
+            print(f"Fixed image dimension: {fixed.dimension}")
+            print(f"Moving image dimension: {moving.dimension}")
+            print("Error: Fixed and moving images must have the same number of dimensions.")
+            sys.exit(1)
         lamareg(
             input_image=args.moving_file,
             reference_image=args.fixed_file,
