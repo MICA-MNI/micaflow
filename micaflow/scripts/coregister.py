@@ -160,19 +160,56 @@ if __name__ == "__main__":
                         help="Number of threads for ANTs registration operations (default: 1).")
     parser.add_argument("--synthseg-threads", type=int, default=1, 
                         help="Number of threads for SynthSeg segmentation operations (default: 1).")
+    parser.add_argument("--shell-channel", type=int,
+                        help="Index of the shell channel to use for DWI images.")
+    parser.add_argument("--b0-output", default=None,
+                        help="Optional path to save the extracted shell volume when processing DWI data.")
     args = parser.parse_args()
+
+    # Process DWI shell extraction if requested
+    if args.shell_channel is not None and args.b0_output is not None:
+        print(f"Extracting shell channel {args.shell_channel} from DWI image...")
+        import ants
+        import os
+        import numpy as np
+        
+        # Read the full DWI image
+        moving_image = ants.image_read(args.moving_file)
+        
+        # Check if the image is 4D (has multiple volumes)
+        if moving_image.dimension == 4:
+            # Get the number of volumes
+            num_volumes = moving_image.components
+            print(f"Found 4D image with {num_volumes} volumes")
+            
+            # Make sure the requested shell channel is valid
+            if args.shell_channel >= num_volumes:
+                print(f"Warning: Requested shell channel {args.shell_channel} exceeds available volumes. Using volume 0 instead.")
+                shell_index = 0
+            else:
+                shell_index = args.shell_channel
+                
+            # Extract the specified volume
+            print(f"Extracting volume {shell_index}")
+            extracted_volume = ants.from_numpy(
+                moving_image[:,:,:,shell_index].numpy(),
+                origin=moving_image.origin[:3],
+                spacing=moving_image.spacing[:3],
+                direction=moving_image.direction[:3,:3]
+            )
+            
+            # Save the extracted volume
+            ants.image_write(extracted_volume, args.b0_output)
+            print(f"Saved extracted volume to: {args.b0_output}")
+            
+            # Use the extracted volume for registration
+            args.moving_file = args.b0_output
+        else:
+            print("Warning: Shell channel specified but input is not a 4D image. Using original image.")
 
     if args.fixed_segmentation and args.moving_segmentation:
         print("Using previously generated segmentation images.")
         from lamareg.scripts.lamar import lamareg
-        import ants
-        fixed = ants.image_read(args.fixed_file)
-        moving = ants.image_read(args.moving_file)
-        if fixed.dimension != moving.dimension:
-            print(f"Fixed image dimension: {fixed.dimension}")
-            print(f"Moving image dimension: {moving.dimension}")
-            print("Error: Fixed and moving images must have the same number of dimensions.")
-            sys.exit(1)
         lamareg(
             input_image=args.moving_file,
             reference_image=args.fixed_file,

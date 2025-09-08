@@ -541,8 +541,6 @@ if RUN_DWI:
                 --output {output.corrected}
             """
 
-
-
     rule synthseg_dwi:
         input:
             image = rules.dwi_topup.output.corrected,
@@ -606,7 +604,8 @@ if RUN_DWI:
             fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_fwdfield.nii.gz",
             fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_fwdaffine.mat",
             rev_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_revfield.nii.gz",
-            rev_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_revaffine.mat"
+            rev_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_revaffine.mat",
+            b0_temp = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0_temp.nii.gz"
         threads: THREADS
         shell:
             """
@@ -621,7 +620,9 @@ if RUN_DWI:
                 --rev-warp-file {output.rev_field} \
                 --rev-affine-file {output.rev_affine} \
                 --ants-threads {threads} \
-                --synthseg-threads {threads}
+                --synthseg-threads {threads} \
+                --shell-channel -1 \
+                --b0-output {output.b0_temp}
             """
     
     rule dwi_compute_fa_md:

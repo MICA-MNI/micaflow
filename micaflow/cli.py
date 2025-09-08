@@ -494,6 +494,14 @@ def main():
         "--synthseg-threads", type=int, default=1, 
         help="Number of threads for SynthSeg segmentation operations (default: 1)"
     )
+    coreg_parser.add_argument(
+        "--shell-channel", type=int,
+        help="Index of the shell channel to extract from DWI images for registration"
+    )
+    coreg_parser.add_argument(
+        "--b0-output", 
+        help="Path to save the extracted shell volume when processing DWI data (.nii.gz)"
+    )
 
     # Denoise command
     denoise_parser = subparsers.add_parser(
