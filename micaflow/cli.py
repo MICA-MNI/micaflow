@@ -448,36 +448,51 @@ def main():
 
     # Coregistration command
     coreg_parser = subparsers.add_parser(
-        "coregister", help="Coregister a moving image to a reference image"
+        "coregister", help="Coregister a moving image to a reference image using label-augmented registration"
     )
     coreg_parser.add_argument(
-        "--fixed-file", required=True, help="Path to the fixed image."
+        "--fixed-file", required=True, 
+        help="Path to the fixed/reference image (.nii.gz)"
     )
     coreg_parser.add_argument(
-        "--moving-file", required=True, help="Path to the moving image."
+        "--moving-file", required=True, 
+        help="Path to the moving image to be registered (.nii.gz)"
     )
     coreg_parser.add_argument(
-        "--output",
-        default="registered_image.nii",
-        help="Output path for the registered image.",
+        "--fixed-segmentation", 
+        help="Path to the fixed segmentation image (.nii.gz). If not provided, will be generated automatically."
     )
     coreg_parser.add_argument(
-        "--warp-file", default=None, help="Optional path to save the warp field."
+        "--moving-segmentation", 
+        help="Path to the moving segmentation image (.nii.gz). If not provided, will be generated automatically."
     )
     coreg_parser.add_argument(
-        "--affine-file",
-        default=None,
-        help="Optional path to save the affine transform.",
+        "--output", required=True,
+        help="Output path for the registered image (.nii.gz)"
     )
     coreg_parser.add_argument(
-        "--rev-warp-file",
-        default=None,
-        help="Optional path to save the reverse warp field.",
+        "--warp-file", default=None, 
+        help="Optional path to save the forward warp field (moving to fixed) (.nii.gz)"
     )
     coreg_parser.add_argument(
-        "--rev-affine-file",
-        default=None,
-        help="Optional path to save the reverse affine transform.",
+        "--affine-file", default=None,
+        help="Optional path to save the forward affine transform (moving to fixed) (.mat)"
+    )
+    coreg_parser.add_argument(
+        "--rev-warp-file", default=None,
+        help="Optional path to save the reverse warp field (fixed to moving) (.nii.gz)"
+    )
+    coreg_parser.add_argument(
+        "--rev-affine-file", default=None,
+        help="Optional path to save the reverse affine transform (fixed to moving) (.mat)"
+    )
+    coreg_parser.add_argument(
+        "--ants-threads", type=int, default=1, 
+        help="Number of threads for ANTs registration operations (default: 1)"
+    )
+    coreg_parser.add_argument(
+        "--synthseg-threads", type=int, default=1, 
+        help="Number of threads for SynthSeg segmentation operations (default: 1)"
     )
 
     # Denoise command
