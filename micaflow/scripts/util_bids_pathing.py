@@ -46,6 +46,8 @@ def check_paths(
     BVAL_FILE,
     BVEC_FILE,
     INVERSE_DWI_FILE,
+    INVERSE_BVAL_FILE,
+    INVERSE_BVEC_FILE,
     THREADS,
 ):
     """
@@ -89,10 +91,22 @@ def check_paths(
             )
             sys.exit(1)
         if INVERSE_DWI_FILE == "":
-            print_error(
-                "Inverse DWI file not provided. Inverse DWI file is required for distortion correction."
+            print_warning(
+                "Inverse DWI file not provided. Susceptibility-correction will be performed by synthetic b0."
             )
-            sys.exit(1)
+        else:
+            # If inverse DWI is provided, check for inverse bval and bvec files
+            if INVERSE_BVAL_FILE == "":
+                print_error(
+                    "Inverse BVAL file not provided. Inverse BVAL file is required when inverse DWI is provided."
+                )
+                sys.exit(1)
+            if INVERSE_BVEC_FILE == "":
+                print_error(
+                    "Inverse BVEC file not provided. Inverse BVEC file is required when inverse DWI is provided."
+                )
+                sys.exit(1)
+
         RUN_DWI = True
     else:
         RUN_DWI = False
@@ -284,9 +298,61 @@ def check_paths(
                             f"Inverse DWI file does not exist at path {inverse_dwi_path}."
                         )
                         sys.exit(1)
+                    
+                    # Check for inverse bval file
+                    if INVERSE_BVAL_FILE != "":
+                        inverse_bval_path = (
+                            (DATA_DIRECTORY + "/" + SUBJECT + "/dwi/" + INVERSE_BVAL_FILE)
+                            if SESSION is None
+                            else (
+                                DATA_DIRECTORY
+                                + "/"
+                                + SUBJECT
+                                + "/"
+                                + SESSION
+                                + "/dwi/"
+                                + INVERSE_BVAL_FILE
+                            )
+                        )
+                        if os.path.exists(inverse_bval_path):
+                            print_note(
+                                f"Inverse BVAL file exists at path {inverse_bval_path}."
+                            )
+                            INVERSE_BVAL_FILE = inverse_bval_path
+                        else:
+                            print_error(
+                                f"Inverse BVAL file does not exist at path {inverse_bval_path}."
+                            )
+                            sys.exit(1)
+
+                    # Check for inverse bvec file
+                    if INVERSE_BVEC_FILE != "":
+                        inverse_bvec_path = (
+                            (DATA_DIRECTORY + "/" + SUBJECT + "/dwi/" + INVERSE_BVEC_FILE)
+                            if SESSION is None
+                            else (
+                                DATA_DIRECTORY
+                                + "/"
+                                + SUBJECT
+                                + "/"
+                                + SESSION
+                                + "/dwi/"
+                                + INVERSE_BVEC_FILE
+                            )
+                        )
+                        if os.path.exists(inverse_bvec_path):
+                            print_note(
+                                f"Inverse BVEC file exists at path {inverse_bvec_path}."
+                            )
+                            INVERSE_BVEC_FILE = inverse_bvec_path
+                        else:
+                            print_error(
+                                f"Inverse BVEC file does not exist at path {inverse_bvec_path}."
+                            )
+                            sys.exit(1)
                 else:
-                    print_error("Inverse DWI file not provided.")
-                    sys.exit(1)
+                    print_warning("Inverse DWI file not provided, it will be generated.")
+                    
             else:
                 print_note(
                     f"Diffusion data not provided, diffusion pipeline is disabled."
@@ -350,9 +416,25 @@ def check_paths(
                         f"Inverse DWI file does not exist at path {INVERSE_DWI_FILE}."
                     )
                     sys.exit(1)
+                    
+                # Check for inverse bval file
+                if INVERSE_BVAL_FILE != "":
+                    if os.path.exists(INVERSE_BVAL_FILE):
+                        print_note(f"Inverse BVAL file exists at path {INVERSE_BVAL_FILE}.")
+                    else:
+                        print_error(f"Inverse BVAL file does not exist at path {INVERSE_BVAL_FILE}.")
+                        sys.exit(1)
+                        
+                # Check for inverse bvec file
+                if INVERSE_BVEC_FILE != "":
+                    if os.path.exists(INVERSE_BVEC_FILE):
+                        print_note(f"Inverse BVEC file exists at path {INVERSE_BVEC_FILE}.")
+                    else:
+                        print_error(f"Inverse BVEC file does not exist at path {INVERSE_BVEC_FILE}.")
+                        sys.exit(1)
             else:
-                print_error("Inverse DWI file not provided.")
-                sys.exit(1)
+                print_warning("Inverse DWI file not provided, it will be generated.")
+
         else:
             print_note(f"Diffusion data not provided, diffusion pipeline is disabled.")
     print_note("All paths are valid.")
@@ -402,6 +484,8 @@ def check_paths(
         BVAL_FILE,
         BVEC_FILE,
         INVERSE_DWI_FILE,
+        INVERSE_BVAL_FILE,
+        INVERSE_BVEC_FILE,
         THREADS,
         RUN_FLAIR,
     )

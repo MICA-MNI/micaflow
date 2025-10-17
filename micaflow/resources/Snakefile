@@ -17,11 +17,18 @@ DWI_FILE = config.get("dwi_file", "")
 BVAL_FILE = config.get("bval_file", "")
 BVEC_FILE = config.get("bvec_file", "")
 INVERSE_DWI_FILE = config.get("inverse_dwi_file", "")
+INVERSE_BVAL_FILE = config.get("inverse_bval_file", "")
+INVERSE_BVEC_FILE = config.get("inverse_bvec_file", "")
 RM_CEREBELLUM = config.get("rm_cerebellum", False)
 KEEP_TEMP = config.get("keep_temp", False)  # New parameter to control temp directory cleanup
+PED = config.get("PED", "")
+SHELL_DIMENSION = config.get("shell_dimension", 3)
 
 GPU = config.get("gpu", "")
 print("GPU: ", GPU)
+
+# Add this to the top section where variables are defined
+USE_SYNTH_B0 = INVERSE_DWI_FILE == "" or INVERSE_DWI_FILE is None
 
 # Atlas paths
 ATLAS_DIR = os.path.join(workflow.basedir, "atlas")
@@ -61,17 +68,21 @@ if os.path.exists(paths_cache_file):
     BVAL_FILE = paths_data["BVAL_FILE"]
     BVEC_FILE = paths_data["BVEC_FILE"]
     INVERSE_DWI_FILE = paths_data["INVERSE_DWI_FILE"]
+    INVERSE_BVAL_FILE = paths_data.get("INVERSE_BVAL_FILE", "")
+    INVERSE_BVEC_FILE = paths_data.get("INVERSE_BVEC_FILE", "")
     THREADS = paths_data["THREADS"]
     RUN_FLAIR = paths_data["RUN_FLAIR"]
     
     print("[INFO] Loaded paths from cache file:", paths_cache_file)
 else:
     # Run the check_paths function
-    DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, RUN_DWI, GPU, FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, THREADS, RUN_FLAIR = check_paths(
+    DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, RUN_DWI, GPU, FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, INVERSE_BVAL_FILE, INVERSE_BVEC_FILE, THREADS, RUN_FLAIR = check_paths(
             DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, GPU, 
-            FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, THREADS
+            FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, INVERSE_BVAL_FILE, INVERSE_BVEC_FILE, THREADS
         )
-    
+    # Add this after the variable definitions and paths checking
+    if RUN_DWI and USE_SYNTH_B0:
+        print("[INFO] No reverse phase encoding scan provided, will use synthetic B0 for distortion correction")
     # Save the results to cache file
     paths_data = {
         "DATA_DIRECTORY": DATA_DIRECTORY,
@@ -86,6 +97,8 @@ else:
         "BVAL_FILE": BVAL_FILE,
         "BVEC_FILE": BVEC_FILE,
         "INVERSE_DWI_FILE": INVERSE_DWI_FILE,
+        "INVERSE_BVAL_FILE": INVERSE_BVAL_FILE,
+        "INVERSE_BVEC_FILE": INVERSE_BVEC_FILE,
         "THREADS": THREADS,
         "RUN_FLAIR": RUN_FLAIR
     }
@@ -291,7 +304,8 @@ if RUN_FLAIR:
             fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdfield.nii.gz",
             bak_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_bakfield.nii.gz",
             fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdaffine.mat",
-            bak_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_bakaffine.mat",
+            fwd_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdfield-secondary.nii.gz",
+            bak_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_bakfield-secondary.nii.gz",
             output_segmentation = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_seg.nii.gz"
         threads: THREADS
         shell:
@@ -305,16 +319,18 @@ if RUN_FLAIR:
                 --warp-file {output.fwd_field} \
                 --affine-file {output.fwd_affine} \
                 --rev-warp-file {output.bak_field} \
-                --rev-affine-file {output.bak_affine} \
                 --ants-threads {threads} \
                 --synthseg-threads {threads} \
-                --output-segmentation {output.output_segmentation}
+                --output-segmentation {output.output_segmentation} \
+                --secondary-warp-file {output.fwd_field_secondary} \
+                --secondary-rev-warp-file {output.bak_field_secondary}
             """
 
     rule apply_warp_flair_to_t1w:
         input:
             moving = rules.bias_field_correction_flair.output.corrected,
             warp = rules.registration_t1w.output.fwd_field,
+            warp_secondary = rules.registration_t1w.output.fwd_field_secondary,
             affine = rules.registration_t1w.output.fwd_affine,
             reference = rules.bias_field_correction.output.corrected
         output:
@@ -326,6 +342,7 @@ if RUN_FLAIR:
                 --reference {input.reference} \
                 --affine {input.affine} \
                 --warp {input.warp} \
+                --secondary-warp {input.warp_secondary} \
                 --output {output.warped}
             """
 
@@ -345,16 +362,17 @@ if RUN_FLAIR:
 
 rule registration_mni152:
     input:
-        image_seg = rules.synthseg_t1w.output.seg,
-        fixed_seg = ATLAS_SEG,
         image = rules.bias_field_correction.output.corrected,
-        fixed = ATLAS
+        fixed = ATLAS,
+        image_segmentation = rules.synthseg_t1w.output.seg,
+        fixed_segmentation = ATLAS_SEG
     output:
         warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_MNI152-space_T1w.nii.gz",
         fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_fwdfield.nii.gz",
         bak_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_bakfield.nii.gz",
         fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_fwdaffine.mat",
-        bak_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_bakaffine.mat",
+        fwd_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_fwdfield-secondary.nii.gz",
+        bak_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_bakfield-secondary.nii.gz",
         output_segmentation = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_seg.nii.gz"
     threads: THREADS
     shell:
@@ -362,16 +380,17 @@ rule registration_mni152:
         micaflow coregister \
             --fixed-file {input.fixed} \
             --moving-file {input.image} \
-            --fixed-segmentation {input.fixed_seg} \
-            --moving-segmentation {input.image_seg} \
+            --fixed-segmentation {input.fixed_segmentation} \
+            --moving-segmentation {input.image_segmentation} \
             --output {output.warped} \
-            --warp-file {output.fwd_field} \
             --affine-file {output.fwd_affine} \
+            --warp-file {output.fwd_field} \
             --rev-warp-file {output.bak_field} \
-            --rev-affine-file {output.bak_affine} \
+            --output-segmentation {output.output_segmentation} \
             --ants-threads {threads} \
             --synthseg-threads {threads} \
-            --output-segmentation {output.output_segmentation}
+            --secondary-warp-file {output.fwd_field_secondary} \
+            --secondary-rev-warp-file {output.bak_field_secondary}
         """
 
 rule apply_warp_to_mni:
@@ -381,8 +400,9 @@ rule apply_warp_to_mni:
             else rules.apply_warp_flair_to_t1w.output.warped if RUN_FLAIR and wildcards.modality == "FLAIR"
             else None
         ),
-        warp = rules.registration_mni152.output.fwd_field,
         affine = rules.registration_mni152.output.fwd_affine,
+        warp = rules.registration_mni152.output.fwd_field,
+        warp_secondary = rules.registration_mni152.output.fwd_field_secondary,
         reference = ATLAS
     output:
         warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_MNI152-space_{{modality}}.nii.gz"
@@ -399,7 +419,8 @@ rule apply_warp_to_mni:
                 --reference {input.reference} \
                 --affine {input.affine} \
                 --warp {input.warp} \
-                --output {output.warped}
+                --output {output.warped} \
+                --secondary-warp {input.warp_secondary}
             """)
 
 rule run_texture:
@@ -494,212 +515,528 @@ if RUN_DWI:
                 --bvec {input.bvec} \
                 --output {output.denoised}
             """
-
-    rule dwi_motion_correction:
+    rule dwi_b0_extraction:
         input:
             denoised = rules.dwi_denoise.output.denoised,
             bval = BVAL_FILE,
             bvec = BVEC_FILE
         output:
-            corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_motioncorrected_DWI.nii.gz"
+            b0 = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0_DWI.nii.gz",
+            output_bvec = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0_DWI.bvec",
+            output_bval = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0_DWI.bval",
+            output_dwi = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_DWI_nob0.nii.gz",
+            b0_bval = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0_only.bval",
+            b0_bvec = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0_only.bvec"
+        shell:
+            """
+            micaflow extract_b0 \
+                --input {input.denoised} \
+                --bval {input.bval} \
+                --bvec {input.bvec} \
+                --output-bval {output.output_bval} \
+                --output-bvec {output.output_bvec} \
+                --output {output.b0} \
+                --output-dwi {output.output_dwi} \
+                --shell-dimension {SHELL_DIMENSION} \
+                --b0-bval {output.b0_bval} \
+                --b0-bvec {output.b0_bvec}
+            """
+
+    rule dwi_motion_correction:
+        input:
+            denoised = rules.dwi_b0_extraction.output.output_dwi,
+            bvec = rules.dwi_b0_extraction.output.output_bvec,
+            b0 = rules.dwi_b0_extraction.output.b0
+        output:
+            corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_motioncorrected_DWI.nii.gz",
+            corrected_bvec = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_motioncorrected_DWI.bvec"
         shell:
             """
             micaflow motion_correction \
                 --denoised {input.denoised} \
-                --bval {input.bval} \
-                --bvec {input.bvec} \
-                --output {output.corrected}
-            """
-
-    rule dwi_topup:
-        input:
-            moving = rules.dwi_motion_correction.output.corrected,
-            b0 = INVERSE_DWI_FILE,  # Using the direct path here
-            b0_bval = BVAL_FILE,    # You might need separate variables for these
-            b0_bvec = BVEC_FILE     # You might need separate variables for these
-        output:
-            warp = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_SDC-warp.nii.gz",
-            corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_corrected-b0_DWI.nii.gz"
-        shell:
-            """
-            micaflow SDC \
-                --input {input.moving} \
-                --reverse-image {input.b0} \
+                --input-bvecs {input.bvec} \
+                --output-bvecs {output.corrected_bvec} \
                 --output {output.corrected} \
-                --output-warp {output.warp} 
+                --b0 {input.b0} \
+                --shell-dimension {SHELL_DIMENSION}
             """
 
-    rule dwi_apply_topup:
-        input:
-            motion_corr = rules.dwi_motion_correction.output.corrected,
-            warp = rules.dwi_topup.output.warp,
-            affine = DWI_FILE  # Using the direct path
-        output:
-            corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_SDC-DWI.nii.gz"
-        shell:
-            """
-            micaflow apply_SDC \
-                --input {input.motion_corr} \
-                --warp {input.warp} \
-                --affine {input.affine} \
-                --output {output.corrected}
-            """
+    if USE_SYNTH_B0:
+        rule dwi_bias_correction:
+            input:
+                image = rules.dwi_motion_correction.output.corrected,
+                b0 = rules.dwi_b0_extraction.output.b0,
+            output:
+                corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_bias-corrected_DWI.nii.gz",
+                b0_corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_biascorrected-b0.nii.gz"
+            shell:
+                """
+                micaflow bias_correction \
+                    --input {input.image} \
+                    --b0 {input.b0} \
+                    --b0-output {output.b0_corrected} \
+                    --output {output.corrected} \
+                    --shell-dimension {SHELL_DIMENSION}
+                """
+        rule b0_synthseg:
+            input:
+                image = rules.dwi_bias_correction.output.b0_corrected,
+                seg = lambda wildcards: rules.synthseg_flair.output.seg if RUN_FLAIR else rules.synthseg_t1w.output.seg
+            output:
+                seg = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_synthseg_b0_NoSDC.nii.gz"
+            threads: THREADS
+            shell:
+                """
+                micaflow synthseg \
+                    --i {input.image} \
+                    --o {output.seg} \
+                    --parc \
+                    --robust \
+                    --threads {threads} \
+                    {GPU}
+                """
+        rule b0_synth_registration:
+            input:
+                moving = rules.dwi_bias_correction.output.b0_corrected,
+                fixed = rules.bias_field_correction.output.corrected,
+                fixed_seg = rules.synthseg_t1w.output.seg,
+                moving_seg = rules.b0_synthseg.output.seg
+            output:
+                warped = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_registered-b0_NoSDC.nii.gz",
+                fwd_field = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0-to-t1_warp_NoSDC.nii.gz",
+                fwd_affine = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0-to-t1_affine_NoSDC.mat",
+                fwd_field_secondary = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0-to-t1_warp-secondary_NoSDC.nii.gz",
+                output_segmentation = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0-to-t1_synthseg_NoSDC.nii.gz"
+            threads: THREADS
+            shell:
+                """
+                micaflow coregister \
+                    --fixed-file {input.fixed} \
+                    --moving-file {input.moving} \
+                    --fixed-segmentation {input.fixed_seg} \
+                    --moving-segmentation {input.moving_seg} \
+                    --output {output.warped} \
+                    --warp-file {output.fwd_field} \
+                    --affine-file {output.fwd_affine} \
+                    --ants-threads {threads} \
+                    --synthseg-threads {threads} \
+                    --output-segmentation {output.output_segmentation} \
+                    --secondary-warp-file {output.fwd_field_secondary} \
+                """
+        
+        rule dwi_create_synthetic_b0:
+            input:
+                t1 = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_T1w-space_T1w_normalized.nii.gz",
+                b0 = rules.b0_synth_registration.output.warped,
+                dwi = rules.dwi_bias_correction.output.corrected,
+                warp = rules.b0_synth_registration.output.fwd_field,
+                secondary_warp = rules.b0_synth_registration.output.fwd_field_secondary,
+                affine = rules.b0_synth_registration.output.fwd_affine,
+            output:
+                corrected_DWI = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_SDCcorrected-DWI.nii.gz",
+                intermediate = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_synthetic-b0-t1space.nii.gz",
+                warp = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_SDC_warp_t1space.nii.gz",
+                corrected_b0 = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_SDCcorrected-b0.nii.gz"
+            params:
+                cpu_flag = "--cpu" if GPU == "--cpu" else ""
+            shell:
+                """
+                micaflow synth_b0 \
+                    --t1 {input.t1} \
+                    --b0 {input.b0} \
+                    --dwi {input.dwi} \
+                    --output {output.corrected_DWI} \
+                    --intermediate {output.intermediate} \
+                    {params.cpu_flag} \
+                    --warp {output.warp} \
+                    --temp-dir {TEMP_DIR} \
+                    --phase-encoding {PED} \
+                    --corrected-b0 {output.corrected_b0} \
+                    --shell-dimension {SHELL_DIMENSION} \
+                    --threads {THREADS} \
+                    --synthseg-threads {THREADS} \
+                    --b0-to-T1-affine {input.affine} \
+                    --b0-to-T1-warp {input.warp} \
+                    --b0-to-T1-warp-secondary {input.secondary_warp}
+                """
+        
+        rule synthseg_dwi:
+            input:
+                # This input needs to be adjusted to work with either workflow
+                image = rules.dwi_create_synthetic_b0.output.corrected_b0,
+                seg = lambda wildcards: rules.synthseg_flair.output.seg if RUN_FLAIR else rules.synthseg_t1w.output.seg,
+                seg2 = rules.b0_synthseg.output.seg
+            output:
+                seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_synthseg_DWI.nii.gz"
+            threads: THREADS
+            shell:
+                """
+                micaflow synthseg \
+                    --i {input.image} \
+                    --o {output.seg} \
+                    --parc \
+                    --robust \
+                    --threads {threads} \
+                    {GPU}
+                """
+        
+        # The rest of the rules remain unchanged
 
-    rule synthseg_dwi:
-        input:
-            image = rules.dwi_topup.output.corrected,
-            # Use T1w seg if FLAIR is not available
-            seg = lambda wildcards: rules.synthseg_flair.output.seg if RUN_FLAIR else rules.synthseg_t1w.output.seg
-        output:
-            seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_synthseg_DWI.nii.gz"
-        threads: THREADS
-        shell:
-            """
-            micaflow synthseg \
-                --i {input.image} \
-                --o {output.seg} \
-                --parc \
-                --robust \
-                --threads {threads} \
-                {GPU}
-            """
+        rule dwi_skull_strip:
+            input:
+                image = rules.dwi_create_synthetic_b0.output.corrected_b0,
+                seg = rules.synthseg_dwi.output.seg
+            output:
+                image = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_brain-extracted_DWI.nii.gz",
+                mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_DWI_mask.nii.gz"
+            params:
+                rm_cerebellum = "--remove-cerebellum" if RM_CEREBELLUM else ""
+            shell:
+                """
+                micaflow bet \
+                    --input {input.image} \
+                    --output {output.image} \
+                    --output-mask {output.mask} \
+                    --parcellation {input.seg} \
+                    {params.rm_cerebellum} 
+                """
 
-    rule dwi_skull_strip:
-        input:
-            image = rules.dwi_topup.output.corrected,
-            seg = rules.synthseg_dwi.output.seg
-        output:
-            image = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_brain-extracted_DWI.nii.gz",
-            mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_DWI_mask.nii.gz"
-        params:
-            rm_cerebellum = "--remove-cerebellum" if RM_CEREBELLUM else ""
-        shell:
-            """
-            micaflow bet \
-                --input {input.image} \
-                --output {output.image} \
-                --output-mask {output.mask} \
-                --parcellation {input.seg} \
-                {params.rm_cerebellum} 
-            """
+        rule dwi_registration:
+            input:
+                moving_seg = rules.synthseg_dwi.output.seg,
+                fixed_seg = rules.synthseg_t1w.output.seg,
+                moving = rules.dwi_create_synthetic_b0.output.corrected_b0,
+                fixed = rules.bias_field_correction.output.corrected
+            output:
+                warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_T1w-space_DWI.nii.gz",
+                fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_fwdfield.nii.gz",
+                fwd_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_fwdfield-secondary.nii.gz",
+                fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_fwdaffine.mat",
+                rev_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_revfield.nii.gz",
+                rev_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_revfield-secondary.nii.gz",
+                output_segmentation = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_seg.nii.gz"
+            threads: THREADS
+            shell:
+                """
+                micaflow coregister \
+                    --fixed-file {input.fixed} \
+                    --moving-file {input.moving} \
+                    --fixed-segmentation {input.fixed_seg} \
+                    --moving-segmentation {input.moving_seg} \
+                    --output {output.warped} \
+                    --warp-file {output.fwd_field} \
+                    --affine-file {output.fwd_affine} \
+                    --rev-warp-file {output.rev_field} \
+                    --ants-threads {threads} \
+                    --synthseg-threads {threads} \
+                    --output-segmentation {output.output_segmentation} \
+                    --secondary-warp-file {output.fwd_field_secondary} \
+                    --secondary-rev-warp-file {output.rev_field_secondary}
+                """
+        
+        rule dwi_compute_fa_md:
+            input:
+                image = rules.dwi_create_synthetic_b0.output.corrected_DWI,
+                mask = rules.dwi_skull_strip.output.mask,
+                bval = rules.dwi_b0_extraction.output.output_bval,
+                bvec = rules.dwi_motion_correction.output.corrected_bvec,
+                b0_volume = rules.dwi_create_synthetic_b0.output.corrected_b0,
+                b0_bvec = rules.dwi_b0_extraction.output.b0_bvec,
+                b0_bval = rules.dwi_b0_extraction.output.b0_bval
+            output:
+                fa = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_DWI-space_FA.nii.gz",
+                md = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_DWI-space_MD.nii.gz"
+            shell:
+                """
+                micaflow compute_fa_md \
+                    --input {input.image} \
+                    --mask {input.mask} \
+                    --bval {input.bval} \
+                    --bvec {input.bvec} \
+                    --output-fa {output.fa} \
+                    --output-md {output.md} \
+                    --b0-volume {input.b0_volume} \
+                    --b0-bvec {input.b0_bvec} \
+                    --b0-bval {input.b0_bval} \
+                """
+        rule dwi_fa_md_registration:
+            input:
+                fa = rules.dwi_compute_fa_md.output.fa,
+                md = rules.dwi_compute_fa_md.output.md,
+                reference = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_T1w-space_T1w.nii.gz",
+                affine = rules.dwi_registration.output.fwd_affine,
+                warp = rules.dwi_registration.output.fwd_field,
+                secondary_warp = rules.dwi_registration.output.fwd_field_secondary
+            output:
+                fa_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_FA.nii.gz",
+                md_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_MD.nii.gz"
+            wildcard_constraints:
+                modality="T1w"
+            shell:
+                """
+                # Apply transformation to FA map
+                micaflow apply_warp \
+                    --moving {input.fa} \
+                    --reference {input.reference} \
+                    --affine {input.affine} \
+                    --warp {input.warp} \
+                    --output {output.fa_reg} \
+                    --secondary-warp {input.secondary_warp}
+                
+                # Apply transformation to MD map
+                micaflow apply_warp \
+                    --moving {input.md} \
+                    --reference {input.reference} \
+                    --affine {input.affine} \
+                    --warp {input.warp} \
+                    --output {output.md_reg} \
+                    --secondary-warp {input.secondary_warp}
+                """
 
-    rule dwi_bias_correction:
-        input:
-            image = rules.dwi_apply_topup.output.corrected,
-            mask = rules.dwi_skull_strip.output.mask
-        output:
-            corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_bias-corrected_DWI.nii.gz"
-        shell:
-            """
-            micaflow bias_correction \
-                --input {input.image} \
-                --mask {input.mask} \
-                --output {output.corrected}
-            """
+        rule calculate_metrics_DWI:
+            input:
+                image = rules.dwi_registration.output.output_segmentation,
+                atlas = rules.synthseg_t1w.output.seg
+            output:
+                metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_DWI-to-T1w-space_DICE.csv"
+            shell:
+                """
+                micaflow calculate_dice \
+                    --input {input.image} \
+                    --reference {input.atlas} \
+                    --output {output.metrics}
+                """
 
-    rule dwi_registration:
-        input:
-            moving_seg = rules.synthseg_dwi.output.seg,
-            fixed_seg = rules.synthseg_t1w.output.seg,
-            moving = rules.dwi_bias_correction.output.corrected,
-            fixed = rules.bias_field_correction.output.corrected
-        output:
-            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_T1w-space_DWI.nii.gz",
-            fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_fwdfield.nii.gz",
-            fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_fwdaffine.mat",
-            rev_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_revfield.nii.gz",
-            rev_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_revaffine.mat",
-            b0_temp = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0_temp.nii.gz",
-            output_segmentation = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_seg.nii.gz"
-        threads: THREADS
-        shell:
-            """
-            micaflow coregister \
-                --fixed-file {input.fixed} \
-                --moving-file {input.moving} \
-                --fixed-segmentation {input.fixed_seg} \
-                --moving-segmentation {input.moving_seg} \
-                --output {output.warped} \
-                --warp-file {output.fwd_field} \
-                --affine-file {output.fwd_affine} \
-                --rev-warp-file {output.rev_field} \
-                --rev-affine-file {output.rev_affine} \
-                --ants-threads {threads} \
-                --synthseg-threads {threads} \
-                --shell-channel -1 \
-                --b0-output {output.b0_temp} \
-                --output-segmentation {output.output_segmentation}
-            """
+    else:
+        rule dwi_b0_extraction_reversePE:
+            input:
+                image = INVERSE_DWI_FILE,
+                bval = INVERSE_BVAL_FILE,
+                bvec = INVERSE_BVEC_FILE
+            output:
+                b0 = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0-inverse_DWI.nii.gz",
+                output_bvec = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0-inverse_DWI.bvec",
+                output_bval = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0-inverse_DWI.bval",
+                output_dwi = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_DWI_nob0-inverse.nii.gz"
+            shell:
+                """
+                micaflow extract_b0 \
+                    --input {input.image} \
+                    --bvals {input.bval} \
+                    --bvecs {input.bvec} \
+                    --output-bvals {output.output_bval} \
+                    --output-bvecs {output.output_bvec} \
+                    --output {output.b0} \
+                    --output-dwi {output.output_dwi} \
+                    --shell-dimension {SHELL_DIMENSION}
+                """
+
+        rule dwi_topup:
+            input:
+                b0 = rules.dwi_b0_extraction.output.b0,
+                b0_inverse = rules.dwi_b0_extraction_reversePE.output.b0,
+            output:
+                warp = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_SDC-warp.nii.gz",
+                corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_corrected-b0_DWI.nii.gz"
+            shell:
+                """
+                micaflow SDC \
+                    --input {input.b0} \
+                    --reverse-image {input.b0_inverse} \
+                    --output {output.corrected} \
+                    --output-warp {output.warp} \
+                    --phase-encoding {PED}
+                """
+
+        rule dwi_apply_topup:
+            input:
+                motion_corr = rules.dwi_motion_correction.output.corrected,
+                warp = rules.dwi_topup.output.warp,
+                affine = DWI_FILE
+            output:
+                corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_SDC-DWI.nii.gz"
+            shell:
+                """
+                micaflow apply_SDC \
+                    --input {input.motion_corr} \
+                    --warp {input.warp} \
+                    --affine {input.affine} \
+                    --output {output.corrected} \
+                    --phase-encoding {PED} 
+                """
     
-    rule dwi_compute_fa_md:
-        input:
-            image = rules.dwi_bias_correction.output.corrected,
-            mask = rules.dwi_topup.output.corrected,
-            bval = BVAL_FILE,
-            bvec = BVEC_FILE
-        output:
-            fa = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_DWI-space_FA.nii.gz",
-            md = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_DWI-space_MD.nii.gz"
-        shell:
-            """
-            micaflow compute_fa_md \
-                --input {input.image} \
-                --mask {input.mask} \
-                --bval {input.bval} \
-                --bvec {input.bvec} \
-                --output-fa {output.fa} \
-                --output-md {output.md}
-            """
-    rule dwi_fa_md_registration:
-        input:
-            fa = rules.dwi_compute_fa_md.output.fa,
-            md = rules.dwi_compute_fa_md.output.md,
-            reference = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_T1w-space_T1w.nii.gz",
-            affine = rules.dwi_registration.output.fwd_affine,
-            warp = rules.dwi_registration.output.fwd_field
-        output:
-            fa_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_FA.nii.gz",
-            md_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_MD.nii.gz"
-        wildcard_constraints:
-            modality="T1w"
-        shell:
-            """
-            # Apply transformation to FA map
-            micaflow apply_warp \
-                --moving {input.fa} \
-                --reference {input.reference} \
-                --affine {input.affine} \
-                --warp {input.warp} \
-                --output {output.fa_reg}
-            
-            # Apply transformation to MD map
-            micaflow apply_warp \
-                --moving {input.md} \
-                --reference {input.reference} \
-                --affine {input.affine} \
-                --warp {input.warp} \
-                --output {output.md_reg}
-            """
+        rule synthseg_dwi:
+            input:
+                # This input needs to be adjusted to work with either workflow
+                image = rules.dwi_topup.output.corrected,
+                seg = lambda wildcards: rules.synthseg_flair.output.seg if RUN_FLAIR else rules.synthseg_t1w.output.seg
+            output:
+                seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_synthseg_DWI.nii.gz"
+            threads: THREADS
+            shell:
+                """
+                micaflow synthseg \
+                    --i {input.image} \
+                    --o {output.seg} \
+                    --parc \
+                    --robust \
+                    --threads {threads} \
+                    {GPU}
+                """
+        
+        # The rest of the rules remain unchanged
 
-    rule calculate_metrics_DWI:
-        input:
-            image = rules.dwi_registration.output.output_segmentation,
-            atlas = rules.synthseg_t1w.output.seg
-        output:
-            metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_DWI-to-T1w-space_DICE.csv"
-        shell:
-            """
-            micaflow calculate_dice \
-                --input {input.image} \
-                --reference {input.atlas} \
-                --output {output.metrics}
-            """
+        rule dwi_skull_strip:
+            input:
+                image = rules.dwi_topup.output.corrected,
+                seg = rules.synthseg_dwi.output.seg
+            output:
+                image = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_brain-extracted_DWI.nii.gz",
+                mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_DWI_mask.nii.gz"
+            params:
+                rm_cerebellum = "--remove-cerebellum" if RM_CEREBELLUM else ""
+            shell:
+                """
+                micaflow bet \
+                    --input {input.image} \
+                    --output {output.image} \
+                    --output-mask {output.mask} \
+                    --parcellation {input.seg} \
+                    {params.rm_cerebellum} 
+                """
+
+        rule dwi_bias_correction:
+            input:
+                image = rules.dwi_apply_topup.output.corrected,
+                mask = rules.dwi_skull_strip.output.mask,
+                b0 = rules.dwi_topup.output.corrected
+            output:
+                corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_bias-corrected_DWI.nii.gz",
+                b0_corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_biascorrected-b0.nii.gz"
+            shell:
+                """
+                micaflow bias_correction \
+                    --input {input.image} \
+                    --b0 {input.b0} \
+                    --b0-output {output.b0_corrected} \
+                    --output {output.corrected} \
+                    --mask {input.mask} \
+                    --shell-dimension {SHELL_DIMENSION}
+                """
+
+        rule dwi_registration:
+            input:
+                moving_seg = rules.synthseg_dwi.output.seg,
+                fixed_seg = rules.synthseg_t1w.output.seg,
+                moving = rules.dwi_bias_correction.output.b0_corrected,
+                fixed = rules.bias_field_correction.output.corrected
+            output:
+                warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_T1w-space_DWI.nii.gz",
+                fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_fwdfield.nii.gz",
+                fwd_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_fwdfield-secondary.nii.gz",
+                fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_fwdaffine.mat",
+                rev_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_revfield.nii.gz",
+                rev_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_revfield-secondary.nii.gz",
+                output_segmentation = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_seg.nii.gz"
+            threads: THREADS
+            shell:
+                """
+                micaflow coregister \
+                    --fixed-file {input.fixed} \
+                    --moving-file {input.moving} \
+                    --fixed-segmentation {input.fixed_seg} \
+                    --moving-segmentation {input.moving_seg} \
+                    --output {output.warped} \
+                    --warp-file {output.fwd_field} \
+                    --affine-file {output.fwd_affine} \
+                    --rev-warp-file {output.rev_field} \
+                    --ants-threads {threads} \
+                    --synthseg-threads {threads} \
+                    --output-segmentation {output.output_segmentation} \
+                    --secondary-warp-file {output.fwd_field_secondary} \
+                    --secondary-rev-warp-file {output.rev_field_secondary}
+                """
+        
+        rule dwi_compute_fa_md:
+            input:
+                image = rules.dwi_bias_correction.output.corrected,
+                mask = rules.dwi_skull_strip.output.mask,
+                bval = rules.dwi_b0_extraction.output.output_bval,
+                bvec = rules.dwi_motion_correction.output.corrected_bvec,
+                b0_volume = rules.dwi_bias_correction.output.b0_corrected,
+                b0_bvec = rules.dwi_b0_extraction.output.b0_bvec,
+                b0_bval = rules.dwi_b0_extraction.output.b0_bval
+            output:
+                fa = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_DWI-space_FA.nii.gz",
+                md = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_DWI-space_MD.nii.gz"
+            shell:
+                """
+                micaflow compute_fa_md \
+                    --input {input.image} \
+                    --mask {input.mask} \
+                    --bval {input.bval} \
+                    --bvec {input.bvec} \
+                    --output-fa {output.fa} \
+                    --output-md {output.md} \
+                    --b0-volume {input.b0_volume} \
+                    --b0-bvec {input.b0_bvec} \
+                    --b0-bval {input.b0_bval} \
+                """
+
+        rule dwi_fa_md_registration:
+            input:
+                fa = rules.dwi_compute_fa_md.output.fa,
+                md = rules.dwi_compute_fa_md.output.md,
+                reference = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_T1w-space_T1w.nii.gz",
+                affine = rules.dwi_registration.output.fwd_affine,
+                warp = rules.dwi_registration.output.fwd_field,
+                secondary_warp = rules.dwi_registration.output.fwd_field_secondary
+            output:
+                fa_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_FA.nii.gz",
+                md_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_MD.nii.gz"
+            wildcard_constraints:
+                modality="T1w"
+            shell:
+                """
+                # Apply transformation to FA map
+                micaflow apply_warp \
+                    --moving {input.fa} \
+                    --reference {input.reference} \
+                    --affine {input.affine} \
+                    --warp {input.warp} \
+                    --output {output.fa_reg} \
+                    --secondary-warp {input.secondary_warp}
+                
+                # Apply transformation to MD map
+                micaflow apply_warp \
+                    --moving {input.md} \
+                    --reference {input.reference} \
+                    --affine {input.affine} \
+                    --warp {input.warp} \
+                    --output {output.md_reg} \
+                    --secondary-warp {input.secondary_warp}
+                """
+
+        rule calculate_metrics_DWI:
+            input:
+                image = rules.dwi_registration.output.output_segmentation,
+                atlas = rules.synthseg_t1w.output.seg
+            output:
+                metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_DWI-to-T1w-space_DICE.csv"
+            shell:
+                """
+                micaflow calculate_dice \
+                    --input {input.image} \
+                    --reference {input.atlas} \
+                    --output {output.metrics}
+                """
 
 rule transform_mask_to_mni:
     input:
         mask = rules.skull_strip_t1w.output.mask,
-        warp = rules.registration_mni152.output.fwd_field,
         affine = rules.registration_mni152.output.fwd_affine,
+        warp = rules.registration_mni152.output.fwd_field,
+        secondary_warp = rules.registration_mni152.output.fwd_field_secondary,
         reference = ATLAS
     output:
         mni_mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_MNI152-space_brain_mask.nii.gz"
@@ -709,9 +1046,10 @@ rule transform_mask_to_mni:
             --moving {input.mask} \
             --reference {input.reference} \
             --affine {input.affine} \
-            --warp {input.warp} \
             --output {output.mni_mask} \
-            --interpolation nearestNeighbor
+            --interpolation nearestNeighbor \
+            --warp {input.warp} \
+            --secondary-warp {input.secondary_warp}
         """
 
 if EXTRACT_BRAIN:

@@ -9,3 +9,4 @@ work/*
 /micaflow.egg-info
 /micaflow/resources/.snakemake
 /build
+
