@@ -772,26 +772,16 @@ if RUN_DWI:
                 md_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_MD.nii.gz"
             wildcard_constraints:
                 modality="T1w"
-            shell:
-                """
-                # Apply transformation to FA map
-                micaflow apply_warp \
-                    --moving {input.fa} \
-                    --reference {input.reference} \
-                    --affine {input.affine} \
-                    --warp {input.warp} \
-                    --output {output.fa_reg} \
-                    --secondary-warp {input.secondary_warp}
+            run:
+                # Process FA map
+                shell(f"micaflow apply_warp --moving {input.fa} --reference {input.reference} "
+                      f"--affine {input.affine} --warp {input.warp} --output {output.fa_reg} "
+                      f"--secondary-warp {input.secondary_warp}")
                 
-                # Apply transformation to MD map
-                micaflow apply_warp \
-                    --moving {input.md} \
-                    --reference {input.reference} \
-                    --affine {input.affine} \
-                    --warp {input.warp} \
-                    --output {output.md_reg} \
-                    --secondary-warp {input.secondary_warp}
-                """
+                # Process MD map
+                shell(f"micaflow apply_warp --moving {input.md} --reference {input.reference} "
+                      f"--affine {input.affine} --warp {input.warp} --output {output.md_reg} "
+                      f"--secondary-warp {input.secondary_warp}")
 
         rule calculate_metrics_DWI:
             input:
@@ -982,7 +972,6 @@ if RUN_DWI:
                     --b0-bvec {input.b0_bvec} \
                     --b0-bval {input.b0_bval} \
                 """
-
         rule dwi_fa_md_registration:
             input:
                 fa = rules.dwi_compute_fa_md.output.fa,
@@ -996,26 +985,16 @@ if RUN_DWI:
                 md_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_MD.nii.gz"
             wildcard_constraints:
                 modality="T1w"
-            shell:
-                """
-                # Apply transformation to FA map
-                micaflow apply_warp \
-                    --moving {input.fa} \
-                    --reference {input.reference} \
-                    --affine {input.affine} \
-                    --warp {input.warp} \
-                    --output {output.fa_reg} \
-                    --secondary-warp {input.secondary_warp}
+            run:
+                # Process FA map
+                shell(f"micaflow apply_warp --moving {input.fa} --reference {input.reference} "
+                      f"--affine {input.affine} --warp {input.warp} --output {output.fa_reg} "
+                      f"--secondary-warp {input.secondary_warp}")
                 
-                # Apply transformation to MD map
-                micaflow apply_warp \
-                    --moving {input.md} \
-                    --reference {input.reference} \
-                    --affine {input.affine} \
-                    --warp {input.warp} \
-                    --output {output.md_reg} \
-                    --secondary-warp {input.secondary_warp}
-                """
+                # Process MD map
+                shell(f"micaflow apply_warp --moving {input.md} --reference {input.reference} "
+                      f"--affine {input.affine} --warp {input.warp} --output {output.md_reg} "
+                      f"--secondary-warp {input.secondary_warp}")
 
         rule calculate_metrics_DWI:
             input:
@@ -1142,21 +1121,19 @@ if EXTRACT_BRAIN:
             """
 
 rule cleanup:
-    input:
-        # All final outputs except the cleanup marker
-        lambda wildcards: [output for output in get_final_output() if not output.endswith("cleanup_complete.txt")]
+    # No input dependencies - this makes it run after everything else is done
     output:
-        cleanup_marker = temp(f"{OUT_DIR}/{SUBJECT}/{SESSION}/cleanup_complete.txt")
+        cleanup_marker = f"{OUT_DIR}/{SUBJECT}/{SESSION}/cleanup_complete.txt" 
     run:
         if not KEEP_TEMP and os.path.exists(TEMP_DIR):
             print(f"Cleaning up temporary directory: {TEMP_DIR}")
             shutil.rmtree(TEMP_DIR)
-            with open(output.cleanup_marker, "w") as f:
-                f.write(f"Cleanup completed on: {datetime.datetime.now()}\n")
+        
+        with open(output.cleanup_marker, "w") as f:
+            f.write(f"Cleanup completed on: {datetime.datetime.now()}\n")
+            if not KEEP_TEMP:
                 f.write(f"Temp directory removed: {TEMP_DIR}\n")
-        else:
-            with open(output.cleanup_marker, "w") as f:
-                f.write(f"Cleanup skipped on: {datetime.datetime.now()}\n")
+            else:
                 f.write(f"Temp directory kept: {TEMP_DIR}\n")
                 if KEEP_TEMP:
                     f.write("Reason: keep_temp flag was set to True\n")

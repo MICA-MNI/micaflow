@@ -109,49 +109,52 @@ Notes:
 
 import argparse
 import sys
-import pkg_resources
 import subprocess
 from colorama import init, Fore, Style
+import importlib.resources
 
 init()
 
 
 def get_snakefile_path():
     """
-    Get the path to the Snakefile within the installed package.
-    
-    This function uses pkg_resources to locate the Snakefile that defines
-    the MicaFlow processing pipeline workflow. The Snakefile is packaged
-    with the micaflow installation under resources/.
-    
+    Get the path to the Snakefile within the installed package using importlib.resources.
+
     Returns
     -------
     str
         Absolute path to the Snakefile for use with Snakemake.
-    
+
     Raises
     ------
     pkg_resources.DistributionNotFound
         If the micaflow package is not installed.
     pkg_resources.ResourceNotFound
         If the Snakefile is not found in the package resources.
-    
+
     Examples
     --------
     >>> snakefile = get_snakefile_path()
     >>> print(snakefile)
     /path/to/site-packages/micaflow/resources/Snakefile
-    
+
     >>> # Use with snakemake command
     >>> cmd = ['snakemake', '-s', get_snakefile_path(), '--cores', '4']
-    
+
     Notes
     -----
     - The Snakefile must be in micaflow/resources/Snakefile
     - Path is resolved at runtime based on installation location
     - Used exclusively by the 'pipeline' command
     """
-    return pkg_resources.resource_filename("micaflow", "resources/Snakefile")
+    try:
+        # Python 3.9+: files() returns a Traversable object
+        snakefile = importlib.resources.files("micaflow.resources").joinpath("Snakefile")
+        return str(snakefile)
+    except Exception:
+        # Fallback for older Python versions
+        import pkg_resources
+        return pkg_resources.resource_filename("micaflow", "resources/Snakefile")
 
 
 def print_extended_help():

@@ -10,3 +10,8 @@ work/*
 /micaflow/resources/.snakemake
 /build
 
+/VAN_CASE_test_synth
+/micaflow/scripts/__pycache__
+/micaflow/scripts/__pycache__
+*.pyc
+*.pyc
