@@ -202,33 +202,6 @@ if RUN_FLAIR:
         shell:
             "micaflow synthseg --i {input.image} --o {output.seg} --parc --robust --threads {threads} {GPU}"
 
-# Now define skull_strip rules that depend on synthseg rules
-rule skull_strip:
-    input:
-        image = lambda wildcards: T1W_FILE if wildcards.modality == "T1w" else FLAIR_FILE,
-        seg = lambda wildcards: (
-            rules.synthseg_t1w.output.seg if wildcards.modality == "T1w" else
-            rules.synthseg_flair.output.seg if RUN_FLAIR and wildcards.modality == "FLAIR" else
-            []
-        )
-    output:
-        brain = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_brain-extracted_{{modality}}.nii.gz",
-        mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_{{modality}}_mask.nii.gz"
-    params:
-        parcellation = lambda wildcards, input: f"--parcellation {input.seg}",
-        rm_cerebellum = "--remove-cerebellum" if RM_CEREBELLUM else ""
-    resources:
-        skull_strip_jobs=1
-    shell:
-        """
-        micaflow bet \
-            --input {input.image} \
-            --output {output.brain} \
-            --output-mask {output.mask} \
-            {params.parcellation} \
-            {params.rm_cerebellum} 
-        """
-
 rule skull_strip_t1w:
     input:
         image = T1W_FILE,
@@ -442,7 +415,7 @@ rule run_texture:
 rule run_texture_T1w:
     input:
         image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_T1w-space_{{modality}}.nii.gz",
-        mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_T1w_mask.nii.gz"
+        mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_T1w-space_mask.nii.gz"
     output:
         gradient = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-{{modality}}_gradient-magnitude.nii",
         intensity = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-{{modality}}_relative-intensity.nii"
@@ -451,7 +424,7 @@ rule run_texture_T1w:
         micaflow texture_generation \
             --input {input.image} \
             --mask {input.mask} \
-            --output {OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_textures-{wildcards.modality}
+            --output {OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-{{wildcards.modality}}
         """
 
 rule calculate_metrics_T1w:

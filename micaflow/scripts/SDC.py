@@ -348,13 +348,13 @@ def print_help_message():
     {BLUE}Diffusion Pipeline:{RESET}
     1. Denoising (denoise)
     2. Motion correction (motion_correction)
-    {GREEN}3. Distortion correction (SDC){RESET} {MAGENTA}← You are here{RESET}
+    3. Susceptibility correction (SDC)
     4. B0 extraction (extract_b0)
     5. Registration (coregister)
     
     {BLUE}fMRI Pipeline:{RESET}
     1. Motion correction
-    {GREEN}2. Distortion correction (SDC){RESET} {MAGENTA}← You are here{RESET}
+    2. Susceptibility correction (SDC)
     3. Registration to anatomical
     4. Analysis
     
@@ -681,7 +681,7 @@ def run(data_image, reverse_image, output_name, output_warp, phase_encoding='ap'
         print(f"  Penalty range: [1e1, 1e6]")
         print(f"  PCG iterations: 20")
         print(f"  Gauss-Newton iterations: 1")
-        resultspath = temp_dir
+        resultspath = os.path.join(temp_dir, "hysco_result")  # Now inside temp_dir
         opt = ADMM(
             loss_func,
             max_iter=500,
@@ -700,10 +700,6 @@ def run(data_image, reverse_image, output_name, output_warp, phase_encoding='ap'
         # Save field map and corrected images
         print(f"\n{CYAN}Applying correction and saving results...{RESET}")
         corr, _ = opt.apply_correction()
-        
-        # Save temporary corrected image
-        img = nib.Nifti1Image(corr, affine, im1_nii.header)
-        nib.save(img, 'testimgnew.nii.gz')
         
         # Move field map to output location
         shutil.move(resultspath + "-EstFieldMap.nii.gz", output_warp)
@@ -785,6 +781,14 @@ def run(data_image, reverse_image, output_name, output_warp, phase_encoding='ap'
                         os.remove(transform_file)
                     except Exception as e:
                         print(f"{YELLOW}Warning: Could not remove {transform_file}: {e}{RESET}")
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+        if os.path.exists(temp_dir + 'GN-'):
+            shutil.rmtree(temp_dir + 'GN-')
+        if os.path.exists(registered_im2_path):
+            os.remove(registered_im2_path)
+        if os.path.exists(registered_im1_path):
+            os.remove(registered_im1_path)
     
     print(f"\n{GREEN}{BOLD}Susceptibility distortion correction completed successfully!{RESET}")
     print(f"  Input: {data_image}")
@@ -792,7 +796,6 @@ def run(data_image, reverse_image, output_name, output_warp, phase_encoding='ap'
     print(f"  Output: {output_name}")
     print(f"  Field map: {output_warp}")
     print(f"  Phase-encoding: {phase_encoding.upper()}\n")
-
 
 if __name__ == "__main__":
     # Check if no arguments were provided or help was requested

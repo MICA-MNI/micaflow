@@ -16,7 +16,6 @@ MRI signal intensities are arbitrary and vary significantly due to:
 - Acquisition parameters (TR, TE, flip angle, bandwidth)
 - Reconstruction algorithms and vendor-specific processing
 - Subject-specific factors (head size, tissue properties)
-- Time and temperature effects on scanner performance
 
 Without normalization:
 - Visual comparison across scans is difficult
@@ -236,7 +235,6 @@ def print_help_message():
     {MAGENTA}•{RESET} Different scanners and vendors
     {MAGENTA}•{RESET} Acquisition protocols and parameters
     {MAGENTA}•{RESET} Subjects and scanning sessions
-    {MAGENTA}•{RESET} Time and temperature effects
     
     {GREEN}Solution:{RESET}
     Percentile-based normalization provides:

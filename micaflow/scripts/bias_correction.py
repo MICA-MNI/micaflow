@@ -765,7 +765,6 @@ def bias_field_correction_4d(image_path, mask_path=None, output_path=None,
         b0_resampled,
         mask=mask_resampled,
         return_bias_field=True,
-        verbose=True
     )
 
     bias_field = n4_result['bias']

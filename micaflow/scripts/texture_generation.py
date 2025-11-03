@@ -121,12 +121,13 @@ See Also:
 - denoise : Noise reduction before feature extraction
 
 """
-
 import argparse
+from glob import glob
 import os
 import random
 import string
 from collections import Counter
+import tempfile
 import ants
 import numpy as np
 import time
@@ -757,7 +758,14 @@ class noelTexturesPy:
             c='[3,0]',                  # 3 iterations, no initialization
             x=self._mask,               # Brain mask
         )
-        
+        # Clean up temporary Atropos probability map files
+        temp_files = glob(os.path.join(tempfile.gettempdir(), 'antsr*prob*.nii.gz'))
+        for temp_file in temp_files:
+            try:
+                os.remove(temp_file)
+            except OSError:
+                pass  # Ignore if file already deleted
+            
         self._segm = segm['segmentation']
         
         # Create binary tissue masks
