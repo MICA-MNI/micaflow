@@ -10,6 +10,21 @@ SUBJECT = config.get("subject", "")
 SESSION = config.get("session", "")
 OUT_DIR = config.get("output", "")
 THREADS = workflow.cores
+
+# Dynamic thread allocation logic:
+# - If cores > 2: Reserve 1 core for light jobs, use (cores-1) for heavy jobs
+# - If cores <= 2: Use all cores for heavy jobs (no room for parallel light jobs)
+if THREADS > 2:
+    HEAVY_THREADS = THREADS - 1
+    LIGHT_THREADS = 1
+else:
+    HEAVY_THREADS = THREADS
+    LIGHT_THREADS = 1
+
+print(f"[INFO] Total cores: {THREADS}")
+print(f"[INFO] Heavy job threads: {HEAVY_THREADS}")
+print(f"[INFO] Light job threads: {LIGHT_THREADS}")
+
 DATA_DIRECTORY = config.get("data_directory", "")
 FLAIR_FILE = config.get("flair_file", "")
 T1W_FILE = config.get("t1w_file", "")
@@ -186,7 +201,7 @@ rule synthseg_t1w:
         image = T1W_FILE
     output:
         seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_synthseg_T1w.nii.gz"
-    threads: THREADS
+    threads: HEAVY_THREADS
     shell:
         "micaflow synthseg --i {input.image} --o {output.seg} --parc --robust --threads {threads} {GPU}"
 
@@ -195,10 +210,9 @@ if RUN_FLAIR:
     rule synthseg_flair:
         input:
             image = FLAIR_FILE,
-            t1w_seg = rules.synthseg_t1w.output.seg
         output:
             seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_synthseg_FLAIR.nii.gz"
-        threads: THREADS
+        threads: HEAVY_THREADS
         shell:
             "micaflow synthseg --i {input.image} --o {output.seg} --parc --robust --threads {threads} {GPU}"
 
@@ -209,11 +223,10 @@ rule skull_strip_t1w:
     output:
         brain = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_brain-extracted_T1w.nii.gz",
         mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_T1w-space_mask.nii.gz"
+    threads: LIGHT_THREADS
     params:
         parcellation = lambda wildcards, input: f"--parcellation {input.seg}",
         rm_cerebellum = "--remove-cerebellum" if RM_CEREBELLUM else ""
-    resources:
-        skull_strip_jobs=1
     shell:
         """
         micaflow bet \
@@ -230,6 +243,7 @@ rule bias_field_correction:
         mask = rules.skull_strip_t1w.output.mask
     output:
         corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_T1w-space_T1w.nii.gz"
+    threads: LIGHT_THREADS
     shell:
         "micaflow bias_correction -i {input.image} -o {output.corrected} -m {input.mask}"
 
@@ -242,11 +256,10 @@ if RUN_FLAIR:
         output:
             brain = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_brain-extracted_FLAIR.nii.gz",
             mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_FLAIR_mask.nii.gz"
+        threads: LIGHT_THREADS
         params:
             parcellation = lambda wildcards, input: f"--parcellation {input.seg}",
             rm_cerebellum = "--remove-cerebellum" if RM_CEREBELLUM else ""
-        resources:
-            skull_strip_jobs=1  # Allows only one job of this type to run at a time
         shell:
             """
             micaflow bet \
@@ -263,6 +276,7 @@ if RUN_FLAIR:
             mask = rules.skull_strip_flair.output.mask
         output:
             corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_FLAIR-space_FLAIR.nii.gz"
+        threads: LIGHT_THREADS
         shell:
             "micaflow bias_correction -i {input.image} -o {output.corrected} -m {input.mask}"
 
@@ -280,7 +294,7 @@ if RUN_FLAIR:
             fwd_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdfield-secondary.nii.gz",
             bak_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_bakfield-secondary.nii.gz",
             output_segmentation = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_seg.nii.gz"
-        threads: THREADS
+        threads: HEAVY_THREADS
         shell:
             """
             micaflow coregister \
@@ -292,8 +306,7 @@ if RUN_FLAIR:
                 --warp-file {output.fwd_field} \
                 --affine-file {output.fwd_affine} \
                 --rev-warp-file {output.bak_field} \
-                --ants-threads {threads} \
-                --synthseg-threads {threads} \
+                --threads {threads} \
                 --output-segmentation {output.output_segmentation} \
                 --secondary-warp-file {output.fwd_field_secondary} \
                 --secondary-rev-warp-file {output.bak_field_secondary}
@@ -308,6 +321,7 @@ if RUN_FLAIR:
             reference = rules.bias_field_correction.output.corrected
         output:
             warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_T1w-space_FLAIR.nii.gz"
+        threads: LIGHT_THREADS
         shell:
             """
             micaflow apply_warp \
@@ -325,6 +339,7 @@ if RUN_FLAIR:
             atlas = rules.synthseg_t1w.output.seg
         output:
             metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_FLAIR-to-T1w-space_DICE.csv"
+        threads: LIGHT_THREADS
         shell:
             """
             micaflow calculate_dice \
@@ -347,7 +362,7 @@ rule registration_mni152:
         fwd_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_fwdfield-secondary.nii.gz",
         bak_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_bakfield-secondary.nii.gz",
         output_segmentation = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_seg.nii.gz"
-    threads: THREADS
+    threads: HEAVY_THREADS
     shell:
         """
         micaflow coregister \
@@ -360,8 +375,7 @@ rule registration_mni152:
             --warp-file {output.fwd_field} \
             --rev-warp-file {output.bak_field} \
             --output-segmentation {output.output_segmentation} \
-            --ants-threads {threads} \
-            --synthseg-threads {threads} \
+            --threads {threads} \
             --secondary-warp-file {output.fwd_field_secondary} \
             --secondary-rev-warp-file {output.bak_field_secondary}
         """
@@ -379,11 +393,11 @@ rule apply_warp_to_mni:
         reference = ATLAS
     output:
         warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_MNI152-space_{{modality}}.nii.gz"
+    threads: LIGHT_THREADS
     wildcard_constraints:
         modality="T1w|FLAIR"
     run:
         if wildcards.modality == "FLAIR" and not RUN_FLAIR:
-            # Create an empty file if FLAIR not available
             shell("touch {output.warped}")
         else:
             shell(""" 
@@ -403,6 +417,7 @@ rule run_texture:
     output:
         gradient = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-{{modality}}_gradient-magnitude.nii",
         intensity = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-{{modality}}_relative-intensity.nii"
+    threads: LIGHT_THREADS
     shell:
         """
         micaflow texture_generation \
@@ -419,6 +434,7 @@ rule run_texture_T1w:
     output:
         gradient = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-{{modality}}_gradient-magnitude.nii",
         intensity = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-{{modality}}_relative-intensity.nii"
+    threads: LIGHT_THREADS
     shell:
         """
         micaflow texture_generation \
@@ -433,6 +449,7 @@ rule calculate_metrics_T1w:
         atlas = ATLAS_SEG
     output:
         metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_T1w-to-MNI152-space_DICE.csv"
+    threads: LIGHT_THREADS
     shell:
         """
         micaflow calculate_dice \
@@ -446,6 +463,7 @@ rule normalize_anatomical:
         image = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{wildcards.space}-space_{wildcards.modality}.nii.gz"
     output:
         normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{{space}}-space_{{modality}}_normalized.nii.gz"
+    threads: LIGHT_THREADS
     shell:
         """
         micaflow normalize \
@@ -463,6 +481,7 @@ if RUN_DWI:
             image = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_{wildcards.metric}.nii.gz"
         output:
             normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_{{metric}}_normalized.nii.gz"
+        threads: LIGHT_THREADS
         shell:
             """
             micaflow normalize \
@@ -480,6 +499,7 @@ if RUN_DWI:
             bvec = BVEC_FILE
         output:
             denoised = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_DWI.nii.gz"
+        threads: LIGHT_THREADS
         shell:
             """
             micaflow denoise \
@@ -500,6 +520,7 @@ if RUN_DWI:
             output_dwi = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_DWI_nob0.nii.gz",
             b0_bval = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0_only.bval",
             b0_bvec = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0_only.bvec"
+        threads: LIGHT_THREADS
         shell:
             """
             micaflow extract_b0 \
@@ -523,6 +544,7 @@ if RUN_DWI:
         output:
             corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_motioncorrected_DWI.nii.gz",
             corrected_bvec = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_motioncorrected_DWI.bvec"
+        threads: HEAVY_THREADS
         shell:
             """
             micaflow motion_correction \
@@ -531,7 +553,8 @@ if RUN_DWI:
                 --output-bvecs {output.corrected_bvec} \
                 --output {output.corrected} \
                 --b0 {input.b0} \
-                --shell-dimension {SHELL_DIMENSION}
+                --shell-dimension {SHELL_DIMENSION} \
+                --threads {threads}
             """
 
     if USE_SYNTH_B0:
@@ -542,6 +565,7 @@ if RUN_DWI:
             output:
                 corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_bias-corrected_DWI.nii.gz",
                 b0_corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_biascorrected-b0.nii.gz"
+            threads: LIGHT_THREADS
             shell:
                 """
                 micaflow bias_correction \
@@ -554,10 +578,9 @@ if RUN_DWI:
         rule b0_synthseg:
             input:
                 image = rules.dwi_bias_correction.output.b0_corrected,
-                seg = lambda wildcards: rules.synthseg_flair.output.seg if RUN_FLAIR else rules.synthseg_t1w.output.seg
             output:
                 seg = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_synthseg_b0_NoSDC.nii.gz"
-            threads: THREADS
+            threads: LIGHT_THREADS
             shell:
                 """
                 micaflow synthseg \
@@ -580,7 +603,7 @@ if RUN_DWI:
                 fwd_affine = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0-to-t1_affine_NoSDC.mat",
                 fwd_field_secondary = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0-to-t1_warp-secondary_NoSDC.nii.gz",
                 output_segmentation = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0-to-t1_synthseg_NoSDC.nii.gz"
-            threads: THREADS
+            threads: HEAVY_THREADS
             shell:
                 """
                 micaflow coregister \
@@ -591,8 +614,7 @@ if RUN_DWI:
                     --output {output.warped} \
                     --warp-file {output.fwd_field} \
                     --affine-file {output.fwd_affine} \
-                    --ants-threads {threads} \
-                    --synthseg-threads {threads} \
+                    --threads {threads} \
                     --output-segmentation {output.output_segmentation} \
                     --secondary-warp-file {output.fwd_field_secondary} \
                 """
@@ -610,6 +632,7 @@ if RUN_DWI:
                 intermediate = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_synthetic-b0-t1space.nii.gz",
                 warp = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_SDC_warp_t1space.nii.gz",
                 corrected_b0 = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_SDCcorrected-b0.nii.gz"
+            threads: HEAVY_THREADS
             params:
                 cpu_flag = "--cpu" if GPU == "--cpu" else ""
             shell:
@@ -626,8 +649,7 @@ if RUN_DWI:
                     --phase-encoding {PED} \
                     --corrected-b0 {output.corrected_b0} \
                     --shell-dimension {SHELL_DIMENSION} \
-                    --threads {THREADS} \
-                    --synthseg-threads {THREADS} \
+                    --threads {threads} \
                     --b0-to-T1-affine {input.affine} \
                     --b0-to-T1-warp {input.warp} \
                     --b0-to-T1-warp-secondary {input.secondary_warp}
@@ -637,11 +659,9 @@ if RUN_DWI:
             input:
                 # This input needs to be adjusted to work with either workflow
                 image = rules.dwi_create_synthetic_b0.output.corrected_b0,
-                seg = lambda wildcards: rules.synthseg_flair.output.seg if RUN_FLAIR else rules.synthseg_t1w.output.seg,
-                seg2 = rules.b0_synthseg.output.seg
             output:
                 seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_synthseg_DWI.nii.gz"
-            threads: THREADS
+            threads: HEAVY_THREADS
             shell:
                 """
                 micaflow synthseg \
@@ -664,6 +684,7 @@ if RUN_DWI:
                 mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_DWI_mask.nii.gz"
             params:
                 rm_cerebellum = "--remove-cerebellum" if RM_CEREBELLUM else ""
+            threads: LIGHT_THREADS
             shell:
                 """
                 micaflow bet \
@@ -688,7 +709,7 @@ if RUN_DWI:
                 rev_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_revfield.nii.gz",
                 rev_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_revfield-secondary.nii.gz",
                 output_segmentation = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_seg.nii.gz"
-            threads: THREADS
+            threads: HEAVY_THREADS
             shell:
                 """
                 micaflow coregister \
@@ -700,8 +721,7 @@ if RUN_DWI:
                     --warp-file {output.fwd_field} \
                     --affine-file {output.fwd_affine} \
                     --rev-warp-file {output.rev_field} \
-                    --ants-threads {threads} \
-                    --synthseg-threads {threads} \
+                    --threads {threads} \
                     --output-segmentation {output.output_segmentation} \
                     --secondary-warp-file {output.fwd_field_secondary} \
                     --secondary-rev-warp-file {output.rev_field_secondary}
@@ -719,6 +739,7 @@ if RUN_DWI:
             output:
                 fa = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_DWI-space_FA.nii.gz",
                 md = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_DWI-space_MD.nii.gz"
+            threads: LIGHT_THREADS
             shell:
                 """
                 micaflow compute_fa_md \
@@ -745,6 +766,7 @@ if RUN_DWI:
                 md_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_MD.nii.gz"
             wildcard_constraints:
                 modality="T1w"
+            threads: LIGHT_THREADS
             run:
                 # Process FA map
                 shell(f"micaflow apply_warp --moving {input.fa} --reference {input.reference} "
@@ -762,6 +784,7 @@ if RUN_DWI:
                 atlas = rules.synthseg_t1w.output.seg
             output:
                 metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_DWI-to-T1w-space_DICE.csv"
+            threads: LIGHT_THREADS
             shell:
                 """
                 micaflow calculate_dice \
@@ -781,6 +804,7 @@ if RUN_DWI:
                 output_bvec = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0-inverse_DWI.bvec",
                 output_bval = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0-inverse_DWI.bval",
                 output_dwi = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_DWI_nob0-inverse.nii.gz"
+            threads: LIGHT_THREADS
             shell:
                 """
                 micaflow extract_b0 \
@@ -801,6 +825,7 @@ if RUN_DWI:
             output:
                 warp = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_SDC-warp.nii.gz",
                 corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_corrected-b0_DWI.nii.gz"
+            threads: LIGHT_THREADS
             shell:
                 """
                 micaflow SDC \
@@ -818,6 +843,7 @@ if RUN_DWI:
                 affine = DWI_FILE
             output:
                 corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_SDC-DWI.nii.gz"
+            threads: LIGHT_THREADS
             shell:
                 """
                 micaflow apply_SDC \
@@ -832,10 +858,9 @@ if RUN_DWI:
             input:
                 # This input needs to be adjusted to work with either workflow
                 image = rules.dwi_topup.output.corrected,
-                seg = lambda wildcards: rules.synthseg_flair.output.seg if RUN_FLAIR else rules.synthseg_t1w.output.seg
             output:
                 seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_synthseg_DWI.nii.gz"
-            threads: THREADS
+            threads: HEAVY_THREADS
             shell:
                 """
                 micaflow synthseg \
@@ -858,6 +883,7 @@ if RUN_DWI:
                 mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_DWI_mask.nii.gz"
             params:
                 rm_cerebellum = "--remove-cerebellum" if RM_CEREBELLUM else ""
+            threads: LIGHT_THREADS
             shell:
                 """
                 micaflow bet \
@@ -876,6 +902,7 @@ if RUN_DWI:
             output:
                 corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_bias-corrected_DWI.nii.gz",
                 b0_corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_biascorrected-b0.nii.gz"
+            threads: LIGHT_THREADS
             shell:
                 """
                 micaflow bias_correction \
@@ -901,7 +928,7 @@ if RUN_DWI:
                 rev_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_revfield.nii.gz",
                 rev_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_revfield-secondary.nii.gz",
                 output_segmentation = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_seg.nii.gz"
-            threads: THREADS
+            threads: HEAVY_THREADS
             shell:
                 """
                 micaflow coregister \
@@ -913,8 +940,7 @@ if RUN_DWI:
                     --warp-file {output.fwd_field} \
                     --affine-file {output.fwd_affine} \
                     --rev-warp-file {output.rev_field} \
-                    --ants-threads {threads} \
-                    --synthseg-threads {threads} \
+                    --threads {threads} \
                     --output-segmentation {output.output_segmentation} \
                     --secondary-warp-file {output.fwd_field_secondary} \
                     --secondary-rev-warp-file {output.rev_field_secondary}
@@ -932,6 +958,7 @@ if RUN_DWI:
             output:
                 fa = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_DWI-space_FA.nii.gz",
                 md = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_DWI-space_MD.nii.gz"
+            threads: LIGHT_THREADS
             shell:
                 """
                 micaflow compute_fa_md \
@@ -956,6 +983,7 @@ if RUN_DWI:
             output:
                 fa_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_FA.nii.gz",
                 md_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_MD.nii.gz"
+            threads: LIGHT_THREADS
             wildcard_constraints:
                 modality="T1w"
             run:
@@ -975,6 +1003,7 @@ if RUN_DWI:
                 atlas = rules.synthseg_t1w.output.seg
             output:
                 metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_DWI-to-T1w-space_DICE.csv"
+            threads: LIGHT_THREADS
             shell:
                 """
                 micaflow calculate_dice \
@@ -992,6 +1021,7 @@ rule transform_mask_to_mni:
         reference = ATLAS
     output:
         mni_mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_MNI152-space_brain_mask.nii.gz"
+    threads: LIGHT_THREADS
     shell:
         """
         micaflow apply_warp \
@@ -1023,6 +1053,7 @@ if EXTRACT_BRAIN:
             brain = f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_T1w-space_{{modality}}.nii.gz"
         wildcard_constraints:
             modality = "FA|MD|T1w|FLAIR"
+        threads: LIGHT_THREADS
         run:
             # Ensure output directory exists
             os.makedirs(os.path.dirname(output.brain), exist_ok=True)
@@ -1056,6 +1087,7 @@ if EXTRACT_BRAIN:
             brain = f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_MNI152-space_{{modality}}.nii.gz"
         wildcard_constraints:
             modality = "FA|MD|T1w|FLAIR"
+        threads: LIGHT_THREADS
         run:
             # Ensure output directory exists
             os.makedirs(os.path.dirname(output.brain), exist_ok=True)
@@ -1082,6 +1114,7 @@ if EXTRACT_BRAIN:
         wildcard_constraints:
             space = "T1w|MNI152",
             modality = "T1w|FLAIR|FA|MD"
+        threads: LIGHT_THREADS
         shell:
             """
             micaflow normalize \

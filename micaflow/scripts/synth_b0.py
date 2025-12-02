@@ -597,7 +597,6 @@ def main():
     parser.add_argument('--temp-dir', help='Directory for temporary files (default: current directory)')
     parser.add_argument('--corrected-b0', help='Path to save the corrected B0 image (optional)')
     parser.add_argument('--threads', type=int, help='Number of threads for ANTs (default: all)')
-    parser.add_argument('--synthseg-threads', type=int, help='Number of threads for SynthSeg (default: all)')
     parser.add_argument('--shell-dimension', type=int, default=3,
                         help='Shell dimension for DWI, default=3')
     parser.add_argument('--b0-to-T1-affine', required=True, help='Path to the B0 to T1 affine matrix')

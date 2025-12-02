@@ -53,8 +53,7 @@ micaflow coregister \\
     [--affine-file <path/to/affine.mat>] \\
     [--rev-warp-file <path/to/reverse_warp.nii.gz>] \\
     [--output-segmentation <path/to/output_seg.nii.gz>] \\
-    [--ants-threads <int>] \\
-    [--synthseg-threads <int>]
+    [--threads <int>]
 
 # With pre-computed segmentations (faster)
 micaflow coregister \\
@@ -83,8 +82,7 @@ Python API Usage:
 ...     warp_file="warp.nii.gz",
 ...     affine_file="affine.mat",
 ...     rev_warp_file="reverse_warp.nii.gz",
-...     ants_threads=4,
-...     synthseg_threads=2
+...     threads=4
 ... )
 >>> 
 >>> # Linear-only registration
@@ -207,8 +205,7 @@ def print_help_message():
       {YELLOW}--secondary-rev-warp-file{RESET}: Path for secondary reverse warp
       {YELLOW}--linear-only{RESET}          : Only perform rigid + affine (no SyN)
                             {MAGENTA}Faster but less accurate{RESET}
-      {YELLOW}--ants-threads{RESET}         : Number of threads for ANTs (default: 1)
-      {YELLOW}--synthseg-threads{RESET}     : Number of threads for SynthSeg (default: 1)
+      {YELLOW}--threads{RESET}              : Number of threads for ANTs and SynthSeg (default: 1)
     
     {CYAN}{BOLD}────────────────── EXAMPLE USAGE ────────────────────────{RESET}
     
@@ -242,8 +239,7 @@ def print_help_message():
       {YELLOW}--fixed-file{RESET} mni152.nii.gz \\
       {YELLOW}--moving-file{RESET} subject_t1w.nii.gz \\
       {YELLOW}--output{RESET} registered_t1w.nii.gz \\
-      {YELLOW}--ants-threads{RESET} 4 \\
-      {YELLOW}--synthseg-threads{RESET} 2
+      {YELLOW}--threads{RESET} 4
     
     {BLUE}# Example 5: Multi-step registration with secondary warps{RESET}
     micaflow coregister \\
@@ -285,7 +281,7 @@ def print_help_message():
     
     {CYAN}{BOLD}───────────────── COMMON ISSUES ─────────────────────────{RESET}
     {YELLOW}Issue:{RESET} Registration takes very long
-    {GREEN}Solution:{RESET} Increase --ants-threads, provide pre-computed segmentations
+    {GREEN}Solution:{RESET} Increase --threads, provide pre-computed segmentations
     
     {YELLOW}Issue:{RESET} Poor registration quality
     {GREEN}Solution:{RESET} Ensure images have similar FOV, try providing segmentations
@@ -298,8 +294,8 @@ def print_help_message():
 
 def coregister(fixed_file, moving_file, output, fixed_segmentation=None,
                moving_segmentation=None, warp_file=None, affine_file=None,
-               rev_warp_file=None, ants_threads=1,
-               synthseg_threads=1, output_segmentation=None, linear_only=False, 
+               rev_warp_file=None, threads=1,
+               output_segmentation=None, linear_only=False, 
                secondary_warp_file=None, secondary_rev_warp_file=None):
     """
     Perform label-augmented image registration between two images.
@@ -335,14 +331,9 @@ def coregister(fixed_file, moving_file, output, fixed_segmentation=None,
     rev_warp_file : str, optional
         Path to save the reverse warp field (.nii.gz).
         Transforms from fixed to moving space.
-    rev_affine_file : str, optional
-        Path to save the reverse affine transform (.mat).
-        Linear component of fixed to moving transformation.
-    ants_threads : int, optional
-        Number of threads for ANTs registration operations. Default: 1.
+    threads : int, optional
+        Number of threads for ANTs and SynthSeg operations. Default: 1.
         Higher values speed up processing on multi-core systems.
-    synthseg_threads : int, optional
-        Number of threads for SynthSeg segmentation operations. Default: 1.
     output_segmentation : str, optional
         Path to save the registered segmentation image (.nii.gz).
         Only used when segmentations are provided or generated.
@@ -383,7 +374,7 @@ def coregister(fixed_file, moving_file, output, fixed_segmentation=None,
     ...     output="registered_t1w.nii.gz",
     ...     warp_file="warp.nii.gz",
     ...     affine_file="affine.mat",
-    ...     ants_threads=4
+    ...     threads=4
     ... )
     >>> 
     >>> # Linear-only registration
@@ -425,6 +416,9 @@ def coregister(fixed_file, moving_file, output, fixed_segmentation=None,
         
         print(f"  Fixed image: {fixed_file} (shape: {fixed.shape})")
         print(f"  Moving image: {moving_file} (shape: {moving.shape})")
+        
+        os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(threads)
+        os.environ["OMP_NUM_THREADS"] = str(threads)  # OpenMP threads for ANTs
         
         registration = ants.registration(
             fixed=fixed, 
@@ -480,8 +474,7 @@ def coregister(fixed_file, moving_file, output, fixed_segmentation=None,
             skip_moving_parc=True,
             skip_fixed_parc=True,
             skip_qc=True,
-            ants_threads=ants_threads,
-            synthseg_threads=synthseg_threads,
+            threads=threads,
             secondary_warp_file=secondary_warp_file,
             inverse_secondary_warp_file=secondary_rev_warp_file
         )
@@ -514,8 +507,7 @@ def coregister(fixed_file, moving_file, output, fixed_segmentation=None,
             skip_moving_parc=False,
             skip_fixed_parc=False,
             skip_qc=True,
-            ants_threads=ants_threads,
-            synthseg_threads=synthseg_threads,
+            threads=threads,
             secondary_warp_file=secondary_warp_file,
             inverse_secondary_warp_file=secondary_rev_warp_file
         )
@@ -550,10 +542,8 @@ if __name__ == "__main__":
                         help="Optional path to save the forward affine transform (moving to fixed).")
     parser.add_argument("--rev-warp-file", default=None,
                         help="Optional path to save the reverse warp field (fixed to moving).")
-    parser.add_argument("--ants-threads", type=int, default=1, 
-                        help="Number of threads for ANTs registration operations (default: 1).")
-    parser.add_argument("--synthseg-threads", type=int, default=1, 
-                        help="Number of threads for SynthSeg segmentation operations (default: 1).")
+    parser.add_argument("--threads", type=int, default=1, 
+                        help="Number of threads for registration operations (default: 1).")
     parser.add_argument("--output-segmentation", default=None,
                         help="Optional path to save the output segmentation image alongside the registered image.")
     parser.add_argument("--linear-only", action='store_true',
@@ -576,8 +566,7 @@ if __name__ == "__main__":
             warp_file=args.warp_file,
             affine_file=args.affine_file,
             rev_warp_file=args.rev_warp_file,
-            ants_threads=args.ants_threads,
-            synthseg_threads=args.synthseg_threads,
+            threads=args.threads,
             output_segmentation=args.output_segmentation,
             linear_only=args.linear_only,
             secondary_warp_file=args.secondary_warp_file,

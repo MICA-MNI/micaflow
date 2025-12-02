@@ -15,3 +15,6 @@ work/*
 /micaflow/scripts/__pycache__
 *.pyc
 *.pyc
+test.py
+timing_results.csv
+timing_results_new.csv

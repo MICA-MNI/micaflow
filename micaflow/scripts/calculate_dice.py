@@ -245,7 +245,7 @@ if __name__ == "__main__":
         print(f"{CYAN}Computing DICE scores...{RESET}")
         
         # Call the actual comparison function from lamareg
-        compare_parcellations_dice(args.input, args.reference, args.output)
+        compare_parcellations_dice(args.input, args.reference, args.output, verbose=False)
         
         print(f"\n{GREEN}{BOLD}DICE scores successfully computed!{RESET}")
         print(f"  Results saved to: {args.output}")

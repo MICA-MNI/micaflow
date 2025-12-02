@@ -150,7 +150,7 @@ dependencies = [
     "yacs",
     "yte",
     "colorama>=0.4",
-    "lamareg",
+    "lamareg>=1.5.1",
     "nnunetv2",
     "nilearn"
 ]

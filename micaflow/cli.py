@@ -453,10 +453,6 @@ def main():
         "--gpu", action="store_true", help="Use GPU computation"
     )
     pipeline_parser.add_argument(
-        "--threads", type=int, default=1, 
-        help="Number of CPU threads for individual tools (ANTs, SynthSeg, etc.)"
-    )
-    pipeline_parser.add_argument(
         "--dry-run", "-n", action="store_true", help="Dry run (don't execute commands)"
     )
     pipeline_parser.add_argument(
@@ -755,12 +751,8 @@ def main():
         help="Optional path to save a secondary reverse warp field to be applied after the primary reverse warp and affine (.nii.gz)"
     )
     coreg_parser.add_argument(
-        "--ants-threads", type=int, default=1, 
-        help="Number of threads for ANTs registration operations (default: 1)"
-    )
-    coreg_parser.add_argument(
-        "--synthseg-threads", type=int, default=1, 
-        help="Number of threads for SynthSeg segmentation operations (default: 1)"
+        "--threads", type=int, default=1, 
+        help="Number of threads for registration operations (default: 1)"
     )
     coreg_parser.add_argument(
         "--output-segmentation",
@@ -823,6 +815,11 @@ def main():
         type=int,
         default=3,
         help="Dimension of the DWI image referring to shells (default: 3)",
+    )
+    motion_corr_parser.add_argument(
+        "--threads",
+        type=int,
+        help="Number of threads to use (default: 1)",
     )
 
     # SDC command (main susceptibility distortion correction)
@@ -946,9 +943,6 @@ def main():
         '--threads', type=int, help='Number of threads to use (default: all)'
     )
     synth_b0_parser.add_argument(
-        '--synthseg-threads', type=int, help='Number of threads for SynthSeg (default: all)'
-    )
-    synth_b0_parser.add_argument(
         '--b0-to-T1-warp', help='Path to save the warp field from B0 to T1w (optional)'
     )
     synth_b0_parser.add_argument(
@@ -1023,7 +1017,6 @@ def main():
             "inverse_bval_file",
             "inverse_bvec_file",
             "phase_encoding_direction",
-            "threads",
             "rm_cerebellum",
             "gpu",
             "keep_temp",

@@ -68,13 +68,14 @@ micaflow motion_correction \\
     --output <path/to/motion_corrected_dwi.nii.gz> \\
     --b0 <path/to/reference_b0.nii.gz>
 
-# Custom shell dimension
+# Custom shell dimension and threading
 micaflow motion_correction \\
     --denoised <path/to/dwi.nii.gz> \\
     --input-bvecs <path/to/dwi.bvec> \\
     --output-bvecs <path/to/corrected.bvec> \\
     --output <path/to/motion_corrected_dwi.nii.gz> \\
-    --shell-dimension 3
+    --shell-dimension 3 \\
+    --threads 8
 
 Python API Usage:
 ----------------
@@ -213,6 +214,7 @@ def print_help_message():
       {YELLOW}--b0{RESET}             : Path to external B0 image as reference
                          {MAGENTA}If not provided, first volume is used{RESET}
       {YELLOW}--shell-dimension{RESET}: Dimension of volume axis (default: 3)
+      {YELLOW}--threads{RESET}        : Number of threads for ANTs registration (default: 1)
     
     {CYAN}{BOLD}──────────────────── EXAMPLE USAGE ───────────────────────{RESET}
     
@@ -231,13 +233,14 @@ def print_help_message():
       {YELLOW}--output{RESET} motion_corrected_dwi.nii.gz \\
       {YELLOW}--b0{RESET} extracted_b0.nii.gz
     
-    {BLUE}# Custom shell dimension{RESET}
+    {BLUE}# Custom shell dimension and threading{RESET}
     micaflow motion_correction \\
       {YELLOW}--denoised{RESET} denoised_dwi.nii.gz \\
       {YELLOW}--input-bvecs{RESET} dwi.bvec \\
       {YELLOW}--output-bvecs{RESET} corrected.bvec \\
       {YELLOW}--output{RESET} motion_corrected_dwi.nii.gz \\
-      {YELLOW}--shell-dimension{RESET} 3
+      {YELLOW}--shell-dimension{RESET} 3 \\
+      {YELLOW}--threads{RESET} 8
     
     {CYAN}{BOLD}───────────── WHY MOTION CORRECTION? ────────────────────{RESET}
     
@@ -314,7 +317,7 @@ def print_help_message():
 
 
 def run_motion_correction(dwi_path, input_bvec_path, output_bvec_path, output, 
-                          b0_path=None, shell_dimension=3):
+                          b0_path=None, shell_dimension=3, threads=1):
     """
     Perform motion and eddy current correction on diffusion-weighted images (DWI).
     
@@ -342,6 +345,9 @@ def run_motion_correction(dwi_path, input_bvec_path, output_bvec_path, output,
     shell_dimension : int, optional
         Dimension along which diffusion volumes are organized. Default: 3.
         For standard 4D NIfTI (X, Y, Z, volumes), this should be 3.
+    threads : int, optional
+        Number of threads to use for ANTs registration. Default: 1.
+        Increasing this can speed up processing on multi-core systems.
         
     Returns
     -------
@@ -445,6 +451,10 @@ def run_motion_correction(dwi_path, input_bvec_path, output_bvec_path, output,
     
     print(f"  Reference shape: {b0_ants.numpy().shape}")
 
+    # Set ANTs thread count (similar to lamar.py)
+    os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(threads)
+    os.environ["OMP_NUM_THREADS"] = str(threads)
+
     # Initialize array for registered data
     registered_data = np.zeros_like(dwi_data)
     
@@ -461,6 +471,7 @@ def run_motion_correction(dwi_path, input_bvec_path, output_bvec_path, output,
     print(f"\n{CYAN}Starting volume-by-volume registration...{RESET}")
     print(f"  Registering volumes {start_idx} to {num_volumes-1}")
     print(f"  Registration type: ANTs SyN (Rigid + Affine + Deformable)")
+    print(f"  Using {threads} threads")
     
     for idx in tqdm(range(start_idx, dwi_data.shape[shell_dimension]), 
                     desc=f"{CYAN}Registering volumes{RESET}", 
@@ -494,7 +505,8 @@ def run_motion_correction(dwi_path, input_bvec_path, output_bvec_path, output,
             aff_smoothing_sigmas=(2.0, 0.0, 0.0),
             reg_iterations=(20, 10, 0),
             winsorize_lower_quantile=0.0001,
-            winsorize_upper_quantile=0.9998      
+            winsorize_upper_quantile=0.9998,
+            num_threads=threads      
         )
 
         # Place the registered volume in the output array using the same indexing
@@ -667,6 +679,12 @@ if __name__ == "__main__":
         default=3,
         help="Dimension along which diffusion volumes are organized (default: 3).",
     )
+    parser.add_argument(
+        "--threads",
+        type=int,
+        default=1,
+        help="Number of threads to use for ANTs registration (default: 1).",
+    )
 
     args = parser.parse_args()
     
@@ -677,7 +695,8 @@ if __name__ == "__main__":
             args.output_bvecs, 
             args.output, 
             args.b0, 
-            args.shell_dimension
+            args.shell_dimension,
+            args.threads
         )
         sys.exit(0)
         
