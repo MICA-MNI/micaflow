@@ -160,8 +160,9 @@ print("keep_temp: ", KEEP_TEMP)
 def get_final_output():
     outputs = []
     # All existing outputs...
-    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-T1w_gradient-magnitude.nii")
-    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-T1w_relative-intensity.nii")
+    # Updated to .nii.gz
+    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-T1w_gradient-magnitude.nii.gz")
+    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-T1w_relative-intensity.nii.gz")
     outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_T1w-to-MNI152-space_DICE.csv")
     outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_T1w-space_T1w.nii.gz"))
     
@@ -171,8 +172,9 @@ def get_final_output():
 
     if RUN_FLAIR:
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_FLAIR-to-T1w-space_DICE.csv")
-        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-FLAIR_gradient-magnitude.nii")
-        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-FLAIR_relative-intensity.nii")
+        # Updated to .nii.gz
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-FLAIR_gradient-magnitude.nii.gz")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-FLAIR_relative-intensity.nii.gz")
         outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_T1w-space_FLAIR.nii.gz"))
         
         # Add normalized FLAIR images 
@@ -473,20 +475,41 @@ rule run_texture:
         """
 
 
-rule run_texture_T1w:
+rule run_texture_native:
     input:
         image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_T1w-space_{{modality}}.nii.gz",
         mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_T1w-space_mask.nii.gz"
     output:
-        gradient = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-{{modality}}_gradient-magnitude.nii",
-        intensity = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-{{modality}}_relative-intensity.nii"
+        gradient = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-{{modality}}_gradient-magnitude.nii.gz",
+        intensity = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-{{modality}}_relative-intensity.nii.gz"
     threads: LIGHT_THREADS
     shell:
         """
         micaflow texture_generation \
             --input {input.image} \
             --mask {input.mask} \
-            --output {OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-{{wildcards.modality}}
+            --output {OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-{wildcards.modality}
+        """
+
+rule warp_texture_to_mni:
+    input:
+        moving = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_T1w-space_textures-{{modality}}_{{metric}}.nii.gz",
+        affine = rules.registration_mni152.output.fwd_affine,
+        warp = rules.registration_mni152.output.fwd_field,
+        reference = ATLAS
+    output:
+        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-{{modality}}_{{metric}}.nii.gz"
+    wildcard_constraints:
+        metric = "gradient-magnitude|relative-intensity"
+    threads: LIGHT_THREADS
+    shell:
+        """
+        micaflow apply_warp \
+            --moving {input.moving} \
+            --reference {input.reference} \
+            --affine {input.affine} \
+            --warp {input.warp} \
+            --output {output.warped}
         """
 
 rule calculate_metrics_T1w:

@@ -122,16 +122,10 @@ See Also:
 
 """
 import argparse
-from glob import glob
 import os
-import random
-import string
-from collections import Counter
-import tempfile
-import ants
-import numpy as np
-import time
 import sys
+import numpy as np
+import ants
 from colorama import init, Fore, Style
 
 init()
@@ -345,713 +339,112 @@ def print_help_message():
     print(help_text)
 
 
-def write_nifti(input, id, output_dir, type):
+def compute_gradient_magnitude(image):
+    """Compute gradient magnitude using ANTs."""
+    # Calculate gradient magnitude (sigma=1 for minimal smoothing)
+    grad = ants.iMath(image, 'Grad', 1)
+    return grad
+
+
+def compute_relative_intensity(image, mask):
     """
-    Write ANTsImage to NIfTI file with standardized naming.
+    Compute relative intensity normalized to the global mean of the masked image.
     
-    Parameters
-    ----------
-    input : ANTsImage
-        Image data to write to file.
-    id : str
-        Subject or case identifier for filename.
-    output_dir : str
-        Output directory path.
-    type : str
-        Feature type suffix (e.g., 'gradient-magnitude', 'relative-intensity').
-    
-    Returns
-    -------
-    None
-        Writes file to disk: <output_dir>/<id>_<type>.nii.gz
-    
-    Examples
-    --------
-    >>> gradient_img = ants.image_read("gradient.nii.gz")
-    >>> write_nifti(gradient_img, "sub-01", "/output", "gradient-magnitude")
-    # Creates: /output/sub-01_gradient-magnitude.nii.gz
+    Simplified approach:
+    1. Calculate mean intensity within the brain mask (background reference).
+    2. Normalize voxels relative to this mean.
+    3. Center at 100.
     """
-    output_fname = os.path.join(output_dir, id + '_' + type + '.nii.gz')
-    ants.image_write(input, output_fname)
+    # Get data array
+    img_data = image.numpy()
+    mask_data = mask.numpy()
+    
+    # Calculate background reference (mean of brain tissue)
+    # Using mean is simpler and faster than finding histogram peaks
+    brain_voxels = img_data[mask_data > 0]
+    
+    if len(brain_voxels) == 0:
+        print(f"{Fore.YELLOW}Warning: Mask is empty. Returning zero image.{Style.RESET_ALL}")
+        return image.new_image_like(np.zeros_like(img_data))
+
+    bg_ref = np.mean(brain_voxels)
+    
+    # Initialize output array
+    ri_data = np.zeros_like(img_data)
+    
+    # Avoid division by zero
+    if bg_ref == 0:
+        bg_ref = 1.0
+        
+    # Calculate Relative Intensity
+    # Formula: RI = 100 * (1 + (I - BG) / BG) = 100 * (I / BG)
+    # This centers the mean intensity at 100
+    
+    # Apply only within mask
+    mask_indices = mask_data > 0
+    ri_data[mask_indices] = 100.0 * (img_data[mask_indices] / bg_ref)
+    
+    # Create ANTs image
+    ri_img = image.new_image_like(ri_data)
+    
+    # Smooth the result (sigma=3mm)
+    ri_smooth = ants.smooth_image(ri_img, sigma=3, FWHM=True)
+    
+    # Re-mask to ensure background is clean after smoothing
+    ri_smooth = ri_smooth * mask
+    
+    return ri_smooth
 
 
-def compute_RI(image, bg, mask):
-    """
-    Compute relative intensity map normalized to background intensity.
+def run_texture_pipeline(input_path, mask_path, output_prefix):
+    """Run simplified texture generation pipeline."""
     
-    Relative intensity (RI) normalizes voxel intensities relative to a background
-    reference (typically the GM-WM boundary), accounting for scanner and protocol
-    variations. This creates contrast-normalized values centered at 100.
+    print(f"{Fore.CYAN}Loading input: {input_path}{Style.RESET_ALL}")
+    img = ants.image_read(input_path)
     
-    Formula:
-    - For voxels < bg: RI = 100 × (1 - (bg - I) / bg)
-    - For voxels > bg: RI = 100 × (1 + (I - bg) / bg)
+    print(f"{Fore.CYAN}Loading mask: {mask_path}{Style.RESET_ALL}")
+    mask = ants.image_read(mask_path)
     
-    Parameters
-    ----------
-    image : ndarray
-        Input intensity image as numpy array.
-    bg : float
-        Background intensity reference (typically 0.5 × (GM_peak + WM_peak)).
-    mask : ndarray
-        Binary mask defining brain tissue (1=brain, 0=background).
-    
-    Returns
-    -------
-    ndarray
-        Relative intensity map with same shape as input.
-        Values: ~50-150 (100 = background reference)
-        Outside mask: 0
-    
-    Notes
-    -----
-    - Based on Nyúl et al. (2000) intensity normalization
-    - Centers values at 100 for interpretability
-    - Preserves relative contrast relationships
-    - Accounts for inter-scanner variability
-    
-    Examples
-    --------
-    >>> img = np.array([50, 75, 100, 125, 150])
-    >>> bg = 100
-    >>> mask = np.ones(5)
-    >>> ri = compute_RI(img, bg, mask)
-    >>> print(ri)
-    [50. 75. 100. 125. 150.]
-    
-    References
-    ----------
-    Nyúl LG, Udupa JK, Zhang X. New variants of a method of MRI scale 
-    standardization. IEEE Trans Med Imaging. 2000;19(2):143-150.
-    """
-    ri = np.zeros_like(image)
-    
-    # Find voxels below background (typically CSF and dark GM)
-    bgm = np.stack(np.where(np.logical_and(image < bg, mask == 1)), axis=1)
-    bgm_ind = bgm[:, 0], bgm[:, 1], bgm[:, 2]
-    
-    # Find voxels above background (typically WM and bright GM)
-    bgp = np.stack(np.where(np.logical_and(image > bg, mask == 1)), axis=1)
-    bgp_ind = bgp[:, 0], bgp[:, 1], bgp[:, 2]
+    # Ensure mask is in same space
+    if not ants.image_physical_space_consistency(img, mask):
+        print(f"{Fore.YELLOW}Resampling mask to input space...{Style.RESET_ALL}")
+        mask = ants.resample_image_to_target(mask, img, interp_type='nearestNeighbor')
 
-    # Compute relative intensity (centered at 100)
-    ri[bgm_ind] = 100 * (1 - (bg - image[bgm_ind]) / bg)
-    ri[bgp_ind] = 100 * (1 + (bg - image[bgp_ind]) / bg)
+    # 1. Gradient Magnitude
+    print(f"{Fore.GREEN}Computing Gradient Magnitude...{Style.RESET_ALL}")
+    grad_map = compute_gradient_magnitude(img)
     
-    return ri
+    grad_out = f"{output_prefix}_gradient-magnitude.nii.gz"
+    ants.image_write(grad_map, grad_out)
+    print(f"  Saved: {grad_out}")
 
-
-def peakfinder(gm, wm, lower_q, upper_q):
-    """
-    Find intensity peaks for gray matter and white matter, compute background.
+    # 2. Relative Intensity
+    print(f"{Fore.GREEN}Computing Relative Intensity...{Style.RESET_ALL}")
+    ri_map = compute_relative_intensity(img, mask)
     
-    Uses histogram mode (most common intensity) to find representative peaks
-    for GM and WM tissues. The background reference is computed as the midpoint
-    between these peaks, representing the GM-WM boundary.
-    
-    Parameters
-    ----------
-    gm : ANTsImage
-        Gray matter masked image.
-    wm : ANTsImage
-        White matter masked image.
-    lower_q : float
-        Lower percentile for thresholding (e.g., 1 = 1st percentile).
-    upper_q : float
-        Upper percentile for thresholding (e.g., 99.5 = 99.5th percentile).
-    
-    Returns
-    -------
-    float
-        Background intensity: 0.5 × (GM_peak + WM_peak)
-        Represents the GM-WM boundary intensity.
-    
-    Notes
-    -----
-    - Uses mode (most common value) rather than mean
-    - More robust to outliers and partial volume effects
-    - Percentile thresholding removes extreme values
-    - Intensities are rounded before finding mode
-    
-    Examples
-    --------
-    >>> gm_img = ants.image_read("gm_masked.nii.gz")
-    >>> wm_img = ants.image_read("wm_masked.nii.gz")
-    >>> bg = peakfinder(gm_img, wm_img, 1, 99.5)
-    >>> print(f"Background: {bg}")
-    Background: 542.5
-    """
-    # Find mode of GM intensities (within percentile range)
-    gm_peak = Counter(threshold_percentile(gm, lower_q, upper_q)).most_common(1)[0][0]
-    
-    # Find mode of WM intensities (within percentile range)
-    wm_peak = Counter(threshold_percentile(wm, lower_q, upper_q)).most_common(1)[0][0]
-    
-    # Compute background as midpoint (GM-WM boundary)
-    bg = 0.5 * (gm_peak + wm_peak)
-    
-    return bg
-
-
-def threshold_percentile(x, lower_q, upper_q):
-    """
-    Threshold image intensities to percentile range and round values.
-    
-    Removes extreme values using percentile thresholding, which improves
-    robustness of peak finding by excluding outliers, artifacts, and noise.
-    
-    Parameters
-    ----------
-    x : ANTsImage
-        Input image to threshold.
-    lower_q : float
-        Lower percentile threshold (0-100).
-    upper_q : float
-        Upper percentile threshold (0-100).
-    
-    Returns
-    -------
-    ndarray
-        Flattened array of rounded intensities within percentile range.
-    
-    Notes
-    -----
-    - Values are rounded to integers before return
-    - Flattened to 1D array for histogram computation
-    - Removes extreme outliers that could bias peak finding
-    - Typical range: 1st to 99.5th percentile
-    
-    Examples
-    --------
-    >>> img = ants.image_read("brain.nii.gz")
-    >>> vals = threshold_percentile(img, 1, 99.5)
-    >>> print(f"Shape: {vals.shape}, Range: {vals.min()}-{vals.max()}")
-    Shape: (245632,), Range: 15-1250
-    """
-    # Convert to numpy array
-    x = x.numpy()
-    
-    # Compute percentile thresholds
-    lq = np.percentile(x, lower_q)
-    uq = np.percentile(x, upper_q)
-    
-    # Keep only values within range
-    x = x[np.logical_and(x > lq, x <= uq)]
-    
-    # Round and flatten for histogram
-    return x.flatten().round()
-
-
-def find_logger_basefilename(logger):
-    """
-    Find the base filename of a logger's file handler.
-    
-    Note: This function appears to be unused legacy code.
-    
-    Parameters
-    ----------
-    logger : logging.Logger
-        Logger object with file handler.
-    
-    Returns
-    -------
-    str or None
-        Base filename of the first file handler, or None if no handler.
-    """
-    log_file = None
-    handler = logger.handlers[0]
-    log_file = handler.baseFilename
-    return log_file
-
-
-def random_case_id():
-    """
-    Generate a random case identifier string.
-    
-    Creates a unique identifier in format: abc_1234
-    (3 lowercase letters + underscore + 4 digits)
-    
-    Note: This function appears to be unused in the current implementation.
-    
-    Returns
-    -------
-    str
-        Random identifier string (e.g., "xyz_5678").
-    
-    Examples
-    --------
-    >>> case_id = random_case_id()
-    >>> print(case_id)
-    'abc_1234'
-    >>> print(len(case_id))
-    8
-    """
-    letters = ''.join(random.choices(string.ascii_letters, k=16))
-    digits = ''.join(random.choices(string.digits, k=16))
-    x = letters[:3].lower() + '_' + digits[:4]
-    return x
-
-
-class noelTexturesPy:
-    """
-    Texture feature extraction pipeline for neuroimaging data.
-    
-    This class implements a complete pipeline for computing texture features
-    from MRI scans, including tissue segmentation, gradient magnitude, and
-    relative intensity calculations.
-    
-    Parameters
-    ----------
-    id : str
-        Subject or case identifier for output files.
-    output_dir : str, optional
-        Directory prefix for output files.
-    input : str, optional
-        Path to input MRI image (.nii.gz).
-    mask : str, optional
-        Path to brain mask image (.nii.gz).
-    
-    Attributes
-    ----------
-    _id : str
-        Subject identifier.
-    _outputdir : str
-        Output directory prefix.
-    input : str
-        Input image path.
-    mask : str
-        Mask image path.
-    _input : ANTsImage
-        Loaded input image.
-    _mask : ANTsImage
-        Loaded mask image.
-    _segm : ANTsImage
-        Tissue segmentation (1=CSF, 2=GM, 3=WM).
-    _gm : ndarray
-        Gray matter binary mask.
-    _wm : ndarray
-        White matter binary mask.
-    _grad_input : ANTsImage
-        Gradient magnitude map.
-    _ri : ANTsImage
-        Relative intensity map.
-    
-    Methods
-    -------
-    load_nifti_file()
-        Load input image and mask from disk.
-    segmentation()
-        Segment brain into GM, WM, CSF using Atropos.
-    gradient_magnitude()
-        Compute and save gradient magnitude feature.
-    relative_intensity()
-        Compute and save relative intensity feature.
-    file_processor()
-        Execute complete processing pipeline.
-    
-    Examples
-    --------
-    >>> pipeline = noelTexturesPy(
-    ...     id='sub-01',
-    ...     output_dir='results/textures',
-    ...     input='T1w.nii.gz',
-    ...     mask='mask.nii.gz'
-    ... )
-    >>> pipeline.file_processor()
-    loading nifti files
-    computing GM, WM, CSF segmentation
-    computing gradient magnitude
-    computing relative intensity
-    pipeline processing time elapsed: 183.4 seconds
-    
-    Notes
-    -----
-    - Uses Atropos K-means for tissue segmentation
-    - Gradient computed with finite differences
-    - Relative intensity smoothed with σ=3mm FWHM
-    - All outputs are NIfTI format (.nii or .nii.gz)
-    """
-    
-    def __init__(
-        self,
-        id,
-        output_dir=None,
-        input=None,
-        mask=None,
-    ):
-        """Initialize texture extraction pipeline."""
-        super().__init__()
-        self._id = id
-        self._outputdir = output_dir
-        self.input = input
-        self.mask = mask
-
-    def load_nifti_file(self):
-        """
-        Load input MRI image and brain mask from disk.
-        
-        Reads NIfTI files into memory as ANTsImage objects for processing.
-        
-        Raises
-        ------
-        FileNotFoundError
-            If input or mask file does not exist.
-        RuntimeError
-            If file loading fails.
-        
-        Notes
-        -----
-        - Prints status message during loading
-        - Sets self._input and self._mask attributes
-        - Files must be in NIfTI format (.nii or .nii.gz)
-        """
-        # load nifti data to memory
-        print(f'{CYAN}Loading NIfTI files...{RESET}')
-        self._input = ants.image_read(self.input)
-        self._mask = ants.image_read(self.mask)
-        print(f'  {GREEN}Input: {self.input}{RESET}')
-        print(f'  {GREEN}Mask: {self.mask}{RESET}')
-
-    def segmentation(self):
-        """
-        Segment brain tissue into gray matter, white matter, and CSF.
-        
-        Uses Atropos K-means clustering with MRF spatial prior to segment
-        the brain into three tissue classes. Creates binary masks for GM
-        and WM used in subsequent feature computations.
-        
-        Algorithm:
-        - K-means clustering with 3 classes
-        - MRF smoothing (weight=0.2, neighborhood=1x1x1)
-        - 3 iterations for convergence
-        - Masked to brain tissue only
-        
-        Sets:
-        ----
-        self._segm : ANTsImage
-            Segmentation labels (1=CSF, 2=GM, 3=WM)
-        self._gm : ndarray
-            Binary gray matter mask (1=GM, 0=other)
-        self._wm : ndarray
-            Binary white matter mask (1=WM, 0=other)
-        
-        Notes
-        -----
-        - CSF typically has label 1 (darkest)
-        - GM typically has label 2 (intermediate)
-        - WM typically has label 3 (brightest)
-        - Assumes T1w-like contrast
-        
-        References
-        ----------
-        Avants BB, Tustison NJ, Wu J, et al. An open source multivariate 
-        framework for n-tissue segmentation with evaluation on public data. 
-        Neuroinformatics. 2011;9(4):381-400.
-        """
-        print(f'{CYAN}Computing GM, WM, CSF segmentation...{RESET}')
-        
-        # Run Atropos segmentation
-        segm = ants.atropos(
-            a=self._input,              # Input image
-            i='Kmeans[3]',              # K-means with 3 classes
-            m='[0.2,1x1x1]',            # MRF: weight=0.2, neighborhood=1x1x1
-            c='[3,0]',                  # 3 iterations, no initialization
-            x=self._mask,               # Brain mask
-        )
-        # Clean up temporary Atropos probability map files
-        temp_files = glob(os.path.join(tempfile.gettempdir(), 'antsr*prob*.nii.gz'))
-        for temp_file in temp_files:
-            try:
-                os.remove(temp_file)
-            except OSError:
-                pass  # Ignore if file already deleted
-            
-        self._segm = segm['segmentation']
-        
-        # Create binary tissue masks
-        self._gm = np.where((self._segm.numpy() == 2), 1, 0).astype('float32')
-        self._wm = np.where((self._segm.numpy() == 3), 1, 0).astype('float32')
-        
-        print(f'  {GREEN}Segmentation completed{RESET}')
-        print(f'    CSF: label 1')
-        print(f'    GM:  label 2 ({np.sum(self._gm)} voxels)')
-        print(f'    WM:  label 3 ({np.sum(self._wm)} voxels)')
-
-    def gradient_magnitude(self):
-        """
-        Compute gradient magnitude for edge and boundary detection.
-        
-        Calculates the magnitude of the intensity gradient at each voxel,
-        which highlights edges and tissue boundaries. Higher values indicate
-        sharp intensity transitions (e.g., GM-WM boundary).
-        
-        Method:
-        - First-order finite differences
-        - Magnitude: sqrt(gx² + gy² + gz²)
-        - Preserves spatial resolution
-        
-        Saves:
-        -----
-        <output_dir>_gradient-magnitude.nii
-            Gradient magnitude map
-            Range: 0 to maximum gradient (~50 for typical T1w)
-            Higher values at tissue boundaries
-        
-        Notes
-        -----
-        - Uses ANTs iMath 'Grad' operation
-        - Sigma parameter = 1 (minimal smoothing)
-        - Values are absolute (always positive)
-        - No masking applied to gradient itself
-        """
-        print(f'{CYAN}Computing gradient magnitude...{RESET}')
-
-        # Compute gradient using iMath
-        self._grad_input = ants.iMath(self._input, 'Grad', 1)
-
-        # Save gradient magnitude map
-        output_file = self._outputdir + '_gradient-magnitude.nii'
-        ants.image_write(self._grad_input, output_file)
-        
-        # Compute statistics for reporting
-        grad_data = self._grad_input.numpy()[self._mask.numpy() == 1]
-        print(f'  {GREEN}Gradient magnitude computed{RESET}')
-        print(f'    Range: {grad_data.min():.2f} to {grad_data.max():.2f}')
-        print(f'    Mean: {grad_data.mean():.2f}')
-        print(f'    Saved: {output_file}')
-
-    def relative_intensity(self):
-        """
-        Compute relative intensity map with intensity normalization.
-        
-        Calculates intensity values normalized relative to the GM-WM boundary,
-        accounting for scanner and protocol variations. This creates contrast-
-        normalized values centered at 100, improving cross-scanner consistency.
-        
-        Steps:
-        1. Mask input to GM and WM tissues
-        2. Find intensity peaks for GM and WM (histogram mode)
-        3. Compute background: BG = 0.5 × (GM_peak + WM_peak)
-        4. Calculate relative intensity for each voxel:
-           - Below BG: RI = 100 × (1 - (BG - I) / BG)
-           - Above BG: RI = 100 × (1 + (I - BG) / BG)
-        5. Apply Gaussian smoothing (σ=3mm FWHM)
-        
-        Saves:
-        -----
-        <output_dir>_relative-intensity.nii
-            Relative intensity map
-            Range: Typically 50-150
-            Value of 100 represents GM-WM boundary
-            Smoothed with σ=3mm FWHM
-        
-        Notes
-        -----
-        - Based on Nyúl et al. intensity standardization
-        - Percentile range: 1st to 99.5th (removes outliers)
-        - Smoothing reduces noise while preserving features
-        - Values outside mask remain at 0
-        
-        References
-        ----------
-        Nyúl LG, Udupa JK, Zhang X. New variants of a method of MRI scale 
-        standardization. IEEE Trans Med Imaging. 2000;19(2):143-150.
-        """
-        print(f'{CYAN}Computing relative intensity...{RESET}')
-
-        # Mask input to GM and WM
-        input_n4_gm = self._input * self._input.new_image_like(self._gm)
-        input_n4_wm = self._input * self._input.new_image_like(self._wm)
-        
-        # Find intensity peaks and compute background
-        bg_input = peakfinder(input_n4_gm, input_n4_wm, 1, 99.5)
-        print(f'  Background intensity: {bg_input:.2f}')
-        
-        # Compute relative intensity
-        input_ri = compute_RI(self._input.numpy(), bg_input, self._mask.numpy())
-        
-        # Create ANTs image and smooth
-        tmp = self._input.new_image_like(input_ri)
-        self._ri = ants.smooth_image(tmp, sigma=3, FWHM=True)
-        
-        # Save relative intensity map
-        output_file = self._outputdir + '_relative-intensity.nii'
-        ants.image_write(self._ri, output_file)
-        
-        # Compute statistics for reporting
-        ri_data = self._ri.numpy()[self._mask.numpy() == 1]
-        print(f'  {GREEN}Relative intensity computed{RESET}')
-        print(f'    Range: {ri_data.min():.2f} to {ri_data.max():.2f}')
-        print(f'    Mean: {ri_data.mean():.2f}')
-        print(f'    Saved: {output_file}')
-
-    def file_processor(self):
-        """
-        Execute complete texture feature extraction pipeline.
-        
-        Runs all processing steps in sequence:
-        1. Load input files
-        2. Tissue segmentation (GM, WM, CSF)
-        3. Gradient magnitude computation
-        4. Relative intensity computation
-        
-        Prints processing time upon completion.
-        
-        Raises
-        ------
-        FileNotFoundError
-            If input or mask file not found.
-        RuntimeError
-            If any processing step fails.
-        
-        Notes
-        -----
-        - Processing time typically 2-5 minutes
-        - All outputs saved automatically
-        - Progress messages printed throughout
-        - Total time includes loading and all computations
-        """
-        start = time.time()
-        
-        print(f'\n{CYAN}{BOLD}Starting texture feature extraction pipeline{RESET}\n')
-        
-        self.load_nifti_file()
-        self.segmentation()
-        self.gradient_magnitude()
-        self.relative_intensity()
-        
-        end = time.time()
-        elapsed = np.round(end - start, 1)
-        
-        print(f'\n{GREEN}{BOLD}Pipeline completed successfully!{RESET}')
-        print(f'  Processing time: {elapsed} seconds ({elapsed/60:.1f} minutes)')
-        print(f'  Output files:')
-        print(f'    {self._outputdir}_gradient-magnitude.nii')
-        print(f'    {self._outputdir}_relative-intensity.nii\n')
-
-
-def run_texture_pipeline(input, mask, output_dir):
-    """
-    Run the neuroimaging texture feature extraction pipeline.
-    
-    This function initializes and executes a texture analysis pipeline on a
-    neuroimaging volume. The pipeline computes gradient magnitude and relative
-    intensity features from the input image within regions defined by the mask.
-    Results are saved to the specified output directory.
-    
-    The pipeline includes:
-    1. Automatic tissue segmentation (GM, WM, CSF)
-    2. Gradient magnitude computation (edge detection)
-    3. Relative intensity calculation (contrast normalization)
-    
-    Parameters
-    ----------
-    input : str
-        Path to the input MRI image file (.nii.gz).
-        Typically a preprocessed T1w volume with bias correction.
-    mask : str
-        Path to the binary brain mask file (.nii.gz).
-        Defines regions for texture analysis (1=brain, 0=background).
-    output_dir : str
-        Output prefix for computed texture feature maps.
-        Creates files: <output_dir>_gradient-magnitude.nii.gz
-                      <output_dir>_relative-intensity.nii.gz
-    
-    Returns
-    -------
-    None
-        The function saves texture feature maps to disk but does not return values.
-    
-    Raises
-    ------
-    FileNotFoundError
-        If input or mask file does not exist.
-    RuntimeError
-        If any processing step fails.
-    
-    Examples
-    --------
-    >>> # Basic usage
-    >>> run_texture_pipeline(
-    ...     input="T1w_preprocessed.nii.gz",
-    ...     mask="brain_mask.nii.gz",
-    ...     output_dir="subject01_textures"
-    ... )
-    
-    >>> # With full paths
-    >>> run_texture_pipeline(
-    ...     input="/data/preprocessed/sub-01_T1w.nii.gz",
-    ...     mask="/data/masks/sub-01_mask.nii.gz",
-    ...     output_dir="/results/radiomics/sub-01"
-    ... )
-    
-    Notes
-    -----
-    - The function relies on the noelTexturesPy class
-    - Processing time: 2-5 minutes per subject
-    - Memory requirement: ~2-4 GB RAM
-    - Preprocessing recommended: N4 bias correction, denoising
-    - All features saved in NIfTI format
-    - Progress messages printed throughout execution
-    
-    See Also
-    --------
-    noelTexturesPy : Class implementing the texture extraction pipeline
-    """
-    pipeline = noelTexturesPy(
-        id='textures',
-        output_dir=output_dir,
-        input=input,
-        mask=mask,
-    )
-    pipeline.file_processor()
-
+    ri_out = f"{output_prefix}_relative-intensity.nii.gz"
+    ants.image_write(ri_map, ri_out)
+    print(f"  Saved: {ri_out}")
 
 if __name__ == "__main__":
-    # Check if no arguments were provided or help was requested
-    if len(sys.argv) == 1 or "-h" in sys.argv or "--help" in sys.argv:
-        print_help_message()
-        sys.exit(0)
-    
-    parser = argparse.ArgumentParser(
-        description="Generate texture features from neuroimaging data",
-        add_help=False  # Use custom help
-    )
-    parser.add_argument("--input", "-i", required=True, 
-                       help="Path to the input MRI image file (.nii.gz)")
-    parser.add_argument("--mask", "-m", required=True, 
-                      help="Path to the binary brain mask file (.nii.gz)")
-    parser.add_argument("--output", "-o", required=True, 
-                      help="Output prefix for texture feature maps")
+    parser = argparse.ArgumentParser(description="Simple Texture Feature Extraction")
+    parser.add_argument("--input", "-i", required=True, help="Input MRI image")
+    parser.add_argument("--mask", "-m", required=True, help="Brain mask")
+    parser.add_argument("--output", "-o", required=True, help="Output prefix")
     
     args = parser.parse_args()
     
-    try:
-
-        # Validate input files exist
-        if not os.path.exists(args.input):
-            raise FileNotFoundError(f"Input file not found: {args.input}")
-        if not os.path.exists(args.mask):
-            raise FileNotFoundError(f"Mask file not found: {args.mask}")
-        
-        print(f"{CYAN}Configuration:{RESET}")
-        print(f"  Input: {args.input}")
-        print(f"  Mask: {args.mask}")
-        print(f"  Output prefix: {args.output}")
-        print()
-        
-        # Run pipeline
-        run_texture_pipeline(args.input, args.mask, args.output)
-        
-        sys.exit(0)
-        
-    except FileNotFoundError as e:
-        print(f"\n{RED}{BOLD}File not found:{RESET}")
-        print(f"  {str(e)}")
+    if not os.path.exists(args.input):
+        print(f"{Fore.RED}Error: Input file not found: {args.input}{Style.RESET_ALL}")
         sys.exit(1)
         
+    if not os.path.exists(args.mask):
+        print(f"{Fore.RED}Error: Mask file not found: {args.mask}{Style.RESET_ALL}")
+        sys.exit(1)
+
+    try:
+        run_texture_pipeline(args.input, args.mask, args.output)
+        print(f"\n{Fore.GREEN}Done!{Style.RESET_ALL}")
     except Exception as e:
-        print(f"\n{RED}{BOLD}Error during texture extraction:{RESET}")
-        print(f"  {str(e)}")
-        print(f"\n{YELLOW}Run 'micaflow texture_generation --help' for usage information.{RESET}")
+        print(f"\n{Fore.RED}Error: {e}{Style.RESET_ALL}")
         sys.exit(1)
