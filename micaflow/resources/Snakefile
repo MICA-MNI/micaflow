@@ -257,7 +257,7 @@ if RUN_FLAIR:
             fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdaffine.mat",
             fwd_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_fwdfield-secondary.nii.gz",
             bak_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_bakfield-secondary.nii.gz",
-            output_segmentation = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_seg.nii.gz"
+            output_segmentation = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR-to-T1w_seg.nii.gz"
         threads: HEAVY_THREADS
         shell:
             """
@@ -1093,20 +1093,7 @@ if EXTRACT_BRAIN:
                 --max-value 100
             """
 
-rule cleanup:
-    # No input dependencies - this makes it run after everything else is done
-    output:
-        cleanup_marker = f"{OUT_DIR}/{SUBJECT}/{SESSION}/cleanup_complete.txt" 
-    run:
-        if not KEEP_TEMP and os.path.exists(TEMP_DIR):
-            print(f"Cleaning up temporary directory: {TEMP_DIR}")
-            shutil.rmtree(TEMP_DIR)
-        
-        with open(output.cleanup_marker, "w") as f:
-            f.write(f"Cleanup completed on: {datetime.datetime.now()}\n")
-            if not KEEP_TEMP:
-                f.write(f"Temp directory removed: {TEMP_DIR}\n")
-            else:
-                f.write(f"Temp directory kept: {TEMP_DIR}\n")
-                if KEEP_TEMP:
-                    f.write("Reason: keep_temp flag was set to True\n")
+onsuccess:
+    if not KEEP_TEMP and os.path.exists(TEMP_DIR):
+        print(f"Cleaning up temporary directory: {TEMP_DIR}")
+        shutil.rmtree(TEMP_DIR)
