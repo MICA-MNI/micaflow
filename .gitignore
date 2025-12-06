@@ -4,6 +4,7 @@ docs/_static/*
 docs/_templates/*
 work/*
 .snakemake/*
+.vscode/*
 /.snakemake/
 /.vscode/
 /micaflow.egg-info

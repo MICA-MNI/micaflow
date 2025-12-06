@@ -201,9 +201,8 @@ Julian, Abigail, and Lars Ruthotto. "PyHySCO: GPU-enabled susceptibility artifac
 import numpy as np
 import nibabel as nib
 from scipy.ndimage import map_coordinates
-from EPI_MRI.EPIMRIDistortionCorrection import DataObject, EPIMRIDistortionCorrection
-from optimization.ADMM import myAvg1D, myDiff1D, myLaplacian1D, JacobiCG, ADMM
-import torch
+from EPI_MRI.EPIMRIDistortionCorrection import DataObject, EPIMRIDistortionCorrection, myAvg1D, myDiff1D, myLaplacian1D, JacobiCG
+from optimization.GaussNewton import GaussNewton
 import ants
 import argparse
 import tempfile
@@ -360,7 +359,8 @@ def print_help_message():
     
     {CYAN}{BOLD}────────────────────── EXIT CODES ───────────────────────{RESET}
     {GREEN}0{RESET} : Success - distortion correction completed
-    {RED}1{RESET} : Error - invalid inputs, file not found, or processing failure
+    {RED}1{RESET} : Error - invalid inputs, file not found, or processin            --secondary-warp {input.secondary_warp}
+g failure
     
     {CYAN}{BOLD}───────────────── COMMON ISSUES ─────────────────────────{RESET}
     {YELLOW}Issue:{RESET} "Out of memory" error
@@ -666,7 +666,6 @@ def run(data_image, reverse_image, output_name, output_warp, phase_encoding='ap'
             averaging_operator=myAvg1D,
             derivative_operator=myDiff1D,
             regularizer=myLaplacian1D,
-            rho=1e3,
             PC=JacobiCG,
         )
         
@@ -682,13 +681,9 @@ def run(data_image, reverse_image, output_name, output_warp, phase_encoding='ap'
         print(f"  PCG iterations: 20")
         print(f"  Gauss-Newton iterations: 1")
         resultspath = os.path.join(temp_dir, "hysco_result")  # Now inside temp_dir
-        opt = ADMM(
+        opt = GaussNewton(
             loss_func,
             max_iter=500,
-            rho_max=1e6,
-            rho_min=1e1,
-            max_iter_gn=1,
-            max_iter_pcg=20,
             verbose=True,
             path=resultspath,
         )

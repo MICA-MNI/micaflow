@@ -296,7 +296,7 @@ def coregister(fixed_file, moving_file, output, fixed_segmentation=None,
                moving_segmentation=None, warp_file=None, affine_file=None,
                rev_warp_file=None, threads=1,
                output_segmentation=None, linear_only=False, 
-               secondary_warp_file=None, secondary_rev_warp_file=None):
+               secondary_warp_file=None, secondary_rev_warp_file=None, disable_robust=False):
     """
     Perform label-augmented image registration between two images.
     
@@ -476,7 +476,8 @@ def coregister(fixed_file, moving_file, output, fixed_segmentation=None,
             skip_qc=True,
             threads=threads,
             secondary_warp_file=secondary_warp_file,
-            inverse_secondary_warp_file=secondary_rev_warp_file
+            inverse_secondary_warp_file=secondary_rev_warp_file,
+            disable_robust=disable_robust
         )
         print(f"{GREEN}Registration complete!{RESET}")
         
@@ -509,7 +510,8 @@ def coregister(fixed_file, moving_file, output, fixed_segmentation=None,
             skip_qc=True,
             threads=threads,
             secondary_warp_file=secondary_warp_file,
-            inverse_secondary_warp_file=secondary_rev_warp_file
+            inverse_secondary_warp_file=secondary_rev_warp_file,
+            disable_robust=disable_robust
         )
         print(f"{GREEN}Registration complete!{RESET}")
         
@@ -552,7 +554,8 @@ if __name__ == "__main__":
                         help="If provided, will save a secondary warp file. More accurate but can be difficult to apply. If not provided, warpfields will be composed.")
     parser.add_argument("--secondary-rev-warp-file", 
                         help="If provided, will save a secondary reverse warp file. More accurate but can be difficult to apply. If not provided, warpfields will be composed.")
-    
+    parser.add_argument("--disable-robust", action='store_true',
+                        help="If set, disables robust registration mode in LAMAReg.")
     args = parser.parse_args()
     
     try:
@@ -570,7 +573,8 @@ if __name__ == "__main__":
             output_segmentation=args.output_segmentation,
             linear_only=args.linear_only,
             secondary_warp_file=args.secondary_warp_file,
-            secondary_rev_warp_file=args.secondary_rev_warp_file
+            secondary_rev_warp_file=args.secondary_rev_warp_file,
+            disable_robust=args.disable_robust
         )
         
         print(f"\n{GREEN}{BOLD}Registration successfully completed!{RESET}")

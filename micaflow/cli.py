@@ -762,7 +762,11 @@ def main():
         "--linear-only", action='store_true',
         help="Perform only linear registration (rigid + affine) without nonlinear SyN warping (faster)"
     )
-    
+    coreg_parser.add_argument(
+        "--disable-robust", action='store_true',
+        help="If set, disables robust registration mode in LAMAReg."
+    )
+
     # Denoise command
     denoise_parser = subparsers.add_parser(
         "denoise", help="Denoise diffusion-weighted images using Patch2Self"

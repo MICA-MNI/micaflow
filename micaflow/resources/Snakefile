@@ -21,10 +21,6 @@ else:
     HEAVY_THREADS = THREADS
     LIGHT_THREADS = 1
 
-print(f"[INFO] Total cores: {THREADS}")
-print(f"[INFO] Heavy job threads: {HEAVY_THREADS}")
-print(f"[INFO] Light job threads: {LIGHT_THREADS}")
-
 DATA_DIRECTORY = config.get("data_directory", "")
 FLAIR_FILE = config.get("flair_file", "")
 T1W_FILE = config.get("t1w_file", "")
@@ -40,14 +36,12 @@ PED = config.get("PED", "")
 SHELL_DIMENSION = config.get("shell_dimension", 3)
 EXTRACT_BRAIN = config.get("extract_brain", False)
 GPU = config.get("gpu", "")
-print("GPU: ", GPU)
 
 # Add this to the top section where variables are defined
 USE_SYNTH_B0 = INVERSE_DWI_FILE == "" or INVERSE_DWI_FILE is None
 
 # Atlas paths
 ATLAS_DIR = os.path.join(workflow.basedir, "atlas")
-print("ATLAS_DIR: ", ATLAS_DIR)
 ATLAS = os.path.join(ATLAS_DIR, "mni_icbm152_t1_tal_nlin_sym_09a.nii")
 ATLAS_MASK = os.path.join(ATLAS_DIR, "mni_icbm152_t1_tal_nlin_sym_09a_mask.nii")
 ATLAS_SEG = os.path.join(ATLAS_DIR, "mni_icbm152_t1_tal_nlin_sym_09a_seg.nii")
@@ -57,45 +51,107 @@ SCRIPT_DIR = os.path.join(os.path.dirname(workflow.basedir), "scripts")
 # Define temp directory
 TEMP_DIR = f"{OUT_DIR}/{SUBJECT}/{SESSION}/temp"
 os.makedirs(TEMP_DIR, exist_ok=True)
-print(f"Temporary directory: {TEMP_DIR}")
 
-DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, RUN_DWI, GPU, FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, INVERSE_BVAL_FILE, INVERSE_BVEC_FILE, THREADS, RUN_FLAIR = check_paths(
-        DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, GPU, 
-        FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, INVERSE_BVAL_FILE, INVERSE_BVEC_FILE, THREADS
+# Cache file path for validated parameters
+_PARAMS_CACHE = os.path.join(OUT_DIR, SUBJECT, SESSION, "micaflow_parameters.json")
+
+def _get_validated_params():
+    """
+    Run check_paths only once and cache results to micaflow_parameters.json.
+    On subsequent Snakefile parses (e.g., for run: blocks), read from cache.
+    """
+    global DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, GPU
+    global FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE
+    global INVERSE_DWI_FILE, INVERSE_BVAL_FILE, INVERSE_BVEC_FILE
+    global THREADS, RUN_FLAIR, RUN_DWI, USE_SYNTH_B0
+    global RM_CEREBELLUM, KEEP_TEMP, PED, SHELL_DIMENSION, EXTRACT_BRAIN
+    
+    # If cache exists, read from it
+    if os.path.exists(_PARAMS_CACHE):
+        try:
+            with open(_PARAMS_CACHE, "r") as f:
+                cached = json.load(f)
+            return (
+                cached["DATA_DIRECTORY"], cached["OUT_DIR"], cached["SUBJECT"],
+                cached["SESSION"], cached["RUN_DWI"], cached["GPU"],
+                cached["FLAIR_FILE"], cached["T1W_FILE"], cached["DWI_FILE"],
+                cached["BVAL_FILE"], cached["BVEC_FILE"], cached["INVERSE_DWI_FILE"],
+                cached["INVERSE_BVAL_FILE"], cached["INVERSE_BVEC_FILE"],
+                cached["THREADS"], cached["RUN_FLAIR"], cached["RM_CEREBELLUM"],
+                cached["KEEP_TEMP"], cached["PED"], cached["SHELL_DIMENSION"],
+                cached["EXTRACT_BRAIN"], cached["USE_SYNTH_B0"]
+            )
+        except (json.JSONDecodeError, KeyError):
+            pass  # Cache invalid, regenerate
+    
+    # Run check_paths (first time only)
+    print(f"[INFO] Total cores: {THREADS}")
+    print(f"[INFO] Heavy job threads: {THREADS - 1 if THREADS > 2 else THREADS}")
+    print(f"[INFO] Light job threads: 1")
+    print("GPU: ", GPU)
+    print("ATLAS_DIR: ", ATLAS_DIR)
+    print(f"Temporary directory: {TEMP_DIR}")
+    
+    result = check_paths(
+        DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, GPU,
+        FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE,
+        INVERSE_DWI_FILE, INVERSE_BVAL_FILE, INVERSE_BVEC_FILE, THREADS
     )
-paths_data = {
-    "DATA_DIRECTORY": DATA_DIRECTORY,
-    "OUT_DIR": OUT_DIR,
-    "SUBJECT": SUBJECT,
-    "SESSION": SESSION,
-    "RUN_DWI": RUN_DWI,
-    "GPU": GPU,
-    "FLAIR_FILE": FLAIR_FILE,
-    "T1W_FILE": T1W_FILE,
-    "DWI_FILE": DWI_FILE,
-    "BVAL_FILE": BVAL_FILE,
-    "BVEC_FILE": BVEC_FILE,
-    "INVERSE_DWI_FILE": INVERSE_DWI_FILE,
-    "INVERSE_BVAL_FILE": INVERSE_BVAL_FILE,
-    "INVERSE_BVEC_FILE": INVERSE_BVEC_FILE,
-    "THREADS": THREADS,
-    "RUN_FLAIR": RUN_FLAIR,
-    "RM_CEREBELLUM": RM_CEREBELLUM,
-    "KEEP_TEMP": KEEP_TEMP,
-    "PED": PED,
-    "SHELL_DIMENSION": SHELL_DIMENSION,
-    "EXTRACT_BRAIN": EXTRACT_BRAIN,
-    "USE_SYNTH_B0": USE_SYNTH_B0
-}
+    
+    (data_dir, out_dir, subject, session, run_dwi, gpu,
+     flair_file, t1w_file, dwi_file, bval_file, bvec_file,
+     inv_dwi, inv_bval, inv_bvec, threads, run_flair) = result
+    
+    # Recalculate USE_SYNTH_B0 based on validated values
+    use_synth_b0 = inv_dwi == "" or inv_dwi is None
+    
+    # Save all parameters to cache
+    cache_data = {
+        "DATA_DIRECTORY": data_dir,
+        "OUT_DIR": out_dir,
+        "SUBJECT": subject,
+        "SESSION": session,
+        "RUN_DWI": run_dwi,
+        "GPU": gpu,
+        "FLAIR_FILE": flair_file,
+        "T1W_FILE": t1w_file,
+        "DWI_FILE": dwi_file,
+        "BVAL_FILE": bval_file,
+        "BVEC_FILE": bvec_file,
+        "INVERSE_DWI_FILE": inv_dwi,
+        "INVERSE_BVAL_FILE": inv_bval,
+        "INVERSE_BVEC_FILE": inv_bvec,
+        "THREADS": threads,
+        "RUN_FLAIR": run_flair,
+        "RM_CEREBELLUM": RM_CEREBELLUM,
+        "KEEP_TEMP": KEEP_TEMP,
+        "PED": PED,
+        "SHELL_DIMENSION": SHELL_DIMENSION,
+        "EXTRACT_BRAIN": EXTRACT_BRAIN,
+        "USE_SYNTH_B0": use_synth_b0
+    }
+    
+    # Ensure directory exists and save
+    os.makedirs(os.path.dirname(_PARAMS_CACHE), exist_ok=True)
+    with open(_PARAMS_CACHE, "w") as f:
+        json.dump(cache_data, f, indent=4)
+    
+    print("flair_file: ", flair_file)
+    print("run_flair: ", run_flair)
+    print("keep_temp: ", KEEP_TEMP)
+    
+    return (data_dir, out_dir, subject, session, run_dwi, gpu,
+            flair_file, t1w_file, dwi_file, bval_file, bvec_file,
+            inv_dwi, inv_bval, inv_bvec, threads, run_flair,
+            RM_CEREBELLUM, KEEP_TEMP, PED, SHELL_DIMENSION, EXTRACT_BRAIN, use_synth_b0)
 
-# Save paths data to a JSON file in the output directory for reference
-paths_json_path = os.path.join(OUT_DIR, SUBJECT, SESSION, "micaflow_parameters.json")
+# Get validated parameters (from cache or by running check_paths)
+(DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, RUN_DWI, GPU,
+ FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE,
+ INVERSE_DWI_FILE, INVERSE_BVAL_FILE, INVERSE_BVEC_FILE,
+ THREADS, RUN_FLAIR, RM_CEREBELLUM, KEEP_TEMP, PED,
+ SHELL_DIMENSION, EXTRACT_BRAIN, USE_SYNTH_B0) = _get_validated_params()
 
-with open(paths_json_path, "w") as json_file:
-    import json
-    json.dump(paths_data, json_file, indent=4)
-
-GPU = "--cpu" if GPU == False else ""
 
 print("flair_file: ", FLAIR_FILE)
 print("run_flair: ", RUN_FLAIR)
@@ -133,6 +189,10 @@ def get_final_output():
         # Add normalized FA and MD maps
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_FA_normalized.nii.gz")
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_MD_normalized.nii.gz")
+
+        # Add MNI space FA and MD maps
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_MNI152-space_FA.nii.gz")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_MNI152-space_MD.nii.gz")
         
     if EXTRACT_BRAIN:
         # Add existing brain-extracted outputs
@@ -323,8 +383,8 @@ rule registration_mni152:
         fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_fwdfield.nii.gz",
         bak_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_bakfield.nii.gz",
         fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_fwdaffine.mat",
-        fwd_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_fwdfield-secondary.nii.gz",
-        bak_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_bakfield-secondary.nii.gz",
+        # fwd_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_fwdfield-secondary.nii.gz",
+        # bak_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_bakfield-secondary.nii.gz",
         output_segmentation = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_seg.nii.gz"
     threads: HEAVY_THREADS
     shell:
@@ -340,8 +400,7 @@ rule registration_mni152:
             --rev-warp-file {output.bak_field} \
             --output-segmentation {output.output_segmentation} \
             --threads {threads} \
-            --secondary-warp-file {output.fwd_field_secondary} \
-            --secondary-rev-warp-file {output.bak_field_secondary}
+            --disable-robust
         """
 
 rule apply_warp_to_mni:
@@ -353,7 +412,7 @@ rule apply_warp_to_mni:
         ),
         affine = rules.registration_mni152.output.fwd_affine,
         warp = rules.registration_mni152.output.fwd_field,
-        warp_secondary = rules.registration_mni152.output.fwd_field_secondary,
+        # warp_secondary = rules.registration_mni152.output.fwd_field_secondary,
         reference = ATLAS
     output:
         warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_MNI152-space_{{modality}}.nii.gz"
@@ -370,9 +429,32 @@ rule apply_warp_to_mni:
                 --reference {input.reference} \
                 --affine {input.affine} \
                 --warp {input.warp} \
-                --output {output.warped} \
-                --secondary-warp {input.warp_secondary}
+                --output {output.warped}
             """)
+
+# Add new rule for DWI metrics to MNI space
+if RUN_DWI:
+    rule apply_warp_dwi_to_mni:
+        input:
+            moving = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_{wildcards.metric}.nii.gz",
+            affine = rules.registration_mni152.output.fwd_affine,
+            warp = rules.registration_mni152.output.fwd_field,
+            # warp_secondary = rules.registration_mni152.output.fwd_field_secondary,
+            reference = ATLAS
+        output:
+            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_MNI152-space_{{metric}}.nii.gz"
+        threads: LIGHT_THREADS
+        wildcard_constraints:
+            metric="FA|MD"
+        shell:
+            """
+            micaflow apply_warp \
+                --moving {input.moving} \
+                --reference {input.reference} \
+                --affine {input.affine} \
+                --warp {input.warp} \
+                --output {output.warped}
+            """
 
 rule run_texture:
     input:
@@ -424,7 +506,7 @@ rule calculate_metrics_T1w:
 
 rule normalize_anatomical:
     input:
-        image = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{wildcards.space}-space_{wildcards.modality}.nii.gz"
+        image = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{wildcards.space}-space_{{modality}}.nii.gz"
     output:
         normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{{space}}-space_{{modality}}_normalized.nii.gz"
     threads: LIGHT_THREADS
@@ -984,7 +1066,7 @@ rule transform_mask_to_mni:
         mask = rules.skull_strip_t1w.output.mask,
         affine = rules.registration_mni152.output.fwd_affine,
         warp = rules.registration_mni152.output.fwd_field,
-        secondary_warp = rules.registration_mni152.output.fwd_field_secondary,
+        # secondary_warp = rules.registration_mni152.output.fwd_field_secondary,
         reference = ATLAS
     output:
         mni_mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_MNI152-space_brain_mask.nii.gz"
@@ -997,8 +1079,7 @@ rule transform_mask_to_mni:
             --affine {input.affine} \
             --output {output.mni_mask} \
             --interpolation nearestNeighbor \
-            --warp {input.warp} \
-            --secondary-warp {input.secondary_warp}
+            --warp {input.warp}
         """
 
 if EXTRACT_BRAIN:
