@@ -463,8 +463,8 @@ rule run_texture:
         image = rules.apply_warp_to_mni.output.warped,
         mask = ATLAS_MASK
     output:
-        gradient = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-{{modality}}_gradient-magnitude.nii",
-        intensity = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-{{modality}}_relative-intensity.nii"
+        gradient = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-{{modality}}_gradient-magnitude.nii.gz",
+        intensity = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-{{modality}}_relative-intensity.nii.gz"
     threads: LIGHT_THREADS
     shell:
         """
