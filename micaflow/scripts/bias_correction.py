@@ -737,7 +737,7 @@ def bias_field_correction_4d(image_path, mask_path=None, output_path=None,
         if gibbs:
             print(f"{CYAN}Running Gibbs ringing removal on b=0 image...{RESET}")
             arr_b0 = b0_img.numpy()
-            gibbs_removal(arr_b0, slice_axis=2, n_points=3, inplace=True, num_processes=1)
+            gibbs_removal(arr_b0, slice_axis=2, n_points=3, inplace=True, num_processes=threads)
             b0_img = b0_img.new_image_like(arr_b0)
     else:
         b0_img = None
