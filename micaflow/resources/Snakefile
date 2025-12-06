@@ -88,6 +88,13 @@ paths_data = {
     "USE_SYNTH_B0": USE_SYNTH_B0
 }
 
+# Save paths data to a JSON file in the output directory for reference
+paths_json_path = os.path.join(OUT_DIR, SUBJECT, SESSION, "micaflow_parameters.json")
+
+with open(paths_json_path, "w") as json_file:
+    import json
+    json.dump(paths_data, json_file, indent=4)
+
 GPU = "--cpu" if GPU == False else ""
 
 print("flair_file: ", FLAIR_FILE)
@@ -145,9 +152,6 @@ def get_final_output():
             outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_T1w-space_FA_normalized.nii.gz")
             outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_T1w-space_MD_normalized.nii.gz")
             
-    # Add the cleanup flag file
-    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/cleanup_complete.txt")
-    
     return outputs
 
 
