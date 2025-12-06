@@ -451,9 +451,9 @@ if RUN_DWI:
             moving = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_DWI-space_{wildcards.metric}.nii.gz",
             affine_mni = rules.registration_mni152.output.fwd_affine,
             warp_mni = rules.registration_mni152.output.fwd_field,
-            affine_dwi = rules.registration_dwi.output.fwd_affine,
-            warp_dwi = rules.registration_dwi.output.fwd_field,
-            secondary_warp_dwi = rules.registration_dwi.output.fwd_field_secondary,
+            affine_dwi = rules.dwi_registration.output.fwd_affine,
+            warp_dwi = rules.dwi_registration.output.fwd_field,
+            secondary_warp_dwi = rules.dwi_registration.output.fwd_field_secondary,
             reference = ATLAS
         output:
             warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_MNI152-space_{{metric}}.nii.gz"
