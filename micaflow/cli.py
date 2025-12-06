@@ -657,6 +657,15 @@ def main():
         default=3,
         help="Dimension of the DWI image referring to shells (default: 3)",
     )
+    bias_corr_parser.add_argument(
+        "--threads",
+        type=int,
+        default=1,
+        help="Number of threads to use for bias correction (default: 1)",
+    )
+    bias_corr_parser.add_argument(
+        "--gibbs", action="store_true", help="Apply Gibbs ringing correction"
+    )
 
     # DICE Calculator command
     dice_parser = subparsers.add_parser(

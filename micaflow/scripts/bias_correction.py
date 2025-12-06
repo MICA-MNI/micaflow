@@ -537,7 +537,7 @@ def print_help_message():
     print(help_text)
 
     
-def bias_field_correction_3d(image_path, output_path, mask_path=None, gibbs=False):
+def bias_field_correction_3d(image_path, output_path, mask_path=None, gibbs=False, threads=1):
     """
     Perform N4 bias field correction on a 3D anatomical image.
     
@@ -602,11 +602,9 @@ def bias_field_correction_3d(image_path, output_path, mask_path=None, gibbs=Fals
     img = ants.image_read(image_path)
 
     if gibbs:
-        if not HAS_DIPY:
-            raise ImportError("DIPY is required for Gibbs removal. Please install dipy.")
         print(f"{CYAN}Running Gibbs ringing removal...{RESET}")
         arr = img.numpy()
-        gibbs_removal(arr, slice_axis=2, n_points=3, inplace=True, num_processes=1)
+        gibbs_removal(arr, slice_axis=2, n_points=3, inplace=True, num_processes=threads)
         img = img.new_image_like(arr)
 
     print(f"  Image shape: {img.shape}")
@@ -630,7 +628,7 @@ def bias_field_correction_3d(image_path, output_path, mask_path=None, gibbs=Fals
 
 
 def bias_field_correction_4d(image_path, mask_path=None, output_path=None, 
-                             b0_path=None, b0_corrected_path=None, shell_dimension=3, gibbs=False):
+                             b0_path=None, b0_corrected_path=None, shell_dimension=3, gibbs=False, threads=1):
     """
     Apply N4 bias field correction to a 4D diffusion image.
     
@@ -726,7 +724,7 @@ def bias_field_correction_4d(image_path, mask_path=None, output_path=None,
     if gibbs:
         print(f"{CYAN}Running Gibbs ringing removal on 4D data...{RESET}")
         arr = img.numpy()
-        gibbs_removal(arr, slice_axis=2, n_points=3, inplace=True, num_processes=1)
+        gibbs_removal(arr, slice_axis=2, n_points=3, inplace=True, num_processes=threads)
         img = img.new_image_like(arr)
 
     img_data = img.numpy()
@@ -907,7 +905,7 @@ def needs_resampling(img1, img2):
 
 
 def run_bias_field_correction(image_path, output_path, mask_path=None, mode="auto", 
-                              b0_path=None, b0_corrected_path=None, shell_dimension=3, gibbs=False):
+                              b0_path=None, b0_corrected_path=None, shell_dimension=3, gibbs=False, threads=1):
     """
     Run bias field correction with automatic dimensionality detection.
     
@@ -995,6 +993,8 @@ def run_bias_field_correction(image_path, output_path, mask_path=None, mode="aut
     bias_field_correction_3d : 3D-specific implementation
     bias_field_correction_4d : 4D-specific implementation
     """
+    os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(threads)
+    os.environ["OMP_NUM_THREADS"] = str(threads)  # OpenMP threads for ANTs
     # If auto mode, determine if image is 3D or 4D
     print(f"{CYAN}Detecting image dimensionality...{RESET}")
     img = ants.image_read(image_path)
@@ -1049,10 +1049,10 @@ def run_bias_field_correction(image_path, output_path, mask_path=None, mode="aut
         if mode == "4d":
             return bias_field_correction_4d(
                 image_path, mask_path, output_path, 
-                b0_path, b0_corrected_path, shell_dimension, gibbs
+                b0_path, b0_corrected_path, shell_dimension, gibbs, threads
             )
         else:  # 3d
-            return bias_field_correction_3d(image_path, output_path, mask_path, gibbs)
+            return bias_field_correction_3d(image_path, output_path, mask_path, gibbs, threads)
     finally:
         # Clean up temporary files
         if temp_mask_path and os.path.exists(temp_mask_path):
@@ -1102,7 +1102,11 @@ if __name__ == "__main__":
         "--gibbs", action="store_true",
         help="Apply Gibbs ringing removal (requires DIPY)."
     )
-
+    parser.add_argument(
+        "--threads", type=int, default=1,
+        help="Number of threads to use for processing (default: 1)."
+    )
+    
     args = parser.parse_args()
     
     try:
@@ -1136,7 +1140,8 @@ if __name__ == "__main__":
             args.b0,
             args.b0_output,
             args.shell_dimension,
-            args.gibbs
+            args.gibbs,
+            args.threads
         )
         
         print(f"\n{GREEN}{BOLD}Bias field correction completed successfully!{RESET}")
