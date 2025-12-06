@@ -323,7 +323,8 @@ def main():
         warp=args.warp,
         output=args.output,
         interpolation=args.interpolation,
-        secondary_warp=args.secondary_warp
+        secondary_warp=args.secondary_warp,
+        transforms=args.transforms
     )
 
 

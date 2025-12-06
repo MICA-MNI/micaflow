@@ -993,8 +993,7 @@ def run_bias_field_correction(image_path, output_path, mask_path=None, mode="aut
     bias_field_correction_3d : 3D-specific implementation
     bias_field_correction_4d : 4D-specific implementation
     """
-    os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(threads)
-    os.environ["OMP_NUM_THREADS"] = str(threads)  # OpenMP threads for ANTs
+
     # If auto mode, determine if image is 3D or 4D
     print(f"{CYAN}Detecting image dimensionality...{RESET}")
     img = ants.image_read(image_path)
