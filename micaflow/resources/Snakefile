@@ -444,31 +444,6 @@ if RUN_FLAIR:
                 --output {output.warped}
             """
 
-# Add new rule for DWI metrics to MNI space
-if RUN_DWI:
-    rule apply_warp_dwi_to_mni:
-        input:
-            moving = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_DWI-space_{wildcards.metric}.nii.gz",
-            affine_mni = rules.registration_mni152.output.fwd_affine,
-            warp_mni = rules.registration_mni152.output.fwd_field,
-            affine_dwi = rules.dwi_registration.output.fwd_affine,
-            warp_dwi = rules.dwi_registration.output.fwd_field,
-            secondary_warp_dwi = rules.dwi_registration.output.fwd_field_secondary,
-            reference = ATLAS
-        output:
-            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_MNI152-space_{{metric}}.nii.gz"
-        threads: LIGHT_THREADS
-        wildcard_constraints:
-            metric="FA|MD"
-        shell:
-            """
-            micaflow apply_warp \
-                --moving {input.moving} \
-                --reference {input.reference} \
-                --transforms {input.warp_mni} {input.affine_mni} {input.secondary_warp_dwi} {input.warp_dwi} {input.affine_dwi} \
-                --output {output.warped}
-            """
-
 rule run_texture_native:
     input:
         image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_T1w-space_{{modality}}.nii.gz",
@@ -1102,6 +1077,31 @@ rule transform_mask_to_mni:
             --interpolation nearestNeighbor \
             --warp {input.warp}
         """
+
+# Add new rule for DWI metrics to MNI space
+if RUN_DWI:
+    rule apply_warp_dwi_to_mni:
+        input:
+            moving = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_DWI-space_{wildcards.metric}.nii.gz",
+            affine_mni = rules.registration_mni152.output.fwd_affine,
+            warp_mni = rules.registration_mni152.output.fwd_field,
+            affine_dwi = rules.dwi_registration.output.fwd_affine,
+            warp_dwi = rules.dwi_registration.output.fwd_field,
+            secondary_warp_dwi = rules.dwi_registration.output.fwd_field_secondary,
+            reference = ATLAS
+        output:
+            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_MNI152-space_{{metric}}.nii.gz"
+        threads: LIGHT_THREADS
+        wildcard_constraints:
+            metric="FA|MD"
+        shell:
+            """
+            micaflow apply_warp \
+                --moving {input.moving} \
+                --reference {input.reference} \
+                --transforms {input.warp_mni} {input.affine_mni} {input.secondary_warp_dwi} {input.warp_dwi} {input.affine_dwi} \
+                --output {output.warped}
+            """
 
 if EXTRACT_BRAIN:
     # Remove the separate directory creation rule and handle directory creation within each rule
