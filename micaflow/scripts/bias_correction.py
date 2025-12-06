@@ -123,6 +123,16 @@ micaflow bias_correction \\
     --b0-output b0_corrected.nii.gz \\
     --shell-dimension 4
 
+# With Gibbs ringing removal (requires DIPY)
+micaflow bias_correction \\
+    --input DWI.nii.gz \\
+    --output DWI_corrected.nii.gz \\
+    --mask brain_mask.nii.gz \\
+    --b0 b0.nii.gz \\
+    --b0-output b0_corrected.nii.gz \\
+    --mode 4d \\
+    --gibbs
+
 Python API Usage:
 ----------------
 >>> from micaflow.scripts.bias_correction import run_bias_field_correction
@@ -327,6 +337,12 @@ import os
 import tempfile
 from colorama import init, Fore, Style
 
+try:
+    from dipy.denoise.gibbs import gibbs_removal
+    HAS_DIPY = True
+except ImportError:
+    HAS_DIPY = False
+
 init()
 
 # ANSI color codes
@@ -393,6 +409,7 @@ def print_help_message():
       {YELLOW}--b0{RESET}           : b=0 image path (required for 4D mode)
       {YELLOW}--b0-output{RESET}    : Path for corrected b=0 output (4D mode)
       {YELLOW}--shell-dimension{RESET}: Dimension for diffusion volumes (default: 3)
+      {YELLOW}--gibbs{RESET}        : Apply Gibbs ringing removal (requires DIPY)
     
     {CYAN}{BOLD}──────────────────── EXAMPLE USAGE ──────────────────────{RESET}
     
@@ -524,7 +541,7 @@ def print_help_message():
     print(help_text)
 
     
-def bias_field_correction_3d(image_path, output_path, mask_path=None):
+def bias_field_correction_3d(image_path, output_path, mask_path=None, gibbs=False):
     """
     Perform N4 bias field correction on a 3D anatomical image.
     
@@ -541,6 +558,8 @@ def bias_field_correction_3d(image_path, output_path, mask_path=None):
     mask_path : str, optional
         Path to a brain mask image file. If not provided, a mask will
         be automatically generated using Otsu thresholding.
+    gibbs : bool, optional
+        If True, apply Gibbs ringing removal before bias correction.
     
     Returns
     -------
@@ -585,6 +604,15 @@ def bias_field_correction_3d(image_path, output_path, mask_path=None):
     """
     print(f"{CYAN}Loading 3D image...{RESET}")
     img = ants.image_read(image_path)
+
+    if gibbs:
+        if not HAS_DIPY:
+            raise ImportError("DIPY is required for Gibbs removal. Please install dipy.")
+        print(f"{CYAN}Running Gibbs ringing removal...{RESET}")
+        arr = img.numpy()
+        gibbs_removal(arr, slice_axis=2, n_points=3, inplace=True, num_processes=1)
+        img = img.new_image_like(arr)
+
     print(f"  Image shape: {img.shape}")
     print(f"  Spacing: {img.spacing}")
     
@@ -606,7 +634,7 @@ def bias_field_correction_3d(image_path, output_path, mask_path=None):
 
 
 def bias_field_correction_4d(image_path, mask_path=None, output_path=None, 
-                             b0_path=None, b0_corrected_path=None, shell_dimension=3):
+                             b0_path=None, b0_corrected_path=None, shell_dimension=3, gibbs=False):
     """
     Apply N4 bias field correction to a 4D diffusion image.
     
@@ -632,6 +660,8 @@ def bias_field_correction_4d(image_path, mask_path=None, output_path=None,
     shell_dimension : int, default=3
         Dimension along which diffusion volumes are organized (0-indexed).
         For standard NIfTI: dimension 3 (4th dimension).
+    gibbs : bool, optional
+        If True, apply Gibbs ringing removal before bias correction.
     
     Returns
     -------
@@ -696,6 +726,15 @@ def bias_field_correction_4d(image_path, mask_path=None, output_path=None,
     # Read the input images
     print(f"{CYAN}Loading 4D diffusion image...{RESET}")
     img = ants.image_read(image_path)
+
+    if gibbs:
+        if not HAS_DIPY:
+            raise ImportError("DIPY is required for Gibbs removal. Please install dipy.")
+        print(f"{CYAN}Running Gibbs ringing removal on 4D data...{RESET}")
+        arr = img.numpy()
+        gibbs_removal(arr, slice_axis=2, n_points=3, inplace=True, num_processes=1)
+        img = img.new_image_like(arr)
+
     img_data = img.numpy()
     print(f"  Image shape: {img_data.shape}")
     print(f"  Shell dimension: {shell_dimension}")
@@ -703,6 +742,11 @@ def bias_field_correction_4d(image_path, mask_path=None, output_path=None,
     if b0_path:
         print(f"{CYAN}Loading b=0 image...{RESET}")
         b0_img = ants.image_read(b0_path)
+        if gibbs:
+            print(f"{CYAN}Running Gibbs ringing removal on b=0 image...{RESET}")
+            arr_b0 = b0_img.numpy()
+            gibbs_removal(arr_b0, slice_axis=2, n_points=3, inplace=True, num_processes=1)
+            b0_img = b0_img.new_image_like(arr_b0)
     else:
         b0_img = None
     
@@ -869,7 +913,7 @@ def needs_resampling(img1, img2):
 
 
 def run_bias_field_correction(image_path, output_path, mask_path=None, mode="auto", 
-                              b0_path=None, b0_corrected_path=None, shell_dimension=3):
+                              b0_path=None, b0_corrected_path=None, shell_dimension=3, gibbs=False):
     """
     Run bias field correction with automatic dimensionality detection.
     
@@ -898,6 +942,8 @@ def run_bias_field_correction(image_path, output_path, mask_path=None, mode="aut
         Path to save corrected b=0 image (4D mode only).
     shell_dimension : int, default=3
         Dimension for diffusion volumes (4D mode only).
+    gibbs : bool, default=False
+        If True, apply Gibbs ringing removal.
     
     Returns
     -------
@@ -1009,10 +1055,10 @@ def run_bias_field_correction(image_path, output_path, mask_path=None, mode="aut
         if mode == "4d":
             return bias_field_correction_4d(
                 image_path, mask_path, output_path, 
-                b0_path, b0_corrected_path, shell_dimension
+                b0_path, b0_corrected_path, shell_dimension, gibbs
             )
         else:  # 3d
-            return bias_field_correction_3d(image_path, output_path, mask_path)
+            return bias_field_correction_3d(image_path, output_path, mask_path, gibbs)
     finally:
         # Clean up temporary files
         if temp_mask_path and os.path.exists(temp_mask_path):
@@ -1058,6 +1104,10 @@ if __name__ == "__main__":
         "--shell-dimension", type=int, default=3,
         help="Dimension along which diffusion volumes are organized (default: 3)."
     )
+    parser.add_argument(
+        "--gibbs", action="store_true",
+        help="Apply Gibbs ringing removal (requires DIPY)."
+    )
 
     args = parser.parse_args()
     
@@ -1077,6 +1127,7 @@ if __name__ == "__main__":
         print(f"  Output: {args.output}")
         print(f"  Mask: {args.mask if args.mask else 'Auto-generate'}")
         print(f"  Mode: {args.mode}")
+        print(f"  Gibbs removal: {'Enabled' if args.gibbs else 'Disabled'}")
         if args.b0:
             print(f"  b=0: {args.b0}")
             print(f"  b=0 output: {args.b0_output if args.b0_output else 'Not specified'}")
@@ -1090,7 +1141,8 @@ if __name__ == "__main__":
             args.mode,
             args.b0,
             args.b0_output,
-            args.shell_dimension
+            args.shell_dimension,
+            args.gibbs
         )
         
         print(f"\n{GREEN}{BOLD}Bias field correction completed successfully!{RESET}")
