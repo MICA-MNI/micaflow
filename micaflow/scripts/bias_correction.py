@@ -997,6 +997,8 @@ def run_bias_field_correction(image_path, output_path, mask_path=None, mode="aut
     env["OPENBLAS_NUM_THREADS"] = "1"
     env["OMP_NUM_THREADS"] = "1"
     env["MKL_NUM_THREADS"] = "1"
+    env["VECLIB_MAXIMUM_THREADS"] = "1"
+    env["NUMEXPR_NUM_THREADS"] = "1"
     os.environ.update(env)
     # If auto mode, determine if image is 3D or 4D
     print(f"{CYAN}Detecting image dimensionality...{RESET}")
