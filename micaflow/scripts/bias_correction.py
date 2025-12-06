@@ -336,12 +336,8 @@ import sys
 import os
 import tempfile
 from colorama import init, Fore, Style
+from dipy.denoise.gibbs import gibbs_removal
 
-try:
-    from dipy.denoise.gibbs import gibbs_removal
-    HAS_DIPY = True
-except ImportError:
-    HAS_DIPY = False
 
 init()
 
@@ -728,8 +724,6 @@ def bias_field_correction_4d(image_path, mask_path=None, output_path=None,
     img = ants.image_read(image_path)
 
     if gibbs:
-        if not HAS_DIPY:
-            raise ImportError("DIPY is required for Gibbs removal. Please install dipy.")
         print(f"{CYAN}Running Gibbs ringing removal on 4D data...{RESET}")
         arr = img.numpy()
         gibbs_removal(arr, slice_axis=2, n_points=3, inplace=True, num_processes=1)

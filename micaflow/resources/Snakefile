@@ -271,7 +271,7 @@ rule bias_field_correction:
         corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_T1w-space_T1w.nii.gz"
     threads: LIGHT_THREADS
     shell:
-        "micaflow bias_correction -i {input.image} -o {output.corrected} -m {input.mask}"
+        "micaflow bias_correction -i {input.image} -o {output.corrected} -m {input.mask} --gibbs"
 
 # Place these rules in a conditional block to only run when FLAIR is available
 if RUN_FLAIR:
@@ -304,7 +304,7 @@ if RUN_FLAIR:
             corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_FLAIR-space_FLAIR.nii.gz"
         threads: LIGHT_THREADS
         shell:
-            "micaflow bias_correction -i {input.image} -o {output.corrected} -m {input.mask}"
+            "micaflow bias_correction -i {input.image} -o {output.corrected} -m {input.mask} --gibbs"
 
     rule registration_t1w:
         input:
@@ -628,7 +628,8 @@ if RUN_DWI:
                     --b0 {input.b0} \
                     --b0-output {output.b0_corrected} \
                     --output {output.corrected} \
-                    --shell-dimension {SHELL_DIMENSION}
+                    --shell-dimension {SHELL_DIMENSION} \
+                    --gibbs
                 """
         rule b0_synthseg:
             input:
@@ -966,7 +967,8 @@ if RUN_DWI:
                     --b0-output {output.b0_corrected} \
                     --output {output.corrected} \
                     --mask {input.mask} \
-                    --shell-dimension {SHELL_DIMENSION}
+                    --shell-dimension {SHELL_DIMENSION} \
+                    --gibbs
                 """
 
         rule dwi_registration:
