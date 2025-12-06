@@ -342,7 +342,6 @@ if RUN_FLAIR:
         input:
             moving = rules.bias_field_correction_flair.output.corrected,
             warp = rules.registration_t1w.output.fwd_field,
-            warp_secondary = rules.registration_t1w.output.fwd_field_secondary,
             affine = rules.registration_t1w.output.fwd_affine,
             reference = rules.bias_field_correction.output.corrected
         output:
@@ -355,7 +354,6 @@ if RUN_FLAIR:
                 --reference {input.reference} \
                 --affine {input.affine} \
                 --warp {input.warp} \
-                --secondary-warp {input.warp_secondary} \
                 --output {output.warped}
             """
 
@@ -405,43 +403,57 @@ rule registration_mni152:
             --disable-robust
         """
 
-rule apply_warp_to_mni:
+rule apply_warp_t1w_to_mni:
     input:
-        moving = lambda wildcards: (
-            rules.bias_field_correction.output.corrected if wildcards.modality == "T1w" 
-            else rules.apply_warp_flair_to_t1w.output.warped if RUN_FLAIR and wildcards.modality == "FLAIR"
-            else None
-        ),
+        moving = rules.bias_field_correction.output.corrected,
         affine = rules.registration_mni152.output.fwd_affine,
         warp = rules.registration_mni152.output.fwd_field,
-        # warp_secondary = rules.registration_mni152.output.fwd_field_secondary,
         reference = ATLAS
     output:
-        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_MNI152-space_{{modality}}.nii.gz"
+        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_MNI152-space_T1w.nii.gz"
     threads: LIGHT_THREADS
-    wildcard_constraints:
-        modality="T1w|FLAIR"
-    run:
-        if wildcards.modality == "FLAIR" and not RUN_FLAIR:
-            shell("touch {output.warped}")
-        else:
-            shell(""" 
+    shell:
+        """ 
+        micaflow apply_warp \
+            --moving {input.moving} \
+            --reference {input.reference} \
+            --affine {input.affine} \
+            --warp {input.warp} \
+            --output {output.warped}
+        """
+
+if RUN_FLAIR:
+    rule apply_warp_flair_to_mni:
+        input:
+            moving = rules.bias_field_correction_flair.output.corrected,
+            affine_mni = rules.registration_mni152.output.fwd_affine,
+            warp_mni = rules.registration_mni152.output.fwd_field,
+            affine_flair = rules.registration_t1w.output.fwd_affine,
+            warp_flair = rules.registration_t1w.output.fwd_field,
+            secondary_warp_flair = rules.registration_t1w.output.fwd_field_secondary,
+            reference = ATLAS
+        output:
+            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_MNI152-space_FLAIR.nii.gz"
+        threads: LIGHT_THREADS
+        shell:
+            """ 
             micaflow apply_warp \
                 --moving {input.moving} \
                 --reference {input.reference} \
-                --affine {input.affine} \
-                --warp {input.warp} \
+                --transforms {input.warp_mni} {input.affine_mni} {input.secondary_warp_flair} {input.warp_flair} {input.affine_flair} \
                 --output {output.warped}
-            """)
+            """
 
 # Add new rule for DWI metrics to MNI space
 if RUN_DWI:
     rule apply_warp_dwi_to_mni:
         input:
-            moving = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_{wildcards.metric}.nii.gz",
-            affine = rules.registration_mni152.output.fwd_affine,
-            warp = rules.registration_mni152.output.fwd_field,
-            # warp_secondary = rules.registration_mni152.output.fwd_field_secondary,
+            moving = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_DWI-space_{wildcards.metric}.nii.gz",
+            affine_mni = rules.registration_mni152.output.fwd_affine,
+            warp_mni = rules.registration_mni152.output.fwd_field,
+            affine_dwi = rules.registration_dwi.output.fwd_affine,
+            warp_dwi = rules.registration_dwi.output.fwd_field,
+            secondary_warp_dwi = rules.registration_dwi.output.fwd_field_secondary,
             reference = ATLAS
         output:
             warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_MNI152-space_{{metric}}.nii.gz"
@@ -453,8 +465,7 @@ if RUN_DWI:
             micaflow apply_warp \
                 --moving {input.moving} \
                 --reference {input.reference} \
-                --affine {input.affine} \
-                --warp {input.warp} \
+                --transforms {input.warp_mni} {input.affine_mni} {input.secondary_warp_dwi} {input.warp_dwi} {input.affine_dwi} \
                 --output {output.warped}
             """
 
@@ -1137,7 +1148,7 @@ if EXTRACT_BRAIN:
             image = lambda wildcards: (
                 rules.dwi_compute_fa_md.output.fa if wildcards.modality == "FA" else
                 rules.dwi_compute_fa_md.output.md if wildcards.modality == "MD" else
-                rules.apply_warp_to_mni.output.warped if wildcards.modality in ["T1w", "FLAIR"] else
+                f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_MNI152-space_{wildcards.modality}.nii.gz" if wildcards.modality in ["T1w", "FLAIR"] else
                 None
             ),
             mask = rules.transform_mask_to_mni.output.mni_mask

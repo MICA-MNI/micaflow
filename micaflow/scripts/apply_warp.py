@@ -21,10 +21,11 @@ micaflow apply_warp
     [--affine <path/to/transform.mat>]
     [--warp <path/to/warpfield.nii.gz>]
     [--secondary-warp <path/to/second_warpfield.nii.gz>]
+    [--transforms <path/to/t2> <path/to/t1> ...]
     [--output <path/to/registered_image.nii.gz>]
     [--interpolation <method>]
 
-Note: At least one transform (--affine, --warp, or --secondary-warp) must be provided.
+Note: At least one transform (--affine, --warp, --secondary-warp, or --transforms) must be provided.
 
 Transform Application Order:
 --------------------------
@@ -111,6 +112,8 @@ def print_help_message():
       {YELLOW}--secondary-warp{RESET}  : Path to a secondary warp field (.nii.gz)
                         Used for chaining transformations through intermediate spaces
                         {MAGENTA}Note: At least one transform must be provided{RESET}
+      {YELLOW}--transforms{RESET}      : List of transforms to apply in order (First -> Last)
+                        Can be used instead of named transform arguments.
       {YELLOW}--output{RESET}          : Output path for the warped image (default: warped_image.nii.gz)
       {YELLOW}--interpolation{RESET}   : Interpolation method (default: linear)
                         Options: linear, nearestNeighbor, multiLabel, gaussian, 
@@ -159,7 +162,7 @@ def print_help_message():
 
 
 def apply_warp(moving, reference, affine=None, warp=None, output="warped_image.nii.gz", 
-               interpolation="linear", secondary_warp=None):
+               interpolation="linear", secondary_warp=None, transforms=None):
     """
     Apply spatial transformations to register a moving image to a reference space.
     
@@ -184,6 +187,10 @@ def apply_warp(moving, reference, affine=None, warp=None, output="warped_image.n
         Path to a secondary warp field (.nii.gz format).
         Applied after primary warp, useful for chaining transformations through
         intermediate spaces (e.g., subject → intermediate → template).
+    transforms : list of str, optional
+        List of paths to transforms to apply.
+        The transforms should be listed in the order of application (First -> Last).
+        This overrides affine, warp, and secondary_warp if provided.
     output : str, optional
         Output path for the warped image. Default: "warped_image.nii.gz"
     interpolation : str, optional
@@ -244,15 +251,19 @@ def apply_warp(moving, reference, affine=None, warp=None, output="warped_image.n
     # Build transform list - ANTs applies these in REVERSE order
     # So list order is: [last applied, ..., first applied]
     transform_list = []
-    if secondary_warp is not None:
-        transform_list.append(secondary_warp)  # Applied last
-    if warp is not None:
-        transform_list.append(warp)  # Applied second
-    if affine is not None:
-        transform_list.append(affine)  # Applied first
+    
+    if transforms is not None and len(transforms) > 0:
+        transform_list = list(transforms)
+    else:
+        if secondary_warp is not None:
+            transform_list.append(secondary_warp)  # Applied last
+        if warp is not None:
+            transform_list.append(warp)  # Applied second
+        if affine is not None:
+            transform_list.append(affine)  # Applied first
     
     if not transform_list:
-        raise ValueError("At least one transform (affine, warp, or secondary_warp) must be provided.")
+        raise ValueError("At least one transform (affine, warp, secondary_warp, or transforms list) must be provided.")
     
     # Apply transformations
     transformed = ants.apply_transforms(
@@ -291,6 +302,9 @@ def main():
         "--warp", help="Path to the warp field (.nii.gz)."
     )
     parser.add_argument('--secondary-warp', help='Path to a secondary warp field (.nii.gz) to be applied after the primary warp and affine.')
+    parser.add_argument(
+        "--transforms", nargs="+", help="List of transforms to apply in order (First -> Last)."
+    )
     parser.add_argument(
         "--output", default="warped_image.nii.gz", help="Output warped image filename."
     )

@@ -595,6 +595,9 @@ def main():
         default="linear",
         help="Interpolation method (default: linear).",
     )
+    apply_warp_parser.add_argument(
+        "--transforms", nargs="+", help="List of transforms to apply in order (First -> Last)."
+    )
 
     # Brain Extraction Tool command
     bet_parser = subparsers.add_parser("bet", help="Run HD-BET brain extraction")
@@ -775,6 +778,7 @@ def main():
         "--disable-robust", action='store_true',
         help="If set, disables robust registration mode in LAMAReg."
     )
+    
 
     # Denoise command
     denoise_parser = subparsers.add_parser(
