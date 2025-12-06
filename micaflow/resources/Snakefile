@@ -458,23 +458,6 @@ if RUN_DWI:
                 --output {output.warped}
             """
 
-rule run_texture:
-    input:
-        image = rules.apply_warp_to_mni.output.warped,
-        mask = ATLAS_MASK
-    output:
-        gradient = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-{{modality}}_gradient-magnitude.nii.gz",
-        intensity = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-{{modality}}_relative-intensity.nii.gz"
-    threads: LIGHT_THREADS
-    shell:
-        """
-        micaflow texture_generation \
-            --input {input.image} \
-            --mask {input.mask} \
-            --output {OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-{wildcards.modality}
-        """
-
-
 rule run_texture_native:
     input:
         image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_T1w-space_{{modality}}.nii.gz",
