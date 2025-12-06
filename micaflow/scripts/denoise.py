@@ -46,6 +46,14 @@ micaflow denoise \\
     --output <path/to/denoised_dwi.nii.gz> \\
     --b0-denoise
 
+# With Gibbs ringing removal
+micaflow denoise \\
+    --input <path/to/dwi.nii.gz> \\
+    --bval <path/to/dwi.bval> \\
+    --bvec <path/to/dwi.bvec> \\
+    --output <path/to/denoised_dwi.nii.gz> \\
+    --gibbs
+
 Python API Usage:
 ----------------
 >>> from micaflow.scripts.denoise import run_denoise
@@ -66,6 +74,15 @@ Python API Usage:
 ...     moving_bvec="dwi.bvec",
 ...     output="denoised_dwi.nii.gz",
 ...     b0_denoising=True
+... )
+>>>
+>>> # With Gibbs ringing removal
+>>> output = run_denoise(
+...     moving="raw_dwi.nii.gz",
+...     moving_bval="dwi.bval", 
+...     moving_bvec="dwi.bvec",
+...     output="denoised_dwi.nii.gz",
+...     gibbs=True
 ... )
 
 Pipeline Integration:
@@ -118,6 +135,7 @@ import sys
 import os
 import numpy as np
 from dipy.denoise.patch2self import patch2self
+from dipy.denoise.gibbs import gibbs_removal
 from dipy.io.gradients import read_bvals_bvecs
 from colorama import init, Fore, Style
 
@@ -158,6 +176,8 @@ def print_help_message():
     {CYAN}{BOLD}─────────────────── OPTIONAL ARGUMENTS ───────────────────{RESET}
       {YELLOW}--b0-denoise{RESET}: Denoise b0 volumes separately (default: False)
                    {MAGENTA}Experimental - not recommended for most cases{RESET}
+      {YELLOW}--gibbs{RESET}     : Apply Gibbs ringing removal after denoising
+      {YELLOW}--threads{RESET}   : Number of threads for Gibbs removal (default: 1)
     
     {CYAN}{BOLD}──────────────────── EXAMPLE USAGE ──────────────────────{RESET}
     
@@ -175,6 +195,14 @@ def print_help_message():
       {YELLOW}--bvec{RESET} dwi.bvec \\
       {YELLOW}--output{RESET} denoised_dwi.nii.gz \\
       {YELLOW}--b0-denoise{RESET}
+    
+    {BLUE}# With Gibbs ringing removal{RESET}
+    micaflow denoise \\
+      {YELLOW}--input{RESET} raw_dwi.nii.gz \\
+      {YELLOW}--bval{RESET} dwi.bval \\
+      {YELLOW}--bvec{RESET} dwi.bvec \\
+      {YELLOW}--output{RESET} denoised_dwi.nii.gz \\
+      {YELLOW}--gibbs{RESET}
     
     {CYAN}{BOLD}────────────────── PATCH2SELF ALGORITHM ──────────────────{RESET}
     
@@ -226,7 +254,7 @@ def print_help_message():
     print(help_text)
 
 
-def run_denoise(moving, moving_bval, moving_bvec, output, b0_denoising=False):
+def run_denoise(moving, moving_bval, moving_bvec, output, b0_denoising=False, gibbs=False, threads=1):
     """
     Denoise diffusion-weighted images using the Patch2Self algorithm.
     
@@ -251,6 +279,10 @@ def run_denoise(moving, moving_bval, moving_bvec, output, b0_denoising=False):
     b0_denoising : bool, optional
         If True, denoise b0 volumes separately. Default: False.
         Standard practice is to exclude b0 volumes from denoising.
+    gibbs : bool, optional
+        If True, apply Gibbs ringing removal after denoising. Default: False.
+    threads : int, optional
+        Number of threads to use for Gibbs ringing removal. Default: 1.
         
     Returns
     -------
@@ -293,6 +325,15 @@ def run_denoise(moving, moving_bval, moving_bvec, output, b0_denoising=False):
     ...     output="denoised_dwi.nii.gz",
     ...     b0_denoising=True
     ... )
+    >>> 
+    >>> # With Gibbs ringing removal
+    >>> output = run_denoise(
+    ...     moving="raw_dwi.nii.gz",
+    ...     moving_bval="dwi.bval",
+    ...     moving_bvec="dwi.bvec",
+    ...     output="denoised_dwi.nii.gz",
+    ...     gibbs=True
+    ... )
     """
     # Validate input files exist
     for filepath, name in [(moving, "Input DWI"), 
@@ -334,7 +375,18 @@ def run_denoise(moving, moving_bval, moving_bvec, output, b0_denoising=False):
         b0_threshold=50,
         b0_denoising=b0_denoising,
     )
+    env = os.environ.copy()
+    env["OPENBLAS_NUM_THREADS"] = "1"
+    env["OMP_NUM_THREADS"] = "1"
+    env["MKL_NUM_THREADS"] = "1"
+    env["VECLIB_MAXIMUM_THREADS"] = "1"
+    env["NUMEXPR_NUM_THREADS"] = "1"
+    os.environ.update(env)
     
+    if gibbs:
+        print(f"\n{CYAN}Applying Gibbs ringing removal...{RESET}")
+        gibbs_removal(denoised, slice_axis=2, n_points=3, inplace=True, num_processes=threads)
+
     print(f"\n{CYAN}Saving denoised image...{RESET}")
     nib.save(nib.Nifti1Image(denoised, moving_image.affine), output)
     
@@ -380,6 +432,17 @@ if __name__ == "__main__":
         action='store_true', 
         help="Denoise b0 volumes separately (experimental, default: False)."
     )
+    parser.add_argument(
+        "--gibbs", 
+        action='store_true', 
+        help="Apply Gibbs ringing removal after denoising."
+    )
+    parser.add_argument(
+        "--threads", 
+        type=int, 
+        default=1, 
+        help="Number of threads for Gibbs removal (default: 1)."
+    )
 
     args = parser.parse_args()
     
@@ -389,7 +452,9 @@ if __name__ == "__main__":
             args.bval, 
             args.bvec, 
             args.output, 
-            args.b0_denoise
+            args.b0_denoise,
+            args.gibbs,
+            args.threads
         )
         
         print(f"\n{GREEN}{BOLD}Denoising successfully completed!{RESET}")

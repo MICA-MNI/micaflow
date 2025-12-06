@@ -537,14 +537,16 @@ if RUN_DWI:
             bvec = BVEC_FILE
         output:
             denoised = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_DWI.nii.gz"
-        threads: LIGHT_THREADS
+        threads: HEAVY_THREADS
         shell:
             """
             micaflow denoise \
                 --input {input.moving} \
                 --bval {input.bval} \
                 --bvec {input.bvec} \
-                --output {output.denoised}
+                --output {output.denoised} \
+                --gibbs \
+                --threads {threads}
             """
     rule dwi_b0_extraction:
         input:
@@ -606,7 +608,7 @@ if RUN_DWI:
             output:
                 corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_bias-corrected_DWI.nii.gz",
                 b0_corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_biascorrected-b0.nii.gz"
-            threads: HEAVY_THREADS
+            threads: LIGHT_THREADS
             shell:
                 """
                 micaflow bias_correction \
@@ -615,7 +617,6 @@ if RUN_DWI:
                     --b0-output {output.b0_corrected} \
                     --output {output.corrected} \
                     --shell-dimension {SHELL_DIMENSION} \
-                    --gibbs \
                     --threads {threads}
                 """
         rule b0_synthseg:
@@ -945,7 +946,7 @@ if RUN_DWI:
             output:
                 corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_bias-corrected_DWI.nii.gz",
                 b0_corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_biascorrected-b0.nii.gz"
-            threads: HEAVY_THREADS
+            threads: LIGHT_THREADS
             shell:
                 """
                 micaflow bias_correction \
@@ -955,7 +956,6 @@ if RUN_DWI:
                     --output {output.corrected} \
                     --mask {input.mask} \
                     --shell-dimension {SHELL_DIMENSION} \
-                    --gibbs \
                     --threads {threads}
                 """
 

@@ -797,7 +797,8 @@ def main():
         "--output", required=True, help="Output path for the denoised image (.nii.gz)"
     )
     denoise_parser.add_argument("--b0-denoise", action='store_true', help="Denoise b0 volumes separately (default: False)")
-
+    denoise_parser.add_argument("--gibbs", action='store_true', help="Apply Gibbs ringing correction (default: False)")
+    denoise_parser.add_argument("--threads", type=int, help="Number of threads to use (default: 1)")
 
     # Motion Correction command
     motion_corr_parser = subparsers.add_parser(

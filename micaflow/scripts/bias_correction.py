@@ -435,6 +435,24 @@ def print_help_message():
       {YELLOW}--output{RESET} FLAIR_corrected.nii.gz \\
       {YELLOW}--mode{RESET} 3d
     
+    {BLUE}# Example 5: Custom shell dimension{RESET}
+    micaflow bias_correction \\
+      {YELLOW}--input{RESET} DWI.nii.gz \\
+      {YELLOW}--output{RESET} DWI_corrected.nii.gz \\
+      {YELLOW}--b0{RESET} b0.nii.gz \\
+      {YELLOW}--b0-output{RESET} b0_corrected.nii.gz \\
+      {YELLOW}--shell-dimension{RESET} 4
+    
+    {BLUE}# Example 6: With Gibbs ringing removal{RESET}
+    micaflow bias_correction \\
+      {YELLOW}--input{RESET} DWI.nii.gz \\
+      {YELLOW}--output{RESET} DWI_corrected.nii.gz \\
+      {YELLOW}--mask{RESET} brain_mask.nii.gz \\
+      {YELLOW}--b0{RESET} b0.nii.gz \\
+      {YELLOW}--b0-output{RESET} b0_corrected.nii.gz \\
+      {YELLOW}--mode{RESET} 4d \\
+      {YELLOW}--gibbs{RESET}
+    
     {CYAN}{BOLD}────────── WHAT IS BIAS FIELD? ────────────────────────{RESET}
     
     {GREEN}Bias field (intensity non-uniformity):{RESET}
@@ -628,7 +646,7 @@ def bias_field_correction_3d(image_path, output_path, mask_path=None, gibbs=Fals
 
 
 def bias_field_correction_4d(image_path, mask_path=None, output_path=None, 
-                             b0_path=None, b0_corrected_path=None, shell_dimension=3, gibbs=False, threads=1):
+                             b0_path=None, b0_corrected_path=None, shell_dimension=3):
     """
     Apply N4 bias field correction to a 4D diffusion image.
     
@@ -654,8 +672,6 @@ def bias_field_correction_4d(image_path, mask_path=None, output_path=None,
     shell_dimension : int, default=3
         Dimension along which diffusion volumes are organized (0-indexed).
         For standard NIfTI: dimension 3 (4th dimension).
-    gibbs : bool, optional
-        If True, apply Gibbs ringing removal before bias correction.
     
     Returns
     -------
@@ -721,12 +737,6 @@ def bias_field_correction_4d(image_path, mask_path=None, output_path=None,
     print(f"{CYAN}Loading 4D diffusion image...{RESET}")
     img = ants.image_read(image_path)
 
-    if gibbs:
-        print(f"{CYAN}Running Gibbs ringing removal on 4D data...{RESET}")
-        arr = img.numpy()
-        gibbs_removal(arr, slice_axis=2, n_points=3, inplace=True, num_processes=threads)
-        img = img.new_image_like(arr)
-
     img_data = img.numpy()
     print(f"  Image shape: {img_data.shape}")
     print(f"  Shell dimension: {shell_dimension}")
@@ -734,11 +744,6 @@ def bias_field_correction_4d(image_path, mask_path=None, output_path=None,
     if b0_path:
         print(f"{CYAN}Loading b=0 image...{RESET}")
         b0_img = ants.image_read(b0_path)
-        if gibbs:
-            print(f"{CYAN}Running Gibbs ringing removal on b=0 image...{RESET}")
-            arr_b0 = b0_img.numpy()
-            gibbs_removal(arr_b0, slice_axis=2, n_points=3, inplace=True, num_processes=threads)
-            b0_img = b0_img.new_image_like(arr_b0)
     else:
         b0_img = None
     
@@ -1054,7 +1059,7 @@ def run_bias_field_correction(image_path, output_path, mask_path=None, mode="aut
         if mode == "4d":
             return bias_field_correction_4d(
                 image_path, mask_path, output_path, 
-                b0_path, b0_corrected_path, shell_dimension, gibbs, threads
+                b0_path, b0_corrected_path, shell_dimension
             )
         else:  # 3d
             return bias_field_correction_3d(image_path, output_path, mask_path, gibbs, threads)
