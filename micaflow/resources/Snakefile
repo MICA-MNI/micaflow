@@ -269,9 +269,9 @@ rule bias_field_correction:
         mask = rules.skull_strip_t1w.output.mask
     output:
         corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_T1w-space_T1w.nii.gz"
-    threads: HEAVY_THREADS
+    threads: LIGHT_THREADS
     shell:
-        "micaflow bias_correction -i {input.image} -o {output.corrected} -m {input.mask} --gibbs --threads {threads}"
+        "micaflow bias_correction -i {input.image} -o {output.corrected} -m {input.mask}"
 
 # Place these rules in a conditional block to only run when FLAIR is available
 if RUN_FLAIR:
@@ -302,9 +302,9 @@ if RUN_FLAIR:
             mask = rules.skull_strip_flair.output.mask
         output:
             corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_FLAIR-space_FLAIR.nii.gz"
-        threads: HEAVY_THREADS
+        threads: LIGHT_THREADS
         shell:
-            "micaflow bias_correction -i {input.image} -o {output.corrected} -m {input.mask} --gibbs --threads {threads}"
+            "micaflow bias_correction -i {input.image} -o {output.corrected} -m {input.mask}"
 
     rule registration_t1w:
         input:
