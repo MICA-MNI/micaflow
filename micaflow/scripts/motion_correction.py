@@ -280,7 +280,7 @@ def print_help_message():
     {MAGENTA}•{RESET} Denoising should be performed BEFORE motion correction
     {MAGENTA}•{RESET} If no external B0: first volume used as reference
     {MAGENTA}•{RESET} External B0 recommended for better alignment
-    {MAGENTA}•{RESET} Each volume registered independently to reference
+    {MAGENTA}•{RESET} Each volume registered independently to minimize cumulative drift
     {MAGENTA}•{RESET} B-vectors automatically rotated based on transformation
     {MAGENTA}•{RESET} Rotated b-vectors saved to --output-bvecs
     {MAGENTA}•{RESET} Processing time: ~30-90 seconds (depends on # volumes)
@@ -316,8 +316,8 @@ def print_help_message():
     print(help_text)
 
 
-def run_motion_correction(dwi_path, input_bvec_path, output_bvec_path, output, 
-                          b0_path=None, shell_dimension=3, threads=1):
+def run_motion_correction(dwi_path, input_bval_path, input_bvec_path, output_bvec_path, output, 
+                          b0_path=None, shell_dimension=3, threads=1, tmp_dir='tmp'):
     """
     Perform motion and eddy current correction on diffusion-weighted images (DWI).
     
@@ -449,12 +449,33 @@ def run_motion_correction(dwi_path, input_bvec_path, output_bvec_path, output,
             direction=dwi_ants.direction[:3, :3]
         )
     
-    print(f"  Reference shape: {b0_ants.numpy().shape}")
-
+    from nifreeze.data import dmri
+    # Infer bval path from bvec path (assumes .bval and .bvec share the same basename)
+    input_bval_path = input_bvec_path.replace(".bvec", ".bval")
+    
+    # Check if inferred bval file exists
+    if not os.path.exists(input_bval_path):
+        raise FileNotFoundError(f"Could not find associated b-value file: {input_bval_path}")
     # Set ANTs thread count (similar to lamar.py)
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(threads)
     os.environ["OMP_NUM_THREADS"] = str(threads)
-
+    dataset = dmri.from_nii(
+        filename=dwi_path,
+        bvec_file=input_bvec_path,
+        bval_file=input_bval_path,
+        b0_file=b0_path
+    )
+    # dataset.gradients = dataset.gradients.T
+    from nifreeze.model.base import ModelFactory
+    model = ModelFactory.init(
+        model="AverageDWI",
+        dataset=dataset,
+    )
+    dataset.gradients = dataset.gradients.T
+    # gradients_table = gradient_table(dataset.bvals, dataset.bvecs)
+    # kwargs = {"n_jobs": threads, "gtab": gradients_table}
+    # model = GPModel(dataset=dataset)
+    dataset_length = len(dataset)
     # Initialize array for registered data
     registered_data = np.zeros_like(dwi_data)
     
@@ -465,95 +486,206 @@ def run_motion_correction(dwi_path, input_bvec_path, output_bvec_path, output,
         registered_data[vol_idx] = dwi_data[vol_idx]  # Copy first volume unchanged
         print(f"  First volume copied unchanged (used as reference)")
 
-    # Register each volume to the B0 reference
-    start_idx = 0 if b0_path else 1  # Start from volume 0 if using external B0
-    
-    print(f"\n{CYAN}Starting volume-by-volume registration...{RESET}")
-    print(f"  Registering volumes {start_idx} to {num_volumes-1}")
-    print(f"  Registration type: ANTs SyN (Rigid + Affine + Deformable)")
-    print(f"  Using {threads} threads")
-    
-    for idx in tqdm(range(start_idx, dwi_data.shape[shell_dimension]), 
-                    desc=f"{CYAN}Registering volumes{RESET}", 
-                    bar_format='{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]'):
-        # Create dynamic indexing tuple to access volumes along the specified dimension
-        vol_idx = tuple(slice(None) if i != shell_dimension else idx 
-                        for i in range(len(dwi_data.shape)))
-        
-        # Extract the current volume using dynamic indexing
-        moving_data = dwi_data[vol_idx]
-        moving_ants = ants.from_numpy(
-            moving_data, 
-            origin=dwi_ants.origin[:3], 
-            spacing=dwi_ants.spacing[:3],
-            direction=dwi_ants.direction[:3, :3]
-        )
 
-        # Custom registration based on ANTs SyN configuration
-        reg_result = ants.registration(
-            fixed=b0_ants,
-            moving=moving_ants,
-            type_of_transform='SyN',
-            
-            # Key parameters for optimal motion correction
-            grad_step=0.01,
-            aff_metric='mattes',
-            aff_sampling=32,
-            aff_random_sampling_rate=0.2,
-            aff_iterations=(100, 50, 25),
-            aff_shrink_factors=(2, 1, 1),
-            aff_smoothing_sigmas=(2.0, 0.0, 0.0),
-            reg_iterations=(20, 10, 0),
-            winsorize_lower_quantile=0.0001,
-            winsorize_upper_quantile=0.9998,
-            num_threads=threads      
-        )
+    
+    with tqdm(total=dataset_length, unit="vols.") as pbar:
+        # run an original-to-synthetic affine registration
+        for i in range(dataset_length):
+            pbar.set_description_str(f"Fitting vol. {i}")
 
-        # Place the registered volume in the output array using the same indexing
-        warped_data = reg_result["warpedmovout"].numpy()
-        registered_data[vol_idx] = warped_data
-        
-        # Extract and apply the rotation to the bvec for this volume
-        if 'fwdtransforms' in reg_result and len(reg_result['fwdtransforms']) > 0:
-            # Find the affine transform file (typically ends with .mat)
-            affine_file = None
-            for transform in reg_result['fwdtransforms']:
-                if transform.endswith('.mat'):
-                    affine_file = transform
-                    break
+            # fit the model
+            predicted = model.fit_predict(i)
+
+            # Create ANTs images
+            fixed_ants = ants.from_numpy(
+                predicted,
+                origin=dwi_ants.origin[:3],
+                spacing=dwi_ants.spacing[:3],
+                direction=dwi_ants.direction[:3, :3]
+            )
             
-            if affine_file and os.path.exists(affine_file):
-                # Extract rotation matrix from the affine transformation
-                rotation_matrix = extract_rotation_matrix_from_itk(affine_file)
-                
-                # Apply rotation to the corresponding bvec
-                if rotation_matrix is not None and idx < bvecs.shape[1]:
-                    # Rotate the b-vector using the transformation rotation matrix
-                    rotated_bvec = np.dot(rotation_matrix, bvecs[:, idx])
+            moving_ants = ants.from_numpy(
+                dataset.dataobj[..., i],
+                origin=dwi_ants.origin[:3],
+                spacing=dwi_ants.spacing[:3],
+                direction=dwi_ants.direction[:3, :3]
+            )
+
+            pbar.set_description_str(f"Registering vol. <{i}>")
+
+            # Run registration using the parameters from this file
+            if not os.path.exists(os.path.join(tmp_dir, "motioncorrection")):
+                os.makedirs(os.path.join(tmp_dir, "motioncorrection"), exist_ok=True)
+            outprefix = os.path.join(tmp_dir, "motioncorrection", f"ants-{i:05d}_")
+            reg_result = register_level0_level1(
+                fixed=fixed_ants,
+                moving=moving_ants,
+                outprefix=outprefix,
+                verbose=False
+            )
+
+            # Extract affine matrix
+            # Handle multiple transforms from multi-stage registration
+            composite_matrix = np.eye(4)
+            
+            # Filter for .mat files (linear transforms)
+            # ANTsPy returns transforms in order of application [T1, T2, ...]
+            affine_files = [t for t in reg_result['fwdtransforms'] if t.endswith('.mat')]
+            
+            for affine_file in affine_files:
+                mat = scipy.io.loadmat(affine_file)
+                if 'AffineTransform_float_3_3' in mat:
+                    params = mat['AffineTransform_float_3_3'].flatten()
+                    matrix = np.eye(4)
+                    matrix[:3, :3] = params[:9].reshape(3, 3)
+                    matrix[:3, 3] = params[9:]
                     
-                    # Normalize to unit vector (preserve direction, normalize magnitude)
-                    norm = np.linalg.norm(rotated_bvec)
-                    if norm > 0:
-                        rotated_bvec = rotated_bvec / norm
+                    # Accumulate: M_total = M_new * M_total
+                    # This correctly composes the transforms (T2(T1(x)) -> M2 * M1)
+                    composite_matrix = np.dot(matrix, composite_matrix)
+                
+            # update
+            warped_data = reg_result["warpedmovout"].numpy()
+            registered_data[...,i] = warped_data
+            
+            # Extract and apply the rotation to the bvec for this volume
+            if 'fwdtransforms' in reg_result and len(reg_result['fwdtransforms']) > 0:
+                # Find the affine transform file (typically ends with .mat)
+                affine_file = None
+                for transform in reg_result['fwdtransforms']:
+                    if transform.endswith('.mat'):
+                        affine_file = transform
+                        break
+                
+                if affine_file and os.path.exists(affine_file):
+                    # Extract rotation matrix from the affine transformation
+                    rotation_matrix = extract_rotation_matrix_from_itk(affine_file)
+                    
+                    # Apply rotation to the corresponding bvec
+                    if rotation_matrix is not None and i < bvecs.shape[1]:
+                        # Rotate the b-vector using the transformation rotation matrix
+                        rotated_bvec = np.dot(rotation_matrix, bvecs[:, i])
                         
-                    rotated_bvecs[:, idx] = rotated_bvec
+                        # Normalize to unit vector (preserve direction, normalize magnitude)
+                        norm = np.linalg.norm(rotated_bvec)
+                        if norm > 0:
+                            rotated_bvec = rotated_bvec / norm
+                            
+                        rotated_bvecs[:, i] = rotated_bvec
+            
+            # Clean up temporary transform files generated by ANTs
+            if 'fwdtransforms' in reg_result:
+                for transform_file in reg_result['fwdtransforms']:
+                    if os.path.exists(transform_file):
+                        try:
+                            os.remove(transform_file)
+                        except Exception as e:
+                            print(f"{YELLOW}Warning: Could not remove {transform_file}: {e}{RESET}")
+            
+            if 'invtransforms' in reg_result:
+                for transform_file in reg_result['invtransforms']:
+                    if os.path.exists(transform_file):
+                        try:
+                            os.remove(transform_file)
+                        except Exception as e:
+                            print(f"{YELLOW}Warning: Could not remove {transform_file}: {e}{RESET}")
+            
+            pbar.update()
+                
+    print(f"  Reference shape: {b0_ants.numpy().shape}")
+
+
+    
+
+    # # Register each volume to the B0 reference
+    # start_idx = 0 if b0_path else 1  # Start from volume 0 if using external B0
+    
+    # print(f"\n{CYAN}Starting volume-by-volume registration...{RESET}")
+    # print(f"  Registering volumes {start_idx} to {num_volumes-1}")
+    # print(f"  Registration type: ANTs SyN (Rigid + Affine + Deformable)")
+    # print(f"  Using {threads} threads")
+    
+    # for idx in tqdm(range(start_idx, dwi_data.shape[shell_dimension]), 
+    #                 desc=f"{CYAN}Registering volumes{RESET}", 
+    #                 bar_format='{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]'):
+    #     # Create dynamic indexing tuple to access volumes along the specified dimension
+    #     vol_idx = tuple(slice(None) if i != shell_dimension else idx 
+    #                     for i in range(len(dwi_data.shape)))
         
-        # Clean up temporary transform files generated by ANTs
-        if 'fwdtransforms' in reg_result:
-            for transform_file in reg_result['fwdtransforms']:
-                if os.path.exists(transform_file):
-                    try:
-                        os.remove(transform_file)
-                    except Exception as e:
-                        print(f"{YELLOW}Warning: Could not remove {transform_file}: {e}{RESET}")
+    #     # Extract the current volume using dynamic indexing
+    #     moving_data = dwi_data[vol_idx]
+    #     moving_ants = ants.from_numpy(
+    #         moving_data, 
+    #         origin=dwi_ants.origin[:3], 
+    #         spacing=dwi_ants.spacing[:3],
+    #         direction=dwi_ants.direction[:3, :3]
+    #     )
+
+    #     # Custom registration based on ANTs SyN configuration
+    #     reg_result = ants.registration(
+    #         fixed=b0_ants,
+    #         moving=moving_ants,
+    #         type_of_transform='SyN',
+            
+    #         # Key parameters for optimal motion correction
+    #         grad_step=0.01,
+    #         aff_metric='mattes',
+    #         aff_sampling=32,
+    #         aff_random_sampling_rate=0.2,
+    #         aff_iterations=(100, 50, 25),
+    #         aff_shrink_factors=(2, 1, 1),
+    #         aff_smoothing_sigmas=(2.0, 0.0, 0.0),
+    #         reg_iterations=(20, 10, 0),
+    #         winsorize_lower_quantile=0.0001,
+    #         winsorize_upper_quantile=0.9998,
+    #         num_threads=threads      
+    #     )
+
+    #     # Place the registered volume in the output array using the same indexing
+    #     warped_data = reg_result["warpedmovout"].numpy()
+    #     registered_data[vol_idx] = warped_data
         
-        if 'invtransforms' in reg_result:
-            for transform_file in reg_result['invtransforms']:
-                if os.path.exists(transform_file):
-                    try:
-                        os.remove(transform_file)
-                    except Exception as e:
-                        print(f"{YELLOW}Warning: Could not remove {transform_file}: {e}{RESET}")
+    #     # Extract and apply the rotation to the bvec for this volume
+    #     if 'fwdtransforms' in reg_result and len(reg_result['fwdtransforms']) > 0:
+    #         # Find the affine transform file (typically ends with .mat)
+    #         affine_file = None
+    #         for transform in reg_result['fwdtransforms']:
+    #             if transform.endswith('.mat'):
+    #                 affine_file = transform
+    #                 break
+            
+    #         if affine_file and os.path.exists(affine_file):
+    #             # Extract rotation matrix from the affine transformation
+    #             rotation_matrix = extract_rotation_matrix_from_itk(affine_file)
+                
+    #             # Apply rotation to the corresponding bvec
+    #             if rotation_matrix is not None and idx < bvecs.shape[1]:
+    #                 # Rotate the b-vector using the transformation rotation matrix
+    #                 rotated_bvec = np.dot(rotation_matrix, bvecs[:, idx])
+                    
+    #                 # Normalize to unit vector (preserve direction, normalize magnitude)
+    #                 norm = np.linalg.norm(rotated_bvec)
+    #                 if norm > 0:
+    #                     rotated_bvec = rotated_bvec / norm
+                        
+    #                 rotated_bvecs[:, idx] = rotated_bvec
+        
+    #     # Clean up temporary transform files generated by ANTs
+    #     if 'fwdtransforms' in reg_result:
+    #         for transform_file in reg_result['fwdtransforms']:
+    #             if os.path.exists(transform_file):
+    #                 try:
+    #                     os.remove(transform_file)
+    #                 except Exception as e:
+    #                     print(f"{YELLOW}Warning: Could not remove {transform_file}: {e}{RESET}")
+        
+    #     if 'invtransforms' in reg_result:
+    #         for transform_file in reg_result['invtransforms']:
+    #             if os.path.exists(transform_file):
+    #                 try:
+    #                     os.remove(transform_file)
+    #                 except Exception as e:
+    #                     print(f"{YELLOW}Warning: Could not remove {transform_file}: {e}{RESET}")
 
     # Save the registered data with original geometry
     print(f"\n{CYAN}Saving motion-corrected DWI...{RESET}")
@@ -572,7 +704,7 @@ def run_motion_correction(dwi_path, input_bvec_path, output_bvec_path, output,
     print(f"{GREEN}Saved to: {output_bvec_path}{RESET}")
 
     print(f"\n{GREEN}{BOLD}Motion correction completed successfully!{RESET}")
-    print(f"  Processed {num_volumes - start_idx} volumes")
+    print(f"  Processed {len(registered_data)} volumes")
     print(f"  Motion-corrected DWI: {output}")
     print(f"  Rotated b-vectors: {output_bvec_path}")
     
@@ -634,6 +766,156 @@ def extract_rotation_matrix_from_itk(affine_file):
         return np.eye(3)
 
 
+def register_level0_level1(fixed, moving, outprefix="reg_", verbose=True):
+    """
+    Approximate translation of the level-0 (Rigid+Rigid) and level-1 (Affine+Affine)
+    JSON parameter files into a two-level ANTsPy registration.
+    
+    - Level 0:
+        Rigid[0.01] + Mattes(32 bins, 0.2 random sampling), 100 iters, sigma=2.0, shrink=1
+        Rigid[0.001] + GC(radius=5, 0.1 random sampling), 20 iters, sigma=0.0, shrink=1
+
+    - Level 1:
+        Affine[0.01] + Mattes(32 bins, 0.2 sampling, Regular in JSON), 100 iters, sigma=2.0, shrink=1
+        Affine[0.001] + GC(radius=5, 0.1 random sampling), 50 iters, sigma=0.0, shrink=1
+
+    Returns
+    -------
+    out : dict
+        {
+          "warpedmovout": warped moving image,
+          "fwdtransforms": list of forward transforms (all levels, including both affines),
+          "invtransforms": list of inverse transforms
+        }
+    """
+
+    # -------------------------
+    # Level 0, Stage 0: Rigid[0.01], Mattes, 32 bins, 0.2 random, 100 iters
+    # -------------------------
+    lvl0_s0 = ants.registration(
+        fixed=fixed,
+        moving=moving,
+        type_of_transform="Rigid",
+        outprefix=outprefix + "lvl0_s0_",
+
+        grad_step=0.01,               # transform_parameters[0] = [0.01]
+        aff_metric="mattes",          # metric[0] = "Mattes"
+        aff_sampling=32,              # radius_or_number_of_bins[0] = 32 (nbins for Mattes)
+        aff_random_sampling_rate=0.2, # sampling_percentage[0] = 0.2
+        aff_iterations=(100,),        # number_of_iterations[0] = [100]
+        aff_shrink_factors=(1,),      # shrink_factors[0] = [1]
+        aff_smoothing_sigmas=(2.0,),  # smoothing_sigmas[0] = [2.0]
+
+        write_composite_transform=False,
+        verbose=verbose,
+        winsorize_lower_quantile=0.0001,
+        winsorize_upper_quantile=0.9998,
+    )
+
+    # -------------------------
+    # Level 0, Stage 1: Rigid[0.001], GC, radius=5, 0.1 random, 20 iters
+    # -------------------------
+    lvl0_s1 = ants.registration(
+        fixed=fixed,
+        moving=moving,
+        type_of_transform="Rigid",
+        outprefix=outprefix + "lvl0_s1_",
+
+        initial_transform=lvl0_s0["fwdtransforms"],  # chain from level0 stage 0
+
+        grad_step=0.001,              # transform_parameters[1] = [0.001]
+        aff_metric="GC",              # metric[1] = "GC"
+        aff_sampling=5,               # radius_or_number_of_bins[1] = 5 (radius for GC)
+        aff_random_sampling_rate=0.1, # sampling_percentage[1] = 0.1
+        aff_iterations=(20,),         # number_of_iterations[1] = [20]
+        aff_shrink_factors=(1,),      # shrink_factors[1] = [1]
+        aff_smoothing_sigmas=(0.0,),  # smoothing_sigmas[1] = [0.0]
+
+        write_composite_transform=False,
+        verbose=verbose,
+        winsorize_lower_quantile=0.0001,
+        winsorize_upper_quantile=0.9998,
+    )
+
+    # At this point lvl0_s1["fwdtransforms"] is the rigid chain.
+
+    # -------------------------
+    # Level 1, Stage 0: Affine[0.01], Mattes, 32 bins, 0.2 sampling, 100 iters
+    # -------------------------
+    lvl1_s0 = ants.registration(
+        fixed=fixed,
+        moving=moving,
+        type_of_transform="Affine",
+        outprefix=outprefix + "lvl1_s0_",
+
+        initial_transform=lvl0_s1["fwdtransforms"],  # start from final rigid
+
+        grad_step=0.01,               # transform_parameters[0] = [0.01]
+        aff_metric="mattes",          # metric[0] = "Mattes"
+        aff_sampling=32,              # radius_or_number_of_bins[0] = 32
+        aff_random_sampling_rate=0.2, # sampling_percentage[0] = 0.2
+        aff_iterations=(100,),        # number_of_iterations[0] = [100]
+        aff_shrink_factors=(1,),      # shrink_factors[0] = [1]
+        aff_smoothing_sigmas=(2.0,),  # smoothing_sigmas[0] = [2.0]
+
+        write_composite_transform=False,
+        verbose=verbose,
+        winsorize_lower_quantile=0.0001,
+        winsorize_upper_quantile=0.9998,
+    )
+
+    # -------------------------
+    # Level 1, Stage 1: Affine[0.001], GC, radius=5, 0.1 random, 50 iters
+    # -------------------------
+    lvl1_s1 = ants.registration(
+        fixed=fixed,
+        moving=moving,
+        type_of_transform="Affine",
+        outprefix=outprefix + "lvl1_s1_",
+
+        # chain from level1 stage 0 (which already includes the level0 rigids)
+        initial_transform=lvl1_s0["fwdtransforms"],
+
+        grad_step=0.001,              # transform_parameters[1] = [0.001]
+        aff_metric="GC",              # metric[1] = "GC"
+        aff_sampling=5,               # radius_or_number_of_bins[1] = 5 (radius)
+        aff_random_sampling_rate=0.1, # sampling_percentage[1] = 0.1
+        aff_iterations=(50,),         # number_of_iterations[1] = [50]
+        aff_shrink_factors=(1,),      # shrink_factors[1] = [1]
+        aff_smoothing_sigmas=(0.0,),  # smoothing_sigmas[1] = [0.0]
+
+        write_composite_transform=False,
+        verbose=verbose,
+        winsorize_lower_quantile=0.0001,
+        winsorize_upper_quantile=0.9998,
+    )
+
+    # -------------------------
+    # Combine both affine stages (and preceding rigids) into a single transform chain
+    # -------------------------
+    # ANTsPy's registration, when given an initial_transform, returns a transform list
+    # that already includes the initial transforms, so lvl1_s1["fwdtransforms"]
+    # effectively encodes:
+    #   Level 1 Affine stage 1
+    #   Level 1 Affine stage 0
+    #   Level 0 Rigid stages
+    combined_fwd = lvl1_s1["fwdtransforms"]
+    combined_inv = lvl1_s1["invtransforms"]
+
+    # Warp the moving image using the full chain
+    warped = ants.apply_transforms(
+        fixed=fixed,
+        moving=moving,
+        transformlist=combined_fwd,
+        interpolator="linear"
+    )
+
+    return {
+        "warpedmovout": warped,
+        "fwdtransforms": combined_fwd,  # includes both affines (and rigids)
+        "invtransforms": combined_inv,
+    }
+
 if __name__ == "__main__":
     # Check if no arguments were provided or help was requested
     if len(sys.argv) == 1 or "-h" in sys.argv or "--help" in sys.argv:
@@ -685,18 +967,31 @@ if __name__ == "__main__":
         default=1,
         help="Number of threads to use for ANTs registration (default: 1).",
     )
-
+    parser.add_argument(
+        "--input-bvals",
+        type=str,
+        required=True,
+        help="Path to the input b-values file (.bval).",
+    )
+    parser.add_argument(
+        "--temp-dir",
+        type=str,
+        default="tmp",
+        help="Path to the temporary directory for intermediate files (default: tmp).",
+    )
     args = parser.parse_args()
     
     try:
         corrected_image = run_motion_correction(
             args.denoised, 
+            args.input_bvals,
             args.input_bvecs, 
             args.output_bvecs, 
             args.output, 
             args.b0, 
             args.shell_dimension,
-            args.threads
+            args.threads,
+            tmp_dir=args.temp_dir
         )
         sys.exit(0)
         

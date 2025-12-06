@@ -791,6 +791,12 @@ def main():
         "--denoised", required=True, help="Path to the denoised DWI (NIfTI file)."
     )
     motion_corr_parser.add_argument(
+        "--input-bvals",
+        type=str,
+        required=True,
+        help="Path to the bvals file.",
+    )
+    motion_corr_parser.add_argument(
         "--input-bvecs",
         type=str,
         required=True,
@@ -820,6 +826,12 @@ def main():
         "--threads",
         type=int,
         help="Number of threads to use (default: 1)",
+    )
+    motion_corr_parser.add_argument(
+        "--temp-dir",
+        type=str,
+        default="tmp",
+        help="Path to the temporary directory for intermediate files (default: tmp)."
     )
 
     # SDC command (main susceptibility distortion correction)

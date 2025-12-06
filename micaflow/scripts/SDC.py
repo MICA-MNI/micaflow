@@ -603,7 +603,7 @@ def run(data_image, reverse_image, output_name, output_warp, phase_encoding='ap'
     print(f"{CYAN}Phase-encoding direction:{RESET} {phase_encoding.upper()} (dimension: {pe_dim})")
     
     # Check GPU availability
-    device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    device = "cpu"
     if device == "cuda:0":
         print(f"{GREEN}GPU acceleration: ENABLED (CUDA){RESET}")
     else:

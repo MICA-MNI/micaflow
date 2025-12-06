@@ -38,7 +38,7 @@ RM_CEREBELLUM = config.get("rm_cerebellum", False)
 KEEP_TEMP = config.get("keep_temp", False)  # New parameter to control temp directory cleanup
 PED = config.get("PED", "")
 SHELL_DIMENSION = config.get("shell_dimension", 3)
-
+EXTRACT_BRAIN = config.get("extract_brain", False)
 GPU = config.get("gpu", "")
 print("GPU: ", GPU)
 
@@ -59,80 +59,40 @@ TEMP_DIR = f"{OUT_DIR}/{SUBJECT}/{SESSION}/temp"
 os.makedirs(TEMP_DIR, exist_ok=True)
 print(f"Temporary directory: {TEMP_DIR}")
 
-
-# Define paths cache file - specific to this subject/session
-paths_cache_file = f"{OUT_DIR}/{SUBJECT}/{SESSION}/paths_checked.json"
-os.makedirs(os.path.dirname(paths_cache_file), exist_ok=True)
-
-# Check if paths have been checked before
-if os.path.exists(paths_cache_file):
-    # Load saved paths from cache
-    with open(paths_cache_file, "r") as f:
-        paths_data = json.load(f)
-    
-    # Restore variables from cache
-    DATA_DIRECTORY = paths_data["DATA_DIRECTORY"]
-    OUT_DIR = paths_data["OUT_DIR"]
-    SUBJECT = paths_data["SUBJECT"]
-    SESSION = paths_data["SESSION"]
-    RUN_DWI = paths_data["RUN_DWI"]
-    GPU = paths_data["GPU"]
-    FLAIR_FILE = paths_data["FLAIR_FILE"]
-    T1W_FILE = paths_data["T1W_FILE"]
-    DWI_FILE = paths_data["DWI_FILE"]
-    BVAL_FILE = paths_data["BVAL_FILE"]
-    BVEC_FILE = paths_data["BVEC_FILE"]
-    INVERSE_DWI_FILE = paths_data["INVERSE_DWI_FILE"]
-    INVERSE_BVAL_FILE = paths_data.get("INVERSE_BVAL_FILE", "")
-    INVERSE_BVEC_FILE = paths_data.get("INVERSE_BVEC_FILE", "")
-    THREADS = paths_data["THREADS"]
-    RUN_FLAIR = paths_data["RUN_FLAIR"]
-    
-    print("[INFO] Loaded paths from cache file:", paths_cache_file)
-else:
-    # Run the check_paths function
-    DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, RUN_DWI, GPU, FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, INVERSE_BVAL_FILE, INVERSE_BVEC_FILE, THREADS, RUN_FLAIR = check_paths(
-            DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, GPU, 
-            FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, INVERSE_BVAL_FILE, INVERSE_BVEC_FILE, THREADS
-        )
-    # Add this after the variable definitions and paths checking
-    if RUN_DWI and USE_SYNTH_B0:
-        print("[INFO] No reverse phase encoding scan provided, will use synthetic B0 for distortion correction")
-    # Save the results to cache file
-    paths_data = {
-        "DATA_DIRECTORY": DATA_DIRECTORY,
-        "OUT_DIR": OUT_DIR,
-        "SUBJECT": SUBJECT,
-        "SESSION": SESSION,
-        "RUN_DWI": RUN_DWI,
-        "GPU": GPU,
-        "FLAIR_FILE": FLAIR_FILE,
-        "T1W_FILE": T1W_FILE,
-        "DWI_FILE": DWI_FILE,
-        "BVAL_FILE": BVAL_FILE,
-        "BVEC_FILE": BVEC_FILE,
-        "INVERSE_DWI_FILE": INVERSE_DWI_FILE,
-        "INVERSE_BVAL_FILE": INVERSE_BVAL_FILE,
-        "INVERSE_BVEC_FILE": INVERSE_BVEC_FILE,
-        "THREADS": THREADS,
-        "RUN_FLAIR": RUN_FLAIR
-    }
-    
-    with open(paths_cache_file, "w") as f:
-        json.dump(paths_data, f, indent=2)
-    
-    print("[INFO] Path checking complete. Results saved to:", paths_cache_file)
-
+DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, RUN_DWI, GPU, FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, INVERSE_BVAL_FILE, INVERSE_BVEC_FILE, THREADS, RUN_FLAIR = check_paths(
+        DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, GPU, 
+        FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE, INVERSE_DWI_FILE, INVERSE_BVAL_FILE, INVERSE_BVEC_FILE, THREADS
+    )
+paths_data = {
+    "DATA_DIRECTORY": DATA_DIRECTORY,
+    "OUT_DIR": OUT_DIR,
+    "SUBJECT": SUBJECT,
+    "SESSION": SESSION,
+    "RUN_DWI": RUN_DWI,
+    "GPU": GPU,
+    "FLAIR_FILE": FLAIR_FILE,
+    "T1W_FILE": T1W_FILE,
+    "DWI_FILE": DWI_FILE,
+    "BVAL_FILE": BVAL_FILE,
+    "BVEC_FILE": BVEC_FILE,
+    "INVERSE_DWI_FILE": INVERSE_DWI_FILE,
+    "INVERSE_BVAL_FILE": INVERSE_BVAL_FILE,
+    "INVERSE_BVEC_FILE": INVERSE_BVEC_FILE,
+    "THREADS": THREADS,
+    "RUN_FLAIR": RUN_FLAIR,
+    "RM_CEREBELLUM": RM_CEREBELLUM,
+    "KEEP_TEMP": KEEP_TEMP,
+    "PED": PED,
+    "SHELL_DIMENSION": SHELL_DIMENSION,
+    "EXTRACT_BRAIN": EXTRACT_BRAIN,
+    "USE_SYNTH_B0": USE_SYNTH_B0
+}
 
 GPU = "--cpu" if GPU == False else ""
 
 print("flair_file: ", FLAIR_FILE)
 print("run_flair: ", RUN_FLAIR)
 print("keep_temp: ", KEEP_TEMP)
-
-# Add a parameter for deep FCD processing
-EXTRACT_BRAIN = config.get("extract_brain", False)  # Default to False
-
 
 def get_final_output():
     outputs = []
@@ -540,7 +500,8 @@ if RUN_DWI:
         input:
             denoised = rules.dwi_b0_extraction.output.output_dwi,
             bvec = rules.dwi_b0_extraction.output.output_bvec,
-            b0 = rules.dwi_b0_extraction.output.b0
+            b0 = rules.dwi_b0_extraction.output.b0,
+            bval = rules.dwi_b0_extraction.output.output_bval
         output:
             corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_motioncorrected_DWI.nii.gz",
             corrected_bvec = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_motioncorrected_DWI.bvec"
@@ -554,7 +515,9 @@ if RUN_DWI:
                 --output {output.corrected} \
                 --b0 {input.b0} \
                 --shell-dimension {SHELL_DIMENSION} \
-                --threads {threads}
+                --threads {threads} \
+                --input-bvals {input.bval} \
+                --temp-dir {TEMP_DIR}
             """
 
     if USE_SYNTH_B0:
