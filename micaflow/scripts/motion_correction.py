@@ -166,10 +166,27 @@ See Also:
 """
 
 import argparse
-import ants
-import numpy as np
 import sys
 import os
+
+# Set threading environment variables BEFORE importing ants or other heavy libraries
+# This ensures they are picked up correctly during initialization
+if "--threads" in sys.argv:
+    try:
+        idx = sys.argv.index("--threads")
+        if idx + 1 < len(sys.argv):
+            threads = sys.argv[idx + 1]
+            os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(threads)
+            os.environ["OMP_NUM_THREADS"] = str(threads)
+            os.environ["OPENBLAS_NUM_THREADS"] = str(threads)
+            os.environ["MKL_NUM_THREADS"] = str(threads)
+            os.environ["VECLIB_MAXIMUM_THREADS"] = str(threads)
+            os.environ["NUMEXPR_NUM_THREADS"] = str(threads)
+    except ValueError:
+        pass
+
+import ants
+import numpy as np
 from tqdm import tqdm
 from colorama import init, Fore, Style
 import scipy
@@ -456,9 +473,12 @@ def run_motion_correction(dwi_path, input_bval_path, input_bvec_path, output_bve
     # Check if inferred bval file exists
     if not os.path.exists(input_bval_path):
         raise FileNotFoundError(f"Could not find associated b-value file: {input_bval_path}")
-    # Set ANTs thread count (similar to lamar.py)
+    
+    # Environment variables are already set at the top of the script, 
+    # but we can reinforce them here just in case
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(threads)
     os.environ["OMP_NUM_THREADS"] = str(threads)
+    
     dataset = dmri.from_nii(
         filename=dwi_path,
         bvec_file=input_bvec_path,
