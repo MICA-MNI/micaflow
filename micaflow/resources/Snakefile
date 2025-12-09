@@ -725,7 +725,7 @@ if RUN_DWI:
                 seg = rules.synthseg_dwi.output.seg
             output:
                 image = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_brain-extracted_DWI.nii.gz",
-                mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_brain-extracted_DWI_mask.nii.gz"
+                mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_brain-extracted_DWI_mask.nii.gz"
             params:
                 rm_cerebellum = "--remove-cerebellum" if RM_CEREBELLUM else ""
             threads: LIGHT_THREADS
