@@ -443,10 +443,121 @@ def extract_b0(dwi_path, bvals_path=None, bvecs_path=None, output_path=None,
         return None
     
     # Check if input is 4D
-    if len(img_shape) < 4:
-        print(f"{RED}Input image is not 4D: {img_shape}. Cannot extract volumes.{RESET}")
+    if len(img_shape) == 3:
+        print(f"{YELLOW}Input image is 3D ({img_shape}). Checking if it is a valid b0...{RESET}")
+        
+        # If 3D, we effectively have 1 volume
+        num_volumes = 1
+        bvals = None  # Initialize bvals variable for this scope
+
+        if bvals_path:
+            try:
+                with open(bvals_path, 'r') as f:
+                    # Read all values, likely just one for a 3D image usually, 
+                    # but maybe the user provided a full bval string?
+                    # If it's a single volume extraction, bvals might still contain just 1 number.
+                    vals = [float(val) for val in f.read().strip().split()]
+                    bvals = vals  # Assign to the variable name used later
+                    
+                # If there's exactly 1 b-value, check it
+                if len(vals) == 1:
+                    b_val = vals[0]
+                    if b_val > threshold:
+                        print(f"{RED}Error: Input 3D image has b-value {b_val} > threshold {threshold}. Not a b0.{RESET}")
+                        return None
+                    else:
+                        print(f"{GREEN}Input is a valid b0 (b={b_val}).{RESET}")
+                
+                # If there are multiple b-values but input is 3D, it implies a mismatch 
+                # OR the user gave a full bvals file for a single extracted volume.
+                # In the 'single 3D file' context, we assume the single volume corresponds to the first bval or 'a' bval is risky
+                # without more info, but commonly 3D means "this is the volume".
+                # Let's fallback to checking if the *first* value is b0 if no index.
+                elif shell_index is not None and shell_index < len(vals):
+                     if vals[shell_index] > threshold:
+                        print(f"{RED}Error: Selected index {shell_index} has b-value {vals[shell_index]} > threshold {threshold}.{RESET}")
+                        return None
+                else:
+                    # Ambiguous case: 3D image but multiple bvals and no index. 
+                    # Assuming the single volume corresponds to the first bval or 'a' bval is risky
+                    # without more info, but commonly 3D means "this is the volume".
+                    # Let's fallback to checking if the *first* value is b0 if no index.
+                    if vals[0] > threshold:
+                         print(f"{RED}Error: First b-value {vals[0]} > threshold {threshold}.{RESET}")
+                         return None
+
+            except Exception as e:
+                print(f"{RED}Error reading bvals for 3D image: {str(e)}{RESET}")
+                return None
+        
+        # If we got here, it's 3D and either valid b0 or no bvals provided (assumed b0/user knows)
+        if output_path:
+            shutil.copyfile(dwi_path, output_path)
+            print(f"{GREEN}Copied 3D b0 volume to: {output_path}{RESET}")
+            
+        # Handle gradient files if requested (create single-entry files)
+        # Handle bvals
+        if bvals and b0_bval:
+             with open(b0_bval, 'w') as f:
+                 # Use the detected b-value or 0 if unknown
+                 val = bvals[shell_index if shell_index is not None else 0] if bvals else 0
+                 f.write(str(int(val)))
+        
+        # Handle bvecs
+        if bvecs_path and b0_bvec:
+             try:
+                with open(bvecs_path, 'r') as f:
+                    lines = f.readlines()
+                
+                # Default to zero vector
+                b0_vec = [0.0, 0.0, 0.0]
+                
+                if len(lines) == 3:
+                     # Parse bvecs (3 rows)
+                     vecs = [[float(v) for v in l.strip().split()] for l in lines]
+                     idx = shell_index if shell_index is not None else 0
+                     
+                     # Extract vector at index
+                     current_vec = []
+                     for dim_row in vecs:
+                        if idx < len(dim_row):
+                            current_vec.append(dim_row[idx])
+                        else:
+                            current_vec.append(0.0)
+                     b0_vec = current_vec
+                
+                # Write b0 bvec file (3 rows, 1 col typically expected for single vol, or 3 lines)
+                # Matches format used in main function: writes one value per line
+                with open(b0_bvec, 'w') as f:
+                    for v in b0_vec:
+                        f.write(f"{v}\n")
+                        
+             except Exception as e:
+                 print(f"{YELLOW}Warning: Error processing bvecs for 3D image: {e}{RESET}")
+
+        # Handle 'non-b0' outputs
+        # Since input is 3D b0, there are NO non-b0 volumes.
+        # We create empty/placeholder files to satisfy pipeline requirements (Snakemake).
+        if output_dwi:
+            print(f"{YELLOW}Warning: No non-b0 volumes in 3D input. Creating empty placeholder for: {output_dwi}{RESET}")
+            # Create empty file
+            with open(output_dwi, 'w') as f:
+                pass
+            
+        if output_bvals:
+            with open(output_bvals, 'w') as f:
+                pass
+
+        if output_bvecs:
+            with open(output_bvecs, 'w') as f:
+                pass
+            
+        return
+
+    if len(img_shape) < 3: # Should capture 1D/2D which are invalid
+        print(f"{RED}Input image dimensions {img_shape} are invalid.{RESET}")
         return None
-    
+        
     num_volumes = img_shape[shell_dimension]
     print(f"  Number of volumes: {num_volumes}")
     bvals = None
