@@ -365,16 +365,30 @@ def run_denoise(moving, moving_bval, moving_bvec, output, b0_denoising=False, gi
     print(f"  Model: Ordinary Least Squares (OLS)")
     print(f"  B0 threshold: 50 s/mm²")
     print(f"  Intensity shifting: Enabled")
-    
-    denoised = patch2self(
-        dwi_data,
-        moving_bval_value,
-        model="ols",
-        shift_intensity=True,
-        clip_negative_vals=False,
-        b0_threshold=50,
-        b0_denoising=b0_denoising,
-    )
+    try:
+        denoised = patch2self(
+            dwi_data,
+            moving_bval_value,
+            model="ols",
+            shift_intensity=True,
+            clip_negative_vals=False,
+            b0_threshold=50,
+            b0_denoising=b0_denoising,
+            version=3,
+        )
+    except Exception as e:
+        print(f"{RED}Error during Patch2Self denoising:{RESET} {str(e)}")
+        print("Falling back to version 1 of Patch2Self...")
+        denoised = patch2self(
+            dwi_data,
+            moving_bval_value,
+            model="ols",
+            shift_intensity=True,
+            clip_negative_vals=False,
+            b0_threshold=50,
+            b0_denoising=b0_denoising,
+            version=1,
+        )
     env = os.environ.copy()
     env["OPENBLAS_NUM_THREADS"] = "1"
     env["OMP_NUM_THREADS"] = "1"
