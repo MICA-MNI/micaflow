@@ -9,7 +9,7 @@ description = "MicaFlow MRI processing pipeline"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "MICA Lab", email = "info@example.com" }]
-license = { text = "MIT" }
+license = { text = "GPL 3.0" }
 dependencies = [
     "absl-py",
     "acres",

@@ -382,7 +382,6 @@ if __name__ == "__main__":
 
     # parse commandline
     args = vars(parser.parse_args())
-    
     try:
         # Validate required files exist
         if not os.path.isdir(args['i']) and not os.path.exists(args['i']):

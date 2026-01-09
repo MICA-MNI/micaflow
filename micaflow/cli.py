@@ -218,6 +218,7 @@ def print_extended_help():
       {YELLOW}--rm-cerebellum{RESET}                Remove cerebellum from brain extraction outputs
       {YELLOW}--PED{RESET}                          Phase encoding direction of DWI, options are: 'ap', 'pa', 'lr', 'rl', 'si', 'is' (default: 'pa')
       {YELLOW}--shell-dimension{RESET}              Dimension of the DWI image referring to shells (default: 3)
+      {YELLOW}--linear{RESET}                       Use linear-only registration to MNI space (faster, no nonlinear warping), default is False
       {YELLOW}Remaining arguments are passed to Snakemake for workflow management{RESET}
 
     {CYAN}{BOLD}────────────────── EXAMPLE PIPELINE USAGE ───────────────{RESET}
@@ -476,6 +477,9 @@ def main():
     )
     pipeline_parser.add_argument(
         "--shell-dimension", type=int, default=3, help="Dimension of the DWI image referring to shells"
+    )
+    pipeline_parser.add_argument(
+        "--linear", action="store_true", help="Use linear-only registration to MNI space (faster, no nonlinear warping)"
     )
 
     # SynthSeg command
@@ -1053,6 +1057,7 @@ def main():
             "extract_brain",
             "shell_dimension",
             "PED",
+            "linear",
         ]:
             if getattr(args, param.replace("-", "_"), None):
                 config[param] = getattr(args, param.replace("-", "_"))

@@ -37,6 +37,12 @@ SHELL_DIMENSION = config.get("shell_dimension", 3)
 EXTRACT_BRAIN = config.get("extract_brain", False)
 GPU = config.get("gpu", "")
 
+# Add Linear Registration Flag
+LINEAR = config.get("linear", False)
+
+# Define MNI space naming based on linear flag
+MNI_SPACE = "MNI152linear-space" if LINEAR else "MNI152-space"
+
 # Add this to the top section where variables are defined
 USE_SYNTH_B0 = INVERSE_DWI_FILE == "" or INVERSE_DWI_FILE is None
 
@@ -79,7 +85,7 @@ def _get_validated_params():
                 cached["INVERSE_BVAL_FILE"], cached["INVERSE_BVEC_FILE"],
                 cached["THREADS"], cached["RUN_FLAIR"], cached["RM_CEREBELLUM"],
                 cached["KEEP_TEMP"], cached["PED"], cached["SHELL_DIMENSION"],
-                cached["EXTRACT_BRAIN"], cached["USE_SYNTH_B0"]
+                cached["EXTRACT_BRAIN"], cached["USE_SYNTH_B0"], cached["LINEAR"]
             )
         except (json.JSONDecodeError, KeyError):
             pass  # Cache invalid, regenerate
@@ -128,7 +134,8 @@ def _get_validated_params():
         "PED": PED,
         "SHELL_DIMENSION": SHELL_DIMENSION,
         "EXTRACT_BRAIN": EXTRACT_BRAIN,
-        "USE_SYNTH_B0": use_synth_b0
+        "USE_SYNTH_B0": use_synth_b0,
+        "LINEAR": LINEAR
     }
     
     # Ensure directory exists and save
@@ -143,43 +150,48 @@ def _get_validated_params():
     return (data_dir, out_dir, subject, session, run_dwi, gpu,
             flair_file, t1w_file, dwi_file, bval_file, bvec_file,
             inv_dwi, inv_bval, inv_bvec, threads, run_flair,
-            RM_CEREBELLUM, KEEP_TEMP, PED, SHELL_DIMENSION, EXTRACT_BRAIN, use_synth_b0)
+            RM_CEREBELLUM, KEEP_TEMP, PED, SHELL_DIMENSION, EXTRACT_BRAIN, use_synth_b0, LINEAR)
 
 # Get validated parameters (from cache or by running check_paths)
 (DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, RUN_DWI, GPU,
  FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE,
  INVERSE_DWI_FILE, INVERSE_BVAL_FILE, INVERSE_BVEC_FILE,
  THREADS, RUN_FLAIR, RM_CEREBELLUM, KEEP_TEMP, PED,
- SHELL_DIMENSION, EXTRACT_BRAIN, USE_SYNTH_B0) = _get_validated_params()
+ SHELL_DIMENSION, EXTRACT_BRAIN, USE_SYNTH_B0, LINEAR) = _get_validated_params()
 
+CPU_FLAG = "" if GPU != False else "--cpu"
+
+# Define MNI space naming based on linear flag
+MNI_SPACE = "MNI152linear-space" if LINEAR else "MNI152-space"
 
 print("flair_file: ", FLAIR_FILE)
 print("run_flair: ", RUN_FLAIR)
 print("keep_temp: ", KEEP_TEMP)
+print("linear: ", LINEAR)
 
 def get_final_output():
     outputs = []
     # All existing outputs...
-    # Updated to .nii.gz
-    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-T1w_gradient-magnitude.nii.gz")
-    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-T1w_relative-intensity.nii.gz")
-    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_T1w-to-MNI152-space_DICE.csv")
+    # Updated to use MNI_SPACE variable
+    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_{MNI_SPACE}_textures-T1w_gradient-magnitude.nii.gz")
+    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_{MNI_SPACE}_textures-T1w_relative-intensity.nii.gz")
+    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_T1w-to-{MNI_SPACE}_DICE.csv")
     outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_T1w-space_T1w.nii.gz"))
     
     # Add normalized T1w images
     outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_T1w-space_T1w_normalized.nii.gz"))
-    outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_MNI152-space_T1w_normalized.nii.gz"))
+    outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_{MNI_SPACE}_T1w_normalized.nii.gz"))
 
     if RUN_FLAIR:
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_FLAIR-to-T1w-space_DICE.csv")
-        # Updated to .nii.gz
-        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-FLAIR_gradient-magnitude.nii.gz")
-        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-FLAIR_relative-intensity.nii.gz")
+        # Updated to use MNI_SPACE variable
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_{MNI_SPACE}_textures-FLAIR_gradient-magnitude.nii.gz")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_{MNI_SPACE}_textures-FLAIR_relative-intensity.nii.gz")
         outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_T1w-space_FLAIR.nii.gz"))
         
         # Add normalized FLAIR images 
         outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_T1w-space_FLAIR_normalized.nii.gz"))
-        outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_MNI152-space_FLAIR_normalized.nii.gz"))
+        outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_{MNI_SPACE}_FLAIR_normalized.nii.gz"))
 
     if RUN_DWI:
         outputs.extend([
@@ -193,19 +205,19 @@ def get_final_output():
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_MD_normalized.nii.gz")
 
         # Add MNI space FA and MD maps
-        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_MNI152-space_FA.nii.gz")
-        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_MNI152-space_MD.nii.gz")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_{MNI_SPACE}_FA.nii.gz")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_{MNI_SPACE}_MD.nii.gz")
         
     if EXTRACT_BRAIN:
         # Add existing brain-extracted outputs
-        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_MNI152-space_T1w.nii.gz")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{MNI_SPACE}_T1w.nii.gz")
         # Add normalized version
-        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_MNI152-space_T1w_normalized.nii.gz")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{MNI_SPACE}_T1w_normalized.nii.gz")
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_T1w-space_T1w_normalized.nii.gz")
         
         if RUN_FLAIR:
-            outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_MNI152-space_FLAIR.nii.gz")
-            outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_MNI152-space_FLAIR_normalized.nii.gz")
+            outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{MNI_SPACE}_FLAIR.nii.gz")
+            outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{MNI_SPACE}_FLAIR_normalized.nii.gz")
             outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_T1w-space_FLAIR_normalized.nii.gz")
         
         if RUN_DWI:
@@ -229,7 +241,7 @@ rule synthseg_t1w:
         seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_synthseg_T1w.nii.gz"
     threads: HEAVY_THREADS
     shell:
-        "micaflow synthseg --i {input.image} --o {output.seg} --parc --robust --threads {threads} {GPU}"
+        "micaflow synthseg --i {input.image} --o {output.seg} --parc --robust --threads {threads} {CPU_FLAG}"
 
 # Now define the FLAIR-specific synthseg rule if needed
 if RUN_FLAIR:
@@ -240,7 +252,7 @@ if RUN_FLAIR:
             seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_synthseg_FLAIR.nii.gz"
         threads: HEAVY_THREADS
         shell:
-            "micaflow synthseg --i {input.image} --o {output.seg} --parc --robust --threads {threads} {GPU}"
+            "micaflow synthseg --i {input.image} --o {output.seg} --parc --robust --threads {threads} {CPU_FLAG}"
 
 rule skull_strip_t1w:
     input:
@@ -379,14 +391,15 @@ rule registration_mni152:
         image_segmentation = rules.synthseg_t1w.output.seg,
         fixed_segmentation = ATLAS_SEG
     output:
-        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_MNI152-space_T1w.nii.gz",
-        fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_fwdfield.nii.gz",
-        bak_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_bakfield.nii.gz",
-        fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_fwdaffine.mat",
-        # fwd_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_fwdfield-secondary.nii.gz",
-        # bak_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_bakfield-secondary.nii.gz",
-        output_segmentation = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-MNI152_seg.nii.gz"
+        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_{MNI_SPACE}_T1w.nii.gz",
+        fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-{MNI_SPACE}_fwdfield.nii.gz",
+        bak_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-{MNI_SPACE}_bakfield.nii.gz",
+        fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-{MNI_SPACE}_fwdaffine.mat",
+        output_segmentation = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-{MNI_SPACE}_seg.nii.gz"
     threads: HEAVY_THREADS
+    params:
+        linear_flag = "--linear-only" if LINEAR else "",
+        disable_robust = "--disable-robust"
     shell:
         """
         micaflow coregister \
@@ -400,7 +413,13 @@ rule registration_mni152:
             --rev-warp-file {output.bak_field} \
             --output-segmentation {output.output_segmentation} \
             --threads {threads} \
-            --disable-robust
+            {params.disable_robust} \
+            {params.linear_flag}
+        
+        # If linear mode, coregister won't create warp files.
+        # Create empty placeholders to satisfy Snakemake's output requirements.
+        if [ ! -f "{output.fwd_field}" ]; then touch "{output.fwd_field}"; fi
+        if [ ! -f "{output.bak_field}" ]; then touch "{output.bak_field}"; fi
         """
 
 rule apply_warp_t1w_to_mni:
@@ -410,17 +429,28 @@ rule apply_warp_t1w_to_mni:
         warp = rules.registration_mni152.output.fwd_field,
         reference = ATLAS
     output:
-        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_MNI152-space_T1w.nii.gz"
+        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{MNI_SPACE}_T1w.nii.gz"
     threads: LIGHT_THREADS
-    shell:
-        """ 
-        micaflow apply_warp \
-            --moving {input.moving} \
-            --reference {input.reference} \
-            --affine {input.affine} \
-            --warp {input.warp} \
-            --output {output.warped}
-        """
+    params:
+        warp_arg = "" if LINEAR else f"--warp {{input.warp}}"
+    run:
+        if LINEAR:
+            shell("""
+            micaflow apply_warp \
+                --moving {input.moving} \
+                --reference {input.reference} \
+                --affine {input.affine} \
+                --output {output.warped}
+            """)
+        else:
+            shell("""
+            micaflow apply_warp \
+                --moving {input.moving} \
+                --reference {input.reference} \
+                --affine {input.affine} \
+                --warp {input.warp} \
+                --output {output.warped}
+            """)
 
 if RUN_FLAIR:
     rule apply_warp_flair_to_mni:
@@ -433,16 +463,28 @@ if RUN_FLAIR:
             secondary_warp_flair = rules.registration_t1w.output.fwd_field_secondary,
             reference = ATLAS
         output:
-            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_MNI152-space_FLAIR.nii.gz"
+            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{MNI_SPACE}_FLAIR.nii.gz"
         threads: LIGHT_THREADS
-        shell:
-            """ 
-            micaflow apply_warp \
-                --moving {input.moving} \
-                --reference {input.reference} \
-                --transforms {input.warp_mni} {input.affine_mni} {input.secondary_warp_flair} {input.warp_flair} {input.affine_flair} \
-                --output {output.warped}
-            """
+        run:
+            if LINEAR:
+                # Linear mode: no MNI warp, only affines
+                shell("""
+                micaflow apply_warp \
+                    --moving {input.moving} \
+                    --reference {input.reference} \
+                    --transforms {input.affine_mni} {input.secondary_warp_flair} {input.warp_flair} {input.affine_flair} \
+                    --output {output.warped}
+                """)
+            else:
+                shell(""" 
+                micaflow apply_warp \
+                    --moving {input.moving} \
+                    --reference {input.reference} \
+                    --transforms {input.warp_mni} {input.affine_mni} {input.secondary_warp_flair} {input.warp_flair} {input.affine_flair} \
+                    --output {output.warped}
+                """)
+
+
 
 rule run_texture_native:
     input:
@@ -467,26 +509,35 @@ rule warp_texture_to_mni:
         warp = rules.registration_mni152.output.fwd_field,
         reference = ATLAS
     output:
-        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_MNI152-space_textures-{{modality}}_{{metric}}.nii.gz"
+        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_{MNI_SPACE}_textures-{{modality}}_{{metric}}.nii.gz"
     wildcard_constraints:
         metric = "gradient-magnitude|relative-intensity"
     threads: LIGHT_THREADS
-    shell:
-        """
-        micaflow apply_warp \
-            --moving {input.moving} \
-            --reference {input.reference} \
-            --affine {input.affine} \
-            --warp {input.warp} \
-            --output {output.warped}
-        """
+    run:
+        if LINEAR:
+            shell("""
+            micaflow apply_warp \
+                --moving {input.moving} \
+                --reference {input.reference} \
+                --affine {input.affine} \
+                --output {output.warped}
+            """)
+        else:
+            shell("""
+            micaflow apply_warp \
+                --moving {input.moving} \
+                --reference {input.reference} \
+                --affine {input.affine} \
+                --warp {input.warp} \
+                --output {output.warped}
+            """)
 
 rule calculate_metrics_T1w:
     input:
         image = rules.registration_mni152.output.output_segmentation,
         atlas = ATLAS_SEG
     output:
-        metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_T1w-to-MNI152-space_DICE.csv"
+        metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_T1w-to-{MNI_SPACE}_DICE.csv"
     threads: LIGHT_THREADS
     shell:
         """
@@ -498,9 +549,11 @@ rule calculate_metrics_T1w:
 
 rule normalize_anatomical:
     input:
-        image = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{wildcards.space}-space_{{modality}}.nii.gz"
+        image = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{wildcards.space}_{{modality}}.nii.gz"
     output:
-        normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{{space}}-space_{{modality}}_normalized.nii.gz"
+        normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{{space}}_{{modality}}_normalized.nii.gz"
+    wildcard_constraints:
+        space = f"T1w-space|{MNI_SPACE}"
     threads: LIGHT_THREADS
     shell:
         """
@@ -633,7 +686,7 @@ if RUN_DWI:
                     --parc \
                     --robust \
                     --threads {threads} \
-                    {GPU}
+                    {CPU_FLAG}
                 """
         rule b0_synth_registration:
             input:
@@ -714,7 +767,7 @@ if RUN_DWI:
                     --parc \
                     --robust \
                     --threads {threads} \
-                    {GPU}
+                    {CPU_FLAG}
                 """
         
         # The rest of the rules remain unchanged
@@ -808,9 +861,9 @@ if RUN_DWI:
             output:
                 fa_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_FA.nii.gz",
                 md_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_MD.nii.gz"
+            threads: LIGHT_THREADS
             wildcard_constraints:
                 modality="T1w"
-            threads: LIGHT_THREADS
             run:
                 # Process FA map
                 shell(f"micaflow apply_warp --moving {input.fa} --reference {input.reference} "
@@ -913,7 +966,7 @@ if RUN_DWI:
                     --parc \
                     --robust \
                     --threads {threads} \
-                    {GPU}
+                    {CPU_FLAG}
                 """
         
         # The rest of the rules remain unchanged
@@ -1065,7 +1118,7 @@ rule transform_mask_to_mni:
         # secondary_warp = rules.registration_mni152.output.fwd_field_secondary,
         reference = ATLAS
     output:
-        mni_mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_MNI152-space_brain_mask.nii.gz"
+        mni_mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{MNI_SPACE}_brain_mask.nii.gz"
     threads: LIGHT_THREADS
     shell:
         """
@@ -1090,18 +1143,28 @@ if RUN_DWI:
             secondary_warp_dwi = rules.dwi_registration.output.fwd_field_secondary,
             reference = ATLAS
         output:
-            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_MNI152-space_{{metric}}.nii.gz"
+            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_{MNI_SPACE}_{{metric}}.nii.gz"
         threads: LIGHT_THREADS
         wildcard_constraints:
             metric="FA|MD"
-        shell:
-            """
-            micaflow apply_warp \
-                --moving {input.moving} \
-                --reference {input.reference} \
-                --transforms {input.warp_mni} {input.affine_mni} {input.secondary_warp_dwi} {input.warp_dwi} {input.affine_dwi} \
-                --output {output.warped}
-            """
+        run:
+            if LINEAR:
+                # Linear mode: no MNI warp
+                shell("""
+                micaflow apply_warp \
+                    --moving {input.moving} \
+                    --reference {input.reference} \
+                    --transforms {input.affine_mni} {input.secondary_warp_dwi} {input.warp_dwi} {input.affine_dwi} \
+                    --output {output.warped}
+                """)
+            else:
+                shell("""
+                micaflow apply_warp \
+                    --moving {input.moving} \
+                    --reference {input.reference} \
+                    --transforms {input.warp_mni} {input.affine_mni} {input.secondary_warp_dwi} {input.warp_dwi} {input.affine_dwi} \
+                    --output {output.warped}
+                """)
 
 if EXTRACT_BRAIN:
     # Remove the separate directory creation rule and handle directory creation within each rule
@@ -1148,12 +1211,12 @@ if EXTRACT_BRAIN:
             image = lambda wildcards: (
                 rules.dwi_compute_fa_md.output.fa if wildcards.modality == "FA" else
                 rules.dwi_compute_fa_md.output.md if wildcards.modality == "MD" else
-                f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_MNI152-space_{wildcards.modality}.nii.gz" if wildcards.modality in ["T1w", "FLAIR"] else
+                f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{MNI_SPACE}_{wildcards.modality}.nii.gz" if wildcards.modality in ["T1w", "FLAIR"] else
                 None
             ),
             mask = rules.transform_mask_to_mni.output.mni_mask
         output:
-            brain = f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_MNI152-space_{{modality}}.nii.gz"
+            brain = f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{MNI_SPACE}_{{modality}}.nii.gz"
         wildcard_constraints:
             modality = "FA|MD|T1w|FLAIR"
         threads: LIGHT_THREADS
@@ -1177,11 +1240,11 @@ if EXTRACT_BRAIN:
 
     rule normalize_brain_extracted:
         input:
-            image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{{space}}-space_{{modality}}.nii.gz"
+            image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{{space}}_{{modality}}.nii.gz"
         output:
-            normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{{space}}-space_{{modality}}_normalized.nii.gz"
+            normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{{space}}_{{modality}}_normalized.nii.gz"
         wildcard_constraints:
-            space = "T1w|MNI152",
+            space = f"T1w-space|{MNI_SPACE}",
             modality = "T1w|FLAIR|FA|MD"
         threads: LIGHT_THREADS
         shell:
@@ -1194,8 +1257,3 @@ if EXTRACT_BRAIN:
                 --min-value 0 \
                 --max-value 100
             """
-
-onsuccess:
-    if not KEEP_TEMP and os.path.exists(TEMP_DIR):
-        print(f"Cleaning up temporary directory: {TEMP_DIR}")
-        shutil.rmtree(TEMP_DIR)

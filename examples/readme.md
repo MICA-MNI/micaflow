@@ -32,6 +32,7 @@ python synthseg_registration.py --input <input_image.nii.gz> --reference <refere
 - `--reference`: Reference/target image (any contrast)
 - `--output`: Path where the registered image will be saved
 - `--workdir`: (Optional) Directory for intermediate files (default: current directory)
+- `--linear`: (Optional) Perform linear-only registration (affine only). Skips the non-linear warping step to increase speed when deformation fields are not needed.
 
 ### Example
 
