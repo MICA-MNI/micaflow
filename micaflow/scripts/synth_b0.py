@@ -656,6 +656,26 @@ def main():
         os.makedirs(temp_dir, exist_ok=True)
         print(f"\n{CYAN}Temporary directory:{RESET} {temp_dir}")
         
+        # --- FIX START: Handle 4D input dimensions for SynB0-DISCO compatibility ---
+        # Ensure inputs are strictly 3D. If 4D with N=1 (e.g. 240x240x220x1), 
+        # squeeze them to prevent NumPy "inhomogeneous shape" errors during inference.
+        
+        t1_img_check = nib.load(t1_path)
+        if len(t1_img_check.shape) > 3 and t1_img_check.shape[3] == 1:
+            print(f"{YELLOW}Warning: T1w input is 4D {t1_img_check.shape}. Squeezing to 3D for inference compatibility...{RESET}")
+            t1_3d_path = os.path.join(temp_dir, "t1_3d_input.nii.gz")
+            # Squeeze data and save to temp file
+            nib.save(nib.Nifti1Image(t1_img_check.get_fdata().squeeze(), t1_img_check.affine), t1_3d_path)
+            t1_path = t1_3d_path
+            
+        b0_img_check = nib.load(b0_path)
+        if len(b0_img_check.shape) > 3 and b0_img_check.shape[3] == 1:
+            print(f"{YELLOW}Warning: B0 input is 4D {b0_img_check.shape}. Squeezing to 3D for inference compatibility...{RESET}")
+            b0_3d_path = os.path.join(temp_dir, "b0_3d_input.nii.gz")
+            nib.save(nib.Nifti1Image(b0_img_check.get_fdata().squeeze(), b0_img_check.affine), b0_3d_path)
+            b0_path = b0_3d_path
+        # --- FIX END ---
+
         # Find models
         models_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'models')
         print(f"{CYAN}Models directory:{RESET} {models_dir}")
