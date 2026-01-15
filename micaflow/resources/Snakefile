@@ -41,7 +41,7 @@ GPU = config.get("gpu", "")
 LINEAR = config.get("linear", False)
 
 # Define MNI space naming based on linear flag
-MNI_SPACE = "MNI152linear-space" if LINEAR else "MNI152-space"
+MNI_SPACE = "MNI152linear" if LINEAR else "MNI152"
 
 # Add this to the top section where variables are defined
 USE_SYNTH_B0 = INVERSE_DWI_FILE == "" or INVERSE_DWI_FILE is None

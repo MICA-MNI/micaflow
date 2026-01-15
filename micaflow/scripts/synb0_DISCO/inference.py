@@ -46,10 +46,11 @@ def inference(T1_path, b0_d_path, model, device):
         # Apply padding if needed
         if any(sum(p) > 0 for p in pad_dims):
             print(f"Padding dimensions to be divisible by 8: {pad_dims}")
+            # FIX: Properly structure padding as a tuple of tuples: ((before,after), (before,after), ...)
             padding = ((0, 0), (0, 0),  # No padding for batch and channel dims
-                     pad_dims[0][0], pad_dims[0][1],  # Depth padding
-                     pad_dims[1][0], pad_dims[1][1],  # Height padding
-                     pad_dims[2][0], pad_dims[2][1])  # Width padding
+                     (pad_dims[0][0], pad_dims[0][1]),  # Depth padding
+                     (pad_dims[1][0], pad_dims[1][1]),  # Height padding
+                     (pad_dims[2][0], pad_dims[2][1]))  # Width padding
             
             # Apply same padding to both images
             img_T1 = np.pad(img_T1, padding, 'constant')
