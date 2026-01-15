@@ -472,6 +472,28 @@ def compute_fa_md(bias_corr_path, mask_path, moving_bval, moving_bvec, fa_path, 
         print(f"  New shape: {dwi_data.shape}")
         print(f"  Total volumes: {len(bvals)}")
     
+    # Filter out invalid diffusion volumes (b > 50 but bvec is 0,0,0)
+    # bvecs is shaped (3, N) at this point
+    bvec_norms = np.linalg.norm(bvecs, axis=0)
+    # Identify indices that are in a shell (b>50) but have no direction
+    bad_indices = (bvals > 50) & (bvec_norms < 1e-6)
+    
+    if np.any(bad_indices):
+        n_removed = np.sum(bad_indices)
+        print(f"{YELLOW}Warning: Found {n_removed} volumes in diffusion shell (b>50) with zero b-vectors (0,0,0).{RESET}")
+        print(f"{YELLOW}  Excluding invalid volumes to prevent fitting errors...{RESET}")
+        
+        # Create mask of volumes to keep
+        keep_mask = ~bad_indices
+        
+        # Apply filtering
+        dwi_data = dwi_data[..., keep_mask]
+        bvals = bvals[keep_mask]
+        bvecs = bvecs[:, keep_mask]
+        
+        print(f"  New DWI shape after filtering: {dwi_data.shape}")
+        print(f"  New B-values count: {len(bvals)}")
+
     # Count b0 volumes
     b0_count = np.sum(bvals <= 50)
     dwi_count = len(bvals) - b0_count
