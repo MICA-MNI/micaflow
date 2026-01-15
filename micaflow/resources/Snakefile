@@ -162,7 +162,7 @@ def _get_validated_params():
 CPU_FLAG = "" if GPU != False else "--cpu"
 
 # Define MNI space naming based on linear flag
-MNI_SPACE = "MNI152linear-space" if LINEAR else "MNI152-space"
+MNI_SPACE = "MNI152linear" if LINEAR else "MNI152"
 
 print("flair_file: ", FLAIR_FILE)
 print("run_flair: ", RUN_FLAIR)
@@ -173,25 +173,25 @@ def get_final_output():
     outputs = []
     # All existing outputs...
     # Updated to use MNI_SPACE variable
-    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_{MNI_SPACE}_textures-T1w_gradient-magnitude.nii.gz")
-    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_{MNI_SPACE}_textures-T1w_relative-intensity.nii.gz")
+    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_{MNI_SPACE}-space_textures-T1w_gradient-magnitude.nii.gz")
+    outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_{MNI_SPACE}-space_textures-T1w_relative-intensity.nii.gz")
     outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_T1w-to-{MNI_SPACE}_DICE.csv")
     outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_T1w-space_T1w.nii.gz"))
     
     # Add normalized T1w images
     outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_T1w-space_T1w_normalized.nii.gz"))
-    outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_{MNI_SPACE}_T1w_normalized.nii.gz"))
+    outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_{MNI_SPACE}-space_T1w_normalized.nii.gz"))
 
     if RUN_FLAIR:
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_FLAIR-to-T1w-space_DICE.csv")
         # Updated to use MNI_SPACE variable
-        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_{MNI_SPACE}_textures-FLAIR_gradient-magnitude.nii.gz")
-        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_{MNI_SPACE}_textures-FLAIR_relative-intensity.nii.gz")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_{MNI_SPACE}-space_textures-FLAIR_gradient-magnitude.nii.gz")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_{MNI_SPACE}-space_textures-FLAIR_relative-intensity.nii.gz")
         outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_T1w-space_FLAIR.nii.gz"))
         
         # Add normalized FLAIR images 
         outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_T1w-space_FLAIR_normalized.nii.gz"))
-        outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_{MNI_SPACE}_FLAIR_normalized.nii.gz"))
+        outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}_{SESSION}_{MNI_SPACE}-space_FLAIR_normalized.nii.gz"))
 
     if RUN_DWI:
         outputs.extend([
@@ -205,19 +205,19 @@ def get_final_output():
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_T1w-space_MD_normalized.nii.gz")
 
         # Add MNI space FA and MD maps
-        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_{MNI_SPACE}_FA.nii.gz")
-        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_{MNI_SPACE}_MD.nii.gz")
-        
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_{MNI_SPACE}-space_FA.nii.gz")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_{MNI_SPACE}-space_MD.nii.gz")
+
     if EXTRACT_BRAIN:
         # Add existing brain-extracted outputs
-        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{MNI_SPACE}_T1w.nii.gz")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{MNI_SPACE}-space_T1w.nii.gz")
         # Add normalized version
-        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{MNI_SPACE}_T1w_normalized.nii.gz")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{MNI_SPACE}-space_T1w_normalized.nii.gz")
         outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_T1w-space_T1w_normalized.nii.gz")
         
         if RUN_FLAIR:
-            outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{MNI_SPACE}_FLAIR.nii.gz")
-            outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{MNI_SPACE}_FLAIR_normalized.nii.gz")
+            outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{MNI_SPACE}-space_FLAIR.nii.gz")
+            outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{MNI_SPACE}-space_FLAIR_normalized.nii.gz")
             outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_T1w-space_FLAIR_normalized.nii.gz")
         
         if RUN_DWI:
@@ -391,7 +391,7 @@ rule registration_mni152:
         image_segmentation = rules.synthseg_t1w.output.seg,
         fixed_segmentation = ATLAS_SEG
     output:
-        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_{MNI_SPACE}_T1w.nii.gz",
+        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_{MNI_SPACE}-space_T1w.nii.gz",
         fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-{MNI_SPACE}_fwdfield.nii.gz",
         bak_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-{MNI_SPACE}_bakfield.nii.gz",
         fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-{MNI_SPACE}_fwdaffine.mat",
@@ -429,7 +429,7 @@ rule apply_warp_t1w_to_mni:
         warp = rules.registration_mni152.output.fwd_field,
         reference = ATLAS
     output:
-        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{MNI_SPACE}_T1w.nii.gz"
+        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{MNI_SPACE}-space_T1w.nii.gz"
     threads: LIGHT_THREADS
     params:
         warp_arg = "" if LINEAR else f"--warp {{input.warp}}"
@@ -463,7 +463,7 @@ if RUN_FLAIR:
             secondary_warp_flair = rules.registration_t1w.output.fwd_field_secondary,
             reference = ATLAS
         output:
-            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{MNI_SPACE}_FLAIR.nii.gz"
+            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{MNI_SPACE}-space_FLAIR.nii.gz"
         threads: LIGHT_THREADS
         run:
             if LINEAR:
@@ -509,7 +509,7 @@ rule warp_texture_to_mni:
         warp = rules.registration_mni152.output.fwd_field,
         reference = ATLAS
     output:
-        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_{MNI_SPACE}_textures-{{modality}}_{{metric}}.nii.gz"
+        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_{MNI_SPACE}-space_textures-{{modality}}_{{metric}}.nii.gz"
     wildcard_constraints:
         metric = "gradient-magnitude|relative-intensity"
     threads: LIGHT_THREADS
@@ -553,7 +553,7 @@ rule normalize_anatomical:
     output:
         normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{{space}}_{{modality}}_normalized.nii.gz"
     wildcard_constraints:
-        space = f"T1w-space|{MNI_SPACE}"
+        space = f"T1w-space|{MNI_SPACE}-space"
     threads: LIGHT_THREADS
     shell:
         """
@@ -1118,7 +1118,7 @@ rule transform_mask_to_mni:
         # secondary_warp = rules.registration_mni152.output.fwd_field_secondary,
         reference = ATLAS
     output:
-        mni_mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{MNI_SPACE}_brain_mask.nii.gz"
+        mni_mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{MNI_SPACE}-space_brain_mask.nii.gz"
     threads: LIGHT_THREADS
     shell:
         """
@@ -1143,7 +1143,7 @@ if RUN_DWI:
             secondary_warp_dwi = rules.dwi_registration.output.fwd_field_secondary,
             reference = ATLAS
         output:
-            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_{MNI_SPACE}_{{metric}}.nii.gz"
+            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_{MNI_SPACE}-space_{{metric}}.nii.gz"
         threads: LIGHT_THREADS
         wildcard_constraints:
             metric="FA|MD"
@@ -1211,12 +1211,12 @@ if EXTRACT_BRAIN:
             image = lambda wildcards: (
                 rules.dwi_compute_fa_md.output.fa if wildcards.modality == "FA" else
                 rules.dwi_compute_fa_md.output.md if wildcards.modality == "MD" else
-                f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{MNI_SPACE}_{wildcards.modality}.nii.gz" if wildcards.modality in ["T1w", "FLAIR"] else
+                f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_{MNI_SPACE}-space_{wildcards.modality}.nii.gz" if wildcards.modality in ["T1w", "FLAIR"] else
                 None
             ),
             mask = rules.transform_mask_to_mni.output.mni_mask
         output:
-            brain = f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{MNI_SPACE}_{{modality}}.nii.gz"
+            brain = f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{MNI_SPACE}-space_{{modality}}.nii.gz"
         wildcard_constraints:
             modality = "FA|MD|T1w|FLAIR"
         threads: LIGHT_THREADS
@@ -1244,7 +1244,7 @@ if EXTRACT_BRAIN:
         output:
             normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/brain-extracted/{SUBJECT}_{SESSION}_{{space}}_{{modality}}_normalized.nii.gz"
         wildcard_constraints:
-            space = f"T1w-space|{MNI_SPACE}",
+            space = f"T1w-space|{MNI_SPACE}-space",
             modality = "T1w|FLAIR|FA|MD"
         threads: LIGHT_THREADS
         shell:
