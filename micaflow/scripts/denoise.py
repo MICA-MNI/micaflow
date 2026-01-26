@@ -134,6 +134,10 @@ import nibabel as nib
 import sys
 import os
 import numpy as np
+import tempfile
+import gzip
+import shutil
+import struct  # Added for binary patching
 from dipy.denoise.patch2self import patch2self
 from dipy.denoise.gibbs import gibbs_removal
 from dipy.io.gradients import read_bvals_bvecs
@@ -253,7 +257,58 @@ def print_help_message():
     """
     print(help_text)
 
-
+def robust_load(filepath):
+    """
+    Load a NIfTI file, repairing the 'vox_offset' header issue if nibabel rejects it.
+    Newer nibabel versions reject .nii files with vox_offset=348 (must be 352).
+    """
+    try:
+        img = nib.load(filepath)
+        # Access data to trigger lazy loading errors immediately
+        _ = img.shape 
+        return img
+    except Exception as e:
+        # Check for specific 348/352 offset error
+        if "vox offset" in str(e).lower() and ("348" in str(e) or "352" in str(e)):
+            print(f"{YELLOW}  Malformed NIfTI header detected (vox_offset 348). Patching binary header...{RESET}")
+            
+            # Create temp file
+            fd, temp_path = tempfile.mkstemp(suffix=".nii")
+            os.close(fd)
+            
+            try:
+                # Handle gzipped input transparently
+                opener = gzip.open if filepath.endswith(".gz") else open
+                
+                with opener(filepath, 'rb') as f_in, open(temp_path, 'wb') as f_out:
+                    # Read the first 352 bytes (header area)
+                    # NIfTI header is 348 bytes, usually padded to 352
+                    header_bytes = bytearray(f_in.read(352))
+                    
+                    # Patch byte 108 (vox_offset, float32)
+                    # Check if it is 348.0
+                    current_offset = struct.unpack_from('<f', header_bytes, 108)[0]
+                    if 347.9 < current_offset < 348.1:
+                        # Force it to 352.0
+                        struct.pack_into('<f', header_bytes, 108, 352.0)
+                        
+                    f_out.write(header_bytes)
+                    # Copy rest of the file
+                    shutil.copyfileobj(f_in, f_out)
+                
+                # Load the patched temp file
+                img_fixed = nib.load(temp_path)
+                # Load data into memory so we can safely delete the temp file
+                data = np.array(img_fixed.get_fdata())
+                new_img = nib.Nifti1Image(data, img_fixed.affine, img_fixed.header)
+                return new_img
+                
+            finally:
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+        else:
+            raise e
+    
 def run_denoise(moving, moving_bval, moving_bvec, output, b0_denoising=False, gibbs=False, threads=1):
     """
     Denoise diffusion-weighted images using the Patch2Self algorithm.

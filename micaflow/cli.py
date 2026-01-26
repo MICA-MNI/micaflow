@@ -514,8 +514,8 @@ def main():
     
     # Suffix configuration
     bids_parser.add_argument("--t1w-suffix", default="T1w.nii.gz", help="Suffix for T1w images (default: T1w.nii.gz)")
-    bids_parser.add_argument("--flair-suffix", default="FLAIR.nii.gz", help="Suffix for FLAIR images (default: FLAIR.nii.gz)")
-    bids_parser.add_argument("--dwi-suffix", default="dwi.nii.gz", help="Suffix for DWI images (default: dwi.nii.gz)")
+    bids_parser.add_argument("--flair-suffix", help="Suffix for FLAIR images (e.g. FLAIR.nii.gz). If not provided, FLAIR is skipped.")
+    bids_parser.add_argument("--dwi-suffix", help="Suffix for DWI images (e.g. dwi.nii.gz). If not provided, DWI is skipped.")
     bids_parser.add_argument("--inverse-dwi-suffix", help="Suffix for Inverse DWI images (e.g. acq-rpe_dwi.nii.gz). If not provided, ignored.")
 
     # Passthrough arguments
@@ -1147,12 +1147,16 @@ def main():
                     continue
 
                 # FLAIR (Optional)
-                flair, err = find_file(base_path, "anat", args.flair_suffix, "FLAIR")
-                if err: continue # Skip on ambiguity
+                flair = None
+                if args.flair_suffix:
+                    flair, err = find_file(base_path, "anat", args.flair_suffix, "FLAIR")
+                    if err: continue # Skip on ambiguity
 
                 # DWI (Optional)
-                dwi, err = find_file(base_path, "dwi", args.dwi_suffix, "DWI")
-                if err: continue # Skip on ambiguity
+                dwi = None
+                if args.dwi_suffix:
+                    dwi, err = find_file(base_path, "dwi", args.dwi_suffix, "DWI")
+                    if err: continue # Skip on ambiguity
                 
                 # Inverse DWI (Optional)
                 inv_dwi = None
