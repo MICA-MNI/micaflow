@@ -12,6 +12,7 @@ MicaFlow is a comprehensive neuroimaging pipeline designed for processing struct
 - **Image Registration**: Multi-modal coregistration and spatial normalization to standard spaces
 - **Texture Features**: Advanced texture feature generation
 - **Quality Control**: Built-in QC metrics and visualization
+- **Batch Processing**: Automated BIDS directory scanning and processing
 - **Brain-Extracted Outputs**: Optional dedicated directory for all skull-stripped images
 - **Temporary File Management**: Option to preserve intermediate files for debugging
 - **Modular Design**: Components can be used independently or as a complete pipeline
@@ -63,6 +64,28 @@ micaflow pipeline --subject sub-001 --session ses-01 \
   --inverse-dwi-file sub-001_ses-01_acq-PA_dwi.nii.gz \
   --out-dir /output/path --cores 4 --cpu
 ```
+
+### Batch Processing (BIDS)
+
+To process an entire BIDS dataset automatically using the batch command:
+
+```bash
+micaflow bids --bids-dir /path/to/bids_root --output-dir /path/to/derivatives \
+  --cores 4 --gpu
+```
+
+This command will:
+1. Scan the BIDS directory for valid subjects and sessions.
+2. Automatically identify T1w, FLAIR (optional), and DWI (optional) files based on suffixes.
+3. Run the pipeline sequentially for each session found.
+4. Generate a `micaflow_runs_summary.json` in the output directory tracking execution status.
+
+**key arguments:**
+- `--bids-dir`: Root path to the BIDS dataset.
+- `--output-dir`: Path where derivatives will be saved.
+- `--participant-label`: (Optional) Space-separated list of subject IDs to process (e.g., `001 002`).
+- `--session-label`: (Optional) Space-separated list of session IDs to process.
+- `--t1w-suffix`, `--dwi-suffix`, etc.: Customize matching patterns for input files.
 
 ### Using Individual Modules
 

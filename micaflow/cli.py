@@ -110,6 +110,11 @@ Notes:
 import argparse
 import sys
 import subprocess
+import glob
+import os
+import time
+import json
+import datetime
 from colorama import init, Fore, Style
 import importlib.resources
 
@@ -178,9 +183,11 @@ def print_extended_help():
     {CYAN}{BOLD}────────────────────────── USAGE ──────────────────────────{RESET}
       micaflow {GREEN}[command]{RESET} [options]
       micaflow {GREEN}pipeline{RESET} [options]
+      micaflow {GREEN}bids{RESET} [options]
     
     {CYAN}{BOLD}─────────────────── AVAILABLE COMMANDS ───────────────────{RESET}
       {GREEN}pipeline{RESET}          : Run the full processing pipeline (default)
+      {GREEN}bids{RESET}              : Run the pipeline on an entire BIDS dataset (batch mode)
       {GREEN}apply_warp{RESET}        : Apply transformation to warp an image to a reference space
       {GREEN}bet{RESET}               : Run brain extraction
       {GREEN}bias_correction{RESET}   : Run N4 Bias Field Correction
@@ -218,8 +225,19 @@ def print_extended_help():
       {YELLOW}--rm-cerebellum{RESET}                Remove cerebellum from brain extraction outputs
       {YELLOW}--PED{RESET}                          Phase encoding direction of DWI, options are: 'ap', 'pa', 'lr', 'rl', 'si', 'is' (default: 'pa')
       {YELLOW}--shell-dimension{RESET}              Dimension of the DWI image referring to shells (default: 3)
-      {YELLOW}--linear{RESET}                       Use linear-only registration to MNI space (faster, no nonlinear warping), default is False
-      {YELLOW}Remaining arguments are passed to Snakemake for workflow management{RESET}
+      {YELLOW}--linear{RESET}                       Use linear-only registration to MNI space (if specified alone)
+      {YELLOW}--nonlinear{RESET}                    Use nonlinear registration to MNI space (default if neither specified)
+
+    {CYAN}{BOLD}─────────────────── BIDS BATCH USAGE ────────────────────{RESET}
+      micaflow {GREEN}bids{RESET} {YELLOW}--bids-dir{RESET} PATH {YELLOW}--output-dir{RESET} PATH [options]
+
+      {BLUE}# Process entire BIDS directory{RESET}
+      micaflow {GREEN}bids{RESET} {YELLOW}--bids-dir{RESET} /data/bids {YELLOW}--output-dir{RESET} /data/derivatives \\
+        {YELLOW}--cores{RESET} 4 {YELLOW}--gpu{RESET}
+      
+      {BLUE}# Process specific subjects with custom suffixes{RESET}
+      micaflow {GREEN}bids{RESET} {YELLOW}--bids-dir{RESET} /data/bids {YELLOW}--output-dir{RESET} /data/derivatives \\
+        {YELLOW}--participant-label{RESET} 001 002 {YELLOW}--dwi-suffix{RESET} dwi_acq-AP.nii.gz
 
     {CYAN}{BOLD}────────────────── EXAMPLE PIPELINE USAGE ───────────────{RESET}
 
@@ -479,8 +497,39 @@ def main():
         "--shell-dimension", type=int, default=3, help="Dimension of the DWI image referring to shells"
     )
     pipeline_parser.add_argument(
-        "--linear", action="store_true", help="Use linear-only registration to MNI space (faster, no nonlinear warping)"
+        "--linear", action="store_true", help="Use linear-only registration to MNI space (if specified alone)"
     )
+    pipeline_parser.add_argument(
+        "--nonlinear", action="store_true", help="Use nonlinear registration to MNI space (default if neither specified)"
+    )
+
+    # BIDS Batch Processing Command
+    bids_parser = subparsers.add_parser(
+        "bids", help="Run the pipeline on an entire BIDS dataset"
+    )
+    bids_parser.add_argument("--bids-dir", required=True, help="Path to BIDS root directory")
+    bids_parser.add_argument("--output-dir", required=True, help="Path to derivatives/output directory")
+    bids_parser.add_argument("--participant-label", nargs="+", help="Specific list of subjects to process (without 'sub-' prefix)")
+    bids_parser.add_argument("--session-label", nargs="+", help="Specific list of sessions to process (without 'ses-' prefix)")
+    
+    # Suffix configuration
+    bids_parser.add_argument("--t1w-suffix", default="T1w.nii.gz", help="Suffix for T1w images (default: T1w.nii.gz)")
+    bids_parser.add_argument("--flair-suffix", default="FLAIR.nii.gz", help="Suffix for FLAIR images (default: FLAIR.nii.gz)")
+    bids_parser.add_argument("--dwi-suffix", default="dwi.nii.gz", help="Suffix for DWI images (default: dwi.nii.gz)")
+    bids_parser.add_argument("--inverse-dwi-suffix", help="Suffix for Inverse DWI images (e.g. acq-rpe_dwi.nii.gz). If not provided, ignored.")
+
+    # Passthrough arguments
+    bids_parser.add_argument("--gpu", action="store_true", help="Use GPU computation")
+    bids_parser.add_argument("--dry-run", "-n", action="store_true", help="Print commands without executing")
+    bids_parser.add_argument("--cores", type=int, default=1, help="Number of cores per subject")
+    bids_parser.add_argument("--rm-cerebellum", action="store_true", help="Remove cerebellum")
+    bids_parser.add_argument("--extract-brain", action="store_true", help="Generate brain-extracted outputs")
+    bids_parser.add_argument("--keep-temp", action="store_true", help="Keep temporary files")
+    bids_parser.add_argument("--linear", action="store_true", help="Use linear-only registration")
+    bids_parser.add_argument("--nonlinear", action="store_true", help="Use nonlinear registration")
+    bids_parser.add_argument("--PED", default="pa", help="Phase encoding direction (default: pa)")
+    bids_parser.add_argument("--shell-dimension", type=int, default=3, help="Shell dimension")
+    bids_parser.add_argument("--config-file", help="YAML config file")
 
     # SynthSeg command
     synthseg_parser = subparsers.add_parser(
@@ -1028,7 +1077,253 @@ def main():
     if not args.command:
         args.command = "pipeline"
 
-    if args.command == "pipeline":
+    if args.command == "bids":
+        # 1. Identify Subjects
+        if args.participant_label:
+            subjects = [f"sub-{label}" if not label.startswith("sub-") else label for label in args.participant_label]
+        else:
+            subjects = [d for d in os.listdir(args.bids_dir) if d.startswith("sub-") and os.path.isdir(os.path.join(args.bids_dir, d))]
+        
+        subjects.sort()
+        if not subjects:
+            print(f"{Fore.RED}No subjects found in {args.bids_dir}{Style.RESET_ALL}")
+            sys.exit(1)
+
+        print(f"{Fore.CYAN}Found {len(subjects)} subjects to process.{Style.RESET_ALL}")
+
+        # Helper to find unique files by suffix
+        def find_file(base, subfolder, suffix, desc):
+            path_pattern = os.path.join(base, subfolder, f"*{suffix}")
+            matches = glob.glob(path_pattern)
+            if len(matches) > 1:
+                print(f"{Fore.RED}Error: Multiple {desc} files found matching *{suffix} in {os.path.join(base, subfolder)}{Style.RESET_ALL}")
+                for m in matches:
+                    print(f"  - {os.path.basename(m)}")
+                return None, True # None found, Error=True
+            if len(matches) == 0:
+                return None, False # None found, Error=False
+            return matches[0], False # Found, Error=False
+
+        # 2. Iterate Subjects
+        for sub in subjects:
+            sub_dir = os.path.join(args.bids_dir, sub)
+            
+            # Detect sessions
+            sessions = [d for d in os.listdir(sub_dir) if d.startswith("ses-") and os.path.isdir(os.path.join(sub_dir, d))]
+            
+            if not sessions:
+                sessions = [None] # No session structure
+            else:
+                sessions.sort()
+                # Filter sessions if requested
+                if args.session_label:
+                    target_ses = [f"ses-{l}" if not l.startswith("ses-") else l for l in args.session_label]
+                    sessions = [s for s in sessions if s in target_ses]
+
+            # 3. Iterate Sessions
+            for ses in sessions:
+                # Start Timer
+                start_time = time.time()
+                run_timestamp = datetime.datetime.now().isoformat()
+
+                # Define path
+                if ses:
+                    base_path = os.path.join(sub_dir, ses)
+                    ses_id = ses
+                    sub_ses_str = f"{sub}/{ses}"
+                else:
+                    base_path = sub_dir
+                    ses_id = None
+                    sub_ses_str = sub
+
+                print(f"\n{Fore.GREEN}Checking {sub_ses_str}...{Style.RESET_ALL}")
+
+                # 4. Find Files
+                # T1w (Required)
+                t1w, err = find_file(base_path, "anat", args.t1w_suffix, "T1w")
+                if err: continue # Skip on error (ambiguity)
+                if not t1w:
+                    print(f"{Fore.YELLOW}Skipping {sub_ses_str}: No T1w found matching *{args.t1w_suffix}{Style.RESET_ALL}")
+                    continue
+
+                # FLAIR (Optional)
+                flair, err = find_file(base_path, "anat", args.flair_suffix, "FLAIR")
+                if err: continue # Skip on ambiguity
+
+                # DWI (Optional)
+                dwi, err = find_file(base_path, "dwi", args.dwi_suffix, "DWI")
+                if err: continue # Skip on ambiguity
+                
+                # Inverse DWI (Optional)
+                inv_dwi = None
+                if args.inverse_dwi_suffix:
+                    inv_dwi, err = find_file(base_path, "dwi", args.inverse_dwi_suffix, "Inverse DWI")
+                    if err: continue
+
+                # Check if DWI has bvals/bvecs (Required if DWI is present)
+                bval_file = None
+                bvec_file = None
+                if dwi:
+                    # Infer bval/bvec by replacing extension
+                    prefix = dwi
+                    if prefix.endswith(".nii.gz"):
+                        prefix = prefix[:-7]
+                    elif prefix.endswith(".nii"):
+                        prefix = prefix[:-4]
+                    
+                    bval_cand = prefix + ".bval"
+                    bvec_cand = prefix + ".bvec"
+                    
+                    if os.path.exists(bval_cand) and os.path.exists(bvec_cand):
+                        bval_file = bval_cand
+                        bvec_file = bvec_cand
+                    else:
+                        # Fallback: Instead of skipping subject, just drop DWI and proceed with T1/FLAIR
+                        print(f"{Fore.YELLOW}Warning: DWI found but missing .bval or .bvec files for {dwi}. Proceeding without DWI.{Style.RESET_ALL}")
+                        dwi = None
+                
+                # Check Inverse DWI bvals/bvecs
+                inv_bval_file = None
+                inv_bvec_file = None
+                if inv_dwi:
+                    prefix = inv_dwi
+                    if prefix.endswith(".nii.gz"):
+                        prefix = prefix[:-7]
+                    elif prefix.endswith(".nii"):
+                        prefix = prefix[:-4]
+                    
+                    cand_bval = prefix + ".bval"
+                    cand_bvec = prefix + ".bvec"
+                    if os.path.exists(cand_bval) and os.path.exists(cand_bvec):
+                        inv_bval_file = cand_bval
+                        inv_bvec_file = cand_bvec
+
+                # 5. Build Command
+                cmd = [sys.executable, "-m", "micaflow.cli", "pipeline"]
+                cmd.extend(["--subject", sub])
+                if ses_id:
+                    cmd.extend(["--session", ses_id])
+                
+                cmd.extend(["--output", args.output_dir])
+                
+                # FIX: Do NOT pass data directory to avoid path duplication logic in pipeline.
+                # Instead, pass explicit absolute paths for all files.
+                # cmd.extend(["--data-directory", args.bids_dir])
+                
+                cmd.extend(["--t1w-file", os.path.abspath(t1w)])
+                if flair:
+                    cmd.extend(["--flair-file", os.path.abspath(flair)])
+                
+                # DWI handling
+                if dwi:
+                    cmd.extend(["--dwi-file", os.path.abspath(dwi)])
+                    cmd.extend(["--bval-file", os.path.abspath(bval_file)])
+                    cmd.extend(["--bvec-file", os.path.abspath(bvec_file)])
+                
+                if inv_dwi:
+                    cmd.extend(["--inverse-dwi-file", os.path.abspath(inv_dwi)])
+                    if inv_bval_file:
+                        cmd.extend(["--inverse-bval-file", os.path.abspath(inv_bval_file)])
+                        cmd.extend(["--inverse-bvec-file", os.path.abspath(inv_bvec_file)])
+
+                # Passthrough args
+                if args.gpu: cmd.append("--gpu")
+                if args.rm_cerebellum: cmd.append("--rm-cerebellum")
+                if args.extract_brain: cmd.append("--extract-brain")
+                if args.keep_temp: cmd.append("--keep-temp")
+                if args.linear: cmd.append("--linear")
+                if args.nonlinear: cmd.append("--nonlinear")
+                if args.config_file: cmd.extend(["--config-file", args.config_file])
+                
+                cmd.extend(["--cores", str(args.cores)])
+                cmd.extend(["--PED", args.PED])
+                cmd.extend(["--shell-dimension", str(args.shell_dimension)])
+
+                # 6. Execute and Log
+                print(f"{Fore.CYAN}Launching pipeline for {sub_ses_str}...{Style.RESET_ALL}")
+                
+                status = "unknown"
+                error_msg = None
+
+                if args.dry_run:
+                    print(f"Dry run: {' '.join(cmd)}")
+                    status = "dry_run"
+                else:
+                    try:
+                        subprocess.run(cmd, check=True)
+                        status = "success"
+                    except subprocess.CalledProcessError as e:
+                        print(f"{Fore.RED}Pipeline failed for {sub_ses_str}{Style.RESET_ALL}")
+                        status = "failed"
+                        error_msg = str(e)
+                
+                # 7. Generate Run Metadata JSON
+                # Logic updated: Append to a single summary JSON in the main output directory
+                if not args.dry_run:
+                    try:
+                        duration = time.time() - start_time
+                        
+                        # Use main output dir
+                        os.makedirs(args.output_dir, exist_ok=True)
+                        
+                        metadata = {
+                            "subject": sub,
+                            "session": ses_id,
+                            "timestamp": run_timestamp,
+                            "duration_seconds": round(duration, 2),
+                            "status": status,
+                            "error": error_msg,
+                            "inputs": {
+                                "t1w": t1w,
+                                "flair": flair,
+                                "dwi": dwi,
+                                "bval": bval_file,
+                                "bvec": bvec_file,
+                                "inverse_dwi": inv_dwi,
+                                "inverse_bval": inv_bval_file
+                            },
+                            "config": {
+                                "linear": args.linear,
+                                "nonlinear": args.nonlinear,
+                                "ped": args.PED,
+                                "shell_dimension": args.shell_dimension,
+                                "extract_brain": args.extract_brain,
+                                "rm_cerebellum": args.rm_cerebellum,
+                                "gpu": args.gpu
+                            },
+                            "command_line": cmd
+                        }
+                        
+                        # Define the single summary log file path
+                        json_path = os.path.join(args.output_dir, "micaflow_runs_summary.json")
+                        
+                        # Load existing data if file exists
+                        run_history = []
+                        if os.path.exists(json_path):
+                            try:
+                                with open(json_path, "r") as f:
+                                    run_history = json.load(f)
+                                    if not isinstance(run_history, list):
+                                        # If for some reason it's not a list, wrap it or start new
+                                        # (Handling backward compatibility if it was dict)
+                                        run_history = [] 
+                            except json.JSONDecodeError:
+                                print(f"{Fore.YELLOW}Warning: Could not decode existing log file. Starting fresh.{Style.RESET_ALL}")
+                                run_history = []
+                        
+                        # Append new run
+                        run_history.append(metadata)
+                        
+                        # Write back to file
+                        with open(json_path, "w") as f:
+                            json.dump(run_history, f, indent=4)
+                        
+                        print(f"Run metadata appended to {json_path}")
+
+                    except Exception as e:
+                        print(f"{Fore.RED}Error saving run metadata: {e}{Style.RESET_ALL}")
+
+    elif args.command == "pipeline":
         # Get the path to the Snakefile
         snakefile = get_snakefile_path()
 
@@ -1058,6 +1353,7 @@ def main():
             "shell_dimension",
             "PED",
             "linear",
+            "nonlinear"
         ]:
             if getattr(args, param.replace("-", "_"), None):
                 config[param] = getattr(args, param.replace("-", "_"))
@@ -1442,6 +1738,7 @@ def main():
         for arg_name, arg_value in vars(args).items():
             if arg_name != "command" and arg_value is not None:
                 arg_name_formatted = arg_name.replace("_", "-")
+               
                 if isinstance(arg_value, bool):
                     if arg_value:
                         normalize_args.append(f"--{arg_name_formatted}")
