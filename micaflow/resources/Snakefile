@@ -133,10 +133,14 @@ def _get_validated_params():
     print("ATLAS_DIR: ", ATLAS_DIR)
     print(f"Temporary directory: {TEMP_DIR}")
     
+    # FIX: Ensure all file paths are strings (handle None -> "") before passing to check_paths
+    def safe_str(val):
+        return "" if val is None else str(val)
+
     result = check_paths(
-        DATA_DIRECTORY, OUT_DIR, SUBJECT, SESSION, GPU,
-        FLAIR_FILE, T1W_FILE, DWI_FILE, BVAL_FILE, BVEC_FILE,
-        INVERSE_DWI_FILE, INVERSE_BVAL_FILE, INVERSE_BVEC_FILE, THREADS
+        safe_str(DATA_DIRECTORY), safe_str(OUT_DIR), safe_str(SUBJECT), safe_str(SESSION), safe_str(GPU),
+        safe_str(FLAIR_FILE), safe_str(T1W_FILE), safe_str(DWI_FILE), safe_str(BVAL_FILE), safe_str(BVEC_FILE),
+        safe_str(INVERSE_DWI_FILE), safe_str(INVERSE_BVAL_FILE), safe_str(INVERSE_BVEC_FILE), THREADS
     )
     
     (data_dir, out_dir, subject, session, run_dwi, gpu,

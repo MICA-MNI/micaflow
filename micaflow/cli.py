@@ -1223,12 +1223,18 @@ def main():
                     cmd.extend(["--dwi-file", os.path.abspath(dwi)])
                     cmd.extend(["--bval-file", os.path.abspath(bval_file)])
                     cmd.extend(["--bvec-file", os.path.abspath(bvec_file)])
+                else:
+                    # FIX: Explicitly pass empty strings to clear potential cache/defaults in pipeline
+                    cmd.extend(["--dwi-file", ""])
+                    cmd.extend(["--bval-file", ""])
+                    cmd.extend(["--bvec-file", ""])
                 
                 if inv_dwi:
                     cmd.extend(["--inverse-dwi-file", os.path.abspath(inv_dwi)])
-                    if inv_bval_file:
-                        cmd.extend(["--inverse-bval-file", os.path.abspath(inv_bval_file)])
-                        cmd.extend(["--inverse-bvec-file", os.path.abspath(inv_bvec_file)])
+                    cmd.extend(["--inverse-bval-file", os.path.abspath(inv_bval_file) if inv_bval_file else ""])
+                    cmd.extend(["--inverse-bvec-file", os.path.abspath(inv_bvec_file) if inv_bvec_file else ""])
+                else:
+                    cmd.extend(["--inverse-dwi-file", ""])
 
                 # Passthrough args
                 if args.gpu: cmd.append("--gpu")
@@ -1242,6 +1248,10 @@ def main():
                 cmd.extend(["--cores", str(args.cores)])
                 cmd.extend(["--PED", args.PED])
                 cmd.extend(["--shell-dimension", str(args.shell_dimension)])
+
+                # FIX: Pass unknown arguments (like --unlock, --rerun-incomplete) to the pipeline
+                if unknown:
+                    cmd.extend(unknown)
 
                 # 6. Execute and Log
                 print(f"{Fore.CYAN}Launching pipeline for {sub_ses_str}...{Style.RESET_ALL}")
@@ -1284,7 +1294,8 @@ def main():
                                 "bval": bval_file,
                                 "bvec": bvec_file,
                                 "inverse_dwi": inv_dwi,
-                                "inverse_bval": inv_bval_file
+                                "inverse_bval": inv_bval_file,
+                                "inverse_bvec": inv_bvec_file
                             },
                             "config": {
                                 "linear": args.linear,
@@ -1359,8 +1370,10 @@ def main():
             "linear",
             "nonlinear"
         ]:
-            if getattr(args, param.replace("-", "_"), None):
-                config[param] = getattr(args, param.replace("-", "_"))
+            # FIX: Check if argument is strictly not None (allow empty strings to override cache)
+            val = getattr(args, param.replace("-", "_"), None)
+            if val is not None:
+                config[param] = val
 
         # Add config parameters to command
         if len(config) > 0:
@@ -1693,6 +1706,8 @@ def main():
                 else:
                     sdc_args.append(f"--{arg_name_formatted}")
                     sdc_args.append(str(arg_value))
+
+       
 
         # Run the SDC script
         try:
