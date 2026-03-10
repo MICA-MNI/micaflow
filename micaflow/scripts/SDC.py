@@ -359,8 +359,7 @@ def print_help_message():
     
     {CYAN}{BOLD}────────────────────── EXIT CODES ───────────────────────{RESET}
     {GREEN}0{RESET} : Success - distortion correction completed
-    {RED}1{RESET} : Error - invalid inputs, file not found, or processin            --secondary-warp {input.secondary_warp}
-g failure
+    {RED}1{RESET} : Error - invalid inputs, file not found, or processing failure
     
     {CYAN}{BOLD}───────────────── COMMON ISSUES ─────────────────────────{RESET}
     {YELLOW}Issue:{RESET} "Out of memory" error

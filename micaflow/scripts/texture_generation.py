@@ -37,21 +37,18 @@ Computed Features:
 How It Works:
 ------------
 1. Load input MRI and brain mask
-2. Segment brain into GM, WM, CSF (Atropos K-means)
-3. Find GM and WM intensity peaks
-4. Compute gradient magnitude (edge detection)
-5. Calculate relative intensity (normalized contrast)
-6. Apply smoothing to relative intensity map
-7. Save all feature maps as NIfTI files
+2. Calculate brain-masked mean intensity for background reference
+3. Compute gradient magnitude (edge detection)
+4. Calculate relative intensity (normalized contrast mapping)
+5. Apply smoothing to relative intensity map
+6. Save all feature maps as NIfTI files
 
 Relative Intensity Calculation:
 ------------------------------
-1. Find GM peak intensity (mode of GM histogram)
-2. Find WM peak intensity (mode of WM histogram)
-3. Compute background: BG = 0.5 × (GM_peak + WM_peak)
-4. For voxels < BG: RI = 100 × (1 - (BG - I) / BG)
-5. For voxels > BG: RI = 100 × (1 + (I - BG) / BG)
-6. Smooth with Gaussian (σ=3mm FWHM)
+1. Calculate mean intensity within the brain mask as background reference (BG)
+2. Normalization: RI = 100 * (I / BG) (Centers the mean intensity at 100)
+3. Smooth with Gaussian (σ=3mm FWHM)
+4. Re-mask to ensure background remains clean
 
 Command-Line Usage:
 ------------------
@@ -251,12 +248,11 @@ def print_help_message():
     
     {GREEN}Processing pipeline:{RESET}
     {MAGENTA}1.{RESET} Load input MRI and brain mask
-    {MAGENTA}2.{RESET} Segment brain into GM, WM, CSF (Atropos K-means)
-    {MAGENTA}3.{RESET} Find GM and WM intensity peaks
-    {MAGENTA}4.{RESET} Compute gradient magnitude (edge detection)
-    {MAGENTA}5.{RESET} Calculate relative intensity (normalized contrast)
-    {MAGENTA}6.{RESET} Apply smoothing (σ=3mm FWHM)
-    {MAGENTA}7.{RESET} Save feature maps as NIfTI files
+    {MAGENTA}2.{RESET} Calculate mean intensity within mask (background reference)
+    {MAGENTA}3.{RESET} Compute gradient magnitude (edge detection)
+    {MAGENTA}4.{RESET} Calculate relative intensity (normalized contrast globally scaled)
+    {MAGENTA}5.{RESET} Apply smoothing (σ=3mm FWHM)
+    {MAGENTA}6.{RESET} Save feature maps as NIfTI files
     
     {GREEN}Atropos segmentation:{RESET}
     {MAGENTA}•{RESET} K-means clustering (3 tissue classes)
@@ -377,7 +373,7 @@ def compute_relative_intensity(image, mask):
         bg_ref = 1.0
         
     # Calculate Relative Intensity
-    # Formula: RI = 100 * (1 + (I - BG) / BG) = 100 * (I / BG)
+    # Formula: RI = 100 * (I / BG) = 100 * (I / mean of brain tissue)
     # This centers the mean intensity at 100
     
     # Apply only within mask

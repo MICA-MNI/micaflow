@@ -48,21 +48,21 @@ MicaFlow can be used as a complete pipeline or as individual modules:
 # Basic usage with T1w only
 micaflow pipeline --subject sub-001 --session ses-01 \
   --data-directory /path/to/data --t1w-file sub-001_ses-01_T1w.nii.gz \
-  --out-dir /output/path --cores 4 --cpu
+  --output /output/path --cores 4
 
 # With FLAIR image
 micaflow pipeline --subject sub-001 --session ses-01 \
   --data-directory /path/to/data --t1w-file sub-001_ses-01_T1w.nii.gz \
-  --flair-file sub-001_ses-01_FLAIR.nii.gz --out-dir /output/path \
-  --cores 4 --cpu
+  --flair-file sub-001_ses-01_FLAIR.nii.gz --output /output/path \
+  --cores 4
 
 # With diffusion data
 micaflow pipeline --subject sub-001 --session ses-01 \
   --data-directory /path/to/data --t1w-file sub-001_ses-01_T1w.nii.gz \
-  --run-dwi --dwi-file sub-001_ses-01_dwi.nii.gz \
+  --dwi-file sub-001_ses-01_dwi.nii.gz \
   --bval-file sub-001_ses-01_dwi.bval --bvec-file sub-001_ses-01_dwi.bvec \
   --inverse-dwi-file sub-001_ses-01_acq-PA_dwi.nii.gz \
-  --out-dir /output/path --cores 4 --cpu
+  --output /output/path --cores 4
 ```
 
 ### Batch Processing (BIDS)
@@ -91,10 +91,10 @@ This command will:
 
 Each module can be used independently:
 
-#### Brain Extraction (HD-BET)
+#### Brain Extraction
 
 ```bash
-micaflow bet --input t1w.nii.gz --output brain.nii.gz --output-mask mask.nii.gz
+micaflow bet --input t1w.nii.gz --output brain.nii.gz --parcellation segmentation.nii.gz --output-mask mask.nii.gz
 ```
 
 #### Brain Segmentation (SynthSeg)
@@ -124,7 +124,7 @@ micaflow apply_warp --moving image.nii.gz --reference target.nii.gz \
 micaflow denoise --input dwi.nii.gz --bval dwi.bval --bvec dwi.bvec --output denoised_dwi.nii.gz
 
 # Motion correction
-micaflow motion_correction --denoised denoised_dwi.nii.gz --bval dwi.bval --bvec dwi.bvec --output motion_corrected_dwi.nii.gz
+micaflow motion_correction --denoised denoised_dwi.nii.gz --input-bvecs dwi.bvec --output-bvecs corrected.bvec --output motion_corrected_dwi.nii.gz
 
 # Susceptibility distortion correction
 micaflow SDC --input motion_corrected_dwi.nii.gz --reverse-image reverse_phase_dwi.nii.gz \

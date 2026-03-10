@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "MicaFlow MRI processing pipeline"
 readme = "README.md"
 requires-python = ">=3.10"
-authors = [{ name = "MICA Lab", email = "info@example.com" }]
+authors = [{ name = "Ian Goodall-Halliwell", email = "goodallhalliwell@gmail.com" }]
 license = { text = "GPL 3.0" }
 dependencies = [
     "absl-py",

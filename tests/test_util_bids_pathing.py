@@ -127,7 +127,7 @@ class TestCheckPaths:
     def test_empty_subject(self, mock_sys_exit, capsys):
         """Test that an error is raised when subject is empty."""
         with pytest.raises(Exception, match="sys.exit called"):
-            check_paths('', '', '', '', '', '', '', '', '', '', '', '')
+            check_paths('', '', '', '', '', '', '', '', '', '', '', '', '', '')
         
         captured = capsys.readouterr()
         assert "Subject not provided" in captured.out
@@ -142,7 +142,7 @@ class TestCheckPaths:
     
     def test_none_session(self, mock_file_exists, capsys):
         """Test that 'None' session is converted to None."""
-        result = check_paths('', '', 'sub-01', 'None', '', '', '/dummy/t1w.nii.gz', '', '', '', '', '')
+        result = check_paths('', '', 'sub-01', 'None', '', '', '/dummy/t1w.nii.gz', '', '', '', '', '', '', '')
         
         captured = capsys.readouterr()
         assert "Session is set to None" in captured.out
@@ -150,7 +150,7 @@ class TestCheckPaths:
     
     def test_empty_cpu_default(self, mock_file_exists, capsys):
         """Test that CPU defaults to True when not provided."""
-        result = check_paths('', '', 'sub-01', '', '', '', '/dummy/t1w.nii.gz', '', '', '', '', '')
+        result = check_paths('', '', 'sub-01', '', '', '', '/dummy/t1w.nii.gz', '', '', '', '', '', '', '')
         
         captured = capsys.readouterr()
         assert "CPU not provided" in captured.out
@@ -158,7 +158,7 @@ class TestCheckPaths:
     
     def test_empty_threads_default(self, mock_file_exists, capsys):
         """Test that THREADS defaults to 1 when not provided."""
-        result = check_paths('', '', 'sub-01', '', '', '', '/dummy/t1w.nii.gz', '', '', '', '', '')
+        result = check_paths('', '', 'sub-01', '', '', '', '/dummy/t1w.nii.gz', '', '', '', '', '', '', '')
         
         captured = capsys.readouterr()
         assert "THREADS not provided" in captured.out
@@ -183,7 +183,7 @@ class TestCheckPaths:
     def test_dwi_missing_bvec(self, mock_sys_exit, capsys):
         """Test that an error is raised when DWI and BVAL are provided but BVEC is not."""
         with pytest.raises(Exception, match="sys.exit called"):
-            check_paths('', '', 'sub-01', '', '', '', '/dummy/t1w.nii.gz', '/dummy/dwi.nii.gz', '/dummy/dwi.bval', '', '', '')
+            check_paths('', '', 'sub-00', '', '', '', '/dummy/t1w.nii.gz', '/dummy/dwi.nii.gz', '/dummy/dwi.bval', '', '', '')
         
         captured = capsys.readouterr()
         assert "BVEC file not provided" in captured.out
@@ -303,7 +303,7 @@ class TestCheckPaths:
         """Test fully specified diffusion data with session."""
         result = check_paths(
             temp_dir_structure, '/output', 'sub-01', 'ses-01', '',
-            '', 'T1w.nii.gz', 'dwi.nii.gz', 'dwi.bval', 'dwi.bvec', 'dwi_inv.nii.gz', '4'
+            '', 'T1w.nii.gz', 'dwi.nii.gz', 'dwi.bval', 'dwi.bvec', 'dwi_inv.nii.gz', '', '', '4'
         )
         
         captured = capsys.readouterr()

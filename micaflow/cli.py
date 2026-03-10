@@ -26,7 +26,7 @@ Preprocessing Modules:
   bias_correction   : N4 bias field correction
   denoise           : Patch2Self denoising for DWI
   motion_correction : Motion correction for DWI
-  normalize         : Intensity normalization
+  normalize_intensity: Normalize image intensity profiles
 
 Registration Modules:
   coregister        : Image coregistration using ANTs
@@ -115,10 +115,66 @@ import os
 import time
 import json
 import datetime
+import urllib.request
+import zipfile
+import tempfile
+import shutil
 from colorama import init, Fore, Style
 import importlib.resources
 
 init()
+
+def check_and_download_models():
+    """
+    Checks if the models and atlas directories are populated.
+    If not, downloads and extracts them from the MICAFlow-Models GitHub repository.
+    """
+    base_path = os.path.dirname(os.path.abspath(__file__))
+    models_dir = os.path.join(base_path, "models")
+    atlas_dir = os.path.join(base_path, "resources", "atlas")
+
+    # Check if directories exist and have files
+    models_full = os.path.exists(models_dir) and len(os.listdir(models_dir)) > 0
+    atlas_full = os.path.exists(atlas_dir) and len(os.listdir(atlas_dir)) > 0
+
+    if models_full and atlas_full:
+        return
+
+    print(f"{Fore.YELLOW}Required models or atlases are missing. Downloading from MICAFlow-Models repository...{Style.RESET_ALL}")
+    
+    os.makedirs(models_dir, exist_ok=True)
+    os.makedirs(atlas_dir, exist_ok=True)
+
+    url = "https://github.com/MICA-MNI/MICAFlow-Models/archive/refs/heads/main.zip"
+    
+    try:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            zip_path = os.path.join(temp_dir, "models.zip")
+            print(f"{Fore.CYAN}Downloading {url}...{Style.RESET_ALL}")
+            urllib.request.urlretrieve(url, zip_path)
+            
+            print(f"{Fore.CYAN}Extracting files...{Style.RESET_ALL}")
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extractall(temp_dir)
+            
+            repo_dir = os.path.join(temp_dir, "MICAFlow-Models-main")
+            
+            # Map elements from repo to the tool's expected locations
+            repo_models = os.path.join(repo_dir, "models")
+            if os.path.exists(repo_models):
+                shutil.copytree(repo_models, models_dir, dirs_exist_ok=True)
+                
+            repo_atlas = os.path.join(repo_dir, "resources", "atlas")
+            repo_atlas_alt = os.path.join(repo_dir, "atlas")
+            
+            if os.path.exists(repo_atlas):
+                shutil.copytree(repo_atlas, atlas_dir, dirs_exist_ok=True)
+            elif os.path.exists(repo_atlas_alt):
+                shutil.copytree(repo_atlas_alt, atlas_dir, dirs_exist_ok=True)
+                
+            print(f"{Fore.GREEN}Models and atlases downloaded successfully!{Style.RESET_ALL}")
+    except Exception as e:
+        print(f"{Fore.RED}Failed to download or extract models: {e}{Style.RESET_ALL}")
 
 
 def get_snakefile_path():
@@ -189,13 +245,14 @@ def print_extended_help():
       {GREEN}pipeline{RESET}          : Run the full processing pipeline (default)
       {GREEN}bids{RESET}              : Run the pipeline on an entire BIDS dataset (batch mode)
       {GREEN}apply_warp{RESET}        : Apply transformation to warp an image to a reference space
-      {GREEN}bet{RESET}               : Run brain extraction
+      {GREEN}bet{RESET}               : Run brain extraction (using mask/SynthSeg)
       {GREEN}bias_correction{RESET}   : Run N4 Bias Field Correction
       {GREEN}calculate_dice{RESET}    : Calculate DICE score between two segmentations
       {GREEN}compute_fa_md{RESET}     : Compute Fractional Anisotropy and Mean Diffusivity maps
       {GREEN}coregister{RESET}        : Coregister a moving image to a reference image
       {GREEN}denoise{RESET}           : Denoise diffusion-weighted images using Patch2Self
       {GREEN}motion_correction{RESET} : Perform motion correction on diffusion-weighted images
+      {GREEN}normalize_intensity{RESET}: Normalize image intensity profiles
       {GREEN}SDC{RESET}               : Run Susceptibility Distortion Correction on DWI images
       {GREEN}apply_SDC{RESET}         : Apply pre-computed SDC warp field to an image
       {GREEN}synthseg{RESET}          : Run SynthSeg brain segmentation
@@ -383,6 +440,8 @@ def main():
     print_extended_help : Extended help message display
     get_snakefile_path : Get path to pipeline Snakefile
     """
+    check_and_download_models()
+
     # If no arguments provided, show help and exit
     if len(sys.argv) == 1:
         print(print_extended_help())
@@ -454,14 +513,14 @@ def main():
         "pipeline", help="Run the full micaflow pipeline"
     )
     # Add pipeline arguments
-    pipeline_parser.add_argument("--subject", help="Subject ID (e.g., sub-01)")
+    pipeline_parser.add_argument("--subject", required=True, help="Subject ID (e.g., sub-01)")
     pipeline_parser.add_argument("--session", help="Session ID (e.g., ses-01)")
-    pipeline_parser.add_argument("--output", help="Output directory")
+    pipeline_parser.add_argument("--output", required=True, help="Output directory")
     pipeline_parser.add_argument(
         "--data-directory", default="", help="Data directory path"
     )
     pipeline_parser.add_argument("--flair-file", help="Path to FLAIR image")
-    pipeline_parser.add_argument("--t1w-file", help="Path to T1w image")
+    pipeline_parser.add_argument("--t1w-file", required=True, help="Path to T1w image")
     pipeline_parser.add_argument("--dwi-file", help="Path to DWI image")
     pipeline_parser.add_argument("--bval-file", help="Path to bval file")
     pipeline_parser.add_argument("--bvec-file", help="Path to bvec file")
@@ -653,7 +712,7 @@ def main():
     )
 
     # Brain Extraction Tool command
-    bet_parser = subparsers.add_parser("bet", help="Run HD-BET brain extraction")
+    bet_parser = subparsers.add_parser("bet", help="Run Brain Extraction (using SynthSeg or Mask)")
     bet_parser.add_argument(
         "--input", required=True, help="Path to the input image (.nii.gz)"
     )
@@ -907,11 +966,9 @@ def main():
 
     # SDC command (main susceptibility distortion correction)
     sdc_parser = subparsers.add_parser(
-        "SDC", help="Run Susceptibility Distortion Correction on DWI images"
-    )
+        "SDC", help="Run Susceptibility Distortion Correction on DWI images")
     sdc_parser.add_argument(
-        "--input", required=True, help="Path to the data image (NIfTI file)"
-    )
+        "--input", required=True, help="Path to the data image (NIfTI file)")
     sdc_parser.add_argument(
         "--reverse-image",
         required=True,
@@ -937,14 +994,11 @@ def main():
 
     # Texture Generation command
     texture_parser = subparsers.add_parser(
-        "texture_generation", help="Generate texture features from neuroimaging data"
-    )
+        "texture_generation", help="Generate texture features from neuroimaging data")
     texture_parser.add_argument(
-        "--input", "-i", required=True, help="Path to the input image file (.nii.gz)"
-    )
+        "--input", "-i", required=True, help="Path to the input image file (.nii.gz)")
     texture_parser.add_argument(
-        "--mask", "-m", required=True, help="Path to the binary mask file (.nii.gz)"
-    )
+        "--mask", "-m", required=True, help="Path to the binary mask file (.nii.gz)")
     texture_parser.add_argument(
         "--output",
         "-o",
@@ -953,14 +1007,11 @@ def main():
     )
 
     normalize_parser = subparsers.add_parser(
-        "normalize", help="Normalize MRI intensity values"
-    )
+        "normalize", help="Normalize MRI intensity values")
     normalize_parser.add_argument(
-        "--input", "-i", required=True, help="Input NIfTI image file (.nii.gz)"
-    )
+        "--input", "-i", required=True, help="Input NIfTI image file (.nii.gz)")
     normalize_parser.add_argument(
-        "--output", "-o", required=True, help="Output normalized image file (.nii.gz)"
-    )
+        "--output", "-o", required=True, help="Output normalized image file (.nii.gz)")
     normalize_parser.add_argument(
         "--lower-percentile",
         type=float,
@@ -988,87 +1039,64 @@ def main():
 
     # Synthetic B0 Generation command
     synth_b0_parser = subparsers.add_parser(
-        "synth_b0", help="Create a synthetic B0 image from T1w and distorted B0 images using an ensemble of models"
-    )
+        "synth_b0", help="Create a synthetic B0 image from T1w and distorted B0 images using an ensemble of models")
     synth_b0_parser.add_argument(
-        '--t1', required=True, help='Path to T1w input image (.nii.gz)'
-    )
+        '--t1', required=True, help='Path to T1w input image (.nii.gz)')
     synth_b0_parser.add_argument(
-        '--b0', required=True, help='Path to distorted B0 input image (.nii.gz)'
-    )
+        '--b0', required=True, help='Path to distorted B0 input image (.nii.gz)')
     synth_b0_parser.add_argument(
-        '--output', required=True, help='Path for synthetic B0 output image (.nii.gz)'
-    )
+        '--output', required=True, help='Path for synthetic B0 output image (.nii.gz)')
     synth_b0_parser.add_argument(
-        '--intermediate', help='Path to save the synthetic B0 before inverse transform'
-    )
+        '--intermediate', help='Path to save the synthetic B0 before inverse transform')
     synth_b0_parser.add_argument(
-        '--cpu', action='store_true', help='Force CPU usage (default: use GPU if available)'
-    )
+        '--cpu', action='store_true', help='Force CPU usage (default: use GPU if available)')
     synth_b0_parser.add_argument(
-        '--phase-encoding', help='Index of the volume to extract from 4D DWI images (if applicable)'
-    )
+        '--phase-encoding', help='Index of the volume to extract from 4D DWI images (if applicable)')
     synth_b0_parser.add_argument(
-        '--warp', help='Path to save the warp field'
-    )
+        '--warp', help='Path to save the warp field')
     synth_b0_parser.add_argument(
-        '--temp-dir', help='Path to a temporary directory for intermediate files'
-    )
+        '--temp-dir', help='Path to a temporary directory for intermediate files')
     synth_b0_parser.add_argument(
         '--corrected-b0', help='Path to save the corrected B0 image (optional)')
     synth_b0_parser.add_argument(
-        '--dwi', help='Path to the full DWI image'
-    )
+        '--dwi', help='Path to the full DWI image')
     synth_b0_parser.add_argument(
-        '--shell-dimension', type=int, default=3, help='Dimension of the DWI image referring to shells (default: 3)'
-    )
+        '--shell-dimension', type=int, default=3, help='Dimension of the DWI image referring to shells (default: 3)')
     synth_b0_parser.add_argument(
-        '--threads', type=int, help='Number of threads to use (default: all)'
-    )
+        '--threads', type=int, help='Number of threads to use (default: all)')
     synth_b0_parser.add_argument(
-        '--b0-to-T1-warp', help='Path to save the warp field from B0 to T1w (optional)'
-    )
+        '--b0-to-T1-warp', help='Path to save the warp field from B0 to T1w (optional)')
     synth_b0_parser.add_argument(
-        '--b0-to-T1-warp-secondary', help='Path to a secondary warp field to be applied after the primary warp and affine (optional)'
-    )
+        '--b0-to-T1-warp-secondary', help='Path to a secondary warp field to be applied after the primary warp and affine (optional)')
     synth_b0_parser.add_argument(
-        '--b0-to-T1-affine', help='Path to save the affine transform from B0 to T1w (optional)'
-    )
+        '--b0-to-T1-affine', help='Path to save the affine transform from B0 to T1w (optional)')
+    synth_b0_parser.add_argument(
+        '--b0-index', type=int, default=0,
+        help="Index at which to insert b0 volume (default: 0).")
 
     # Extract B0 command
     extract_b0_parser = subparsers.add_parser(
-        "extract_b0", help="Extract b=0 volume from DWI"
-    )
+        "extract_b0", help="Extract b=0 volume from DWI")
     extract_b0_parser.add_argument(
-        "--input", required=True, help="Path to DWI image"
-    )
+        "--input", required=True, help="Path to DWI image")
     extract_b0_parser.add_argument(
-        "--bvals", help="Path to bvals file"
-    )
+        "--bvals", help="Path to bvals file")
     extract_b0_parser.add_argument(
-        "--bvecs", help="Path to bvecs file"
-    )
+        "--bvecs", help="Path to bvecs file")
     extract_b0_parser.add_argument(
-        "--output", required=True, help="Path for extracted b=0 volume"
-    )
+        "--output", required=True, help="Path for extracted b=0 volume")
     extract_b0_parser.add_argument(
-        "--output-dwi", help="Path for output non-b0 volumes"
-    )
+        "--output-dwi", help="Path for output non-b0 volumes")
     extract_b0_parser.add_argument(
-        "--output-bvals", help="Path for output bvals file"
-    )
+        "--output-bvals", help="Path for output bvals file")
     extract_b0_parser.add_argument(
-        "--output-bvecs", help="Path for output bvecs file"
-    )
+        "--output-bvecs", help="Path for output bvecs file")
     extract_b0_parser.add_argument(
-        "--threshold", type=float, default=50, help="Maximum b-value to consider as b=0 (default: 50)"
-    )
+        "--threshold", type=float, default=50, help="Maximum b-value to consider as b=0 (default: 50)")
     extract_b0_parser.add_argument(
-        "--index", type=int, help="Directly specify volume index to extract"
-    )
+        "--index", type=int, help="Directly specify volume index to extract")
     extract_b0_parser.add_argument(
-        "--shell-dimension", type=int, default=3, help="Dimension of the DWI image referring to shells (default: 3)"
-    )
+        "--shell-dimension", type=int, default=3, help="Dimension of the DWI image referring to shells (default: 3)")
     extract_b0_parser.add_argument("--b0-bval", help="Path for b0-only bval file")
     extract_b0_parser.add_argument("--b0-bvec", help="Path for b0-only bvec file")
     args, unknown = parser.parse_known_args()

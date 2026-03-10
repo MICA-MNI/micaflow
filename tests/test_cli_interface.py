@@ -1,7 +1,10 @@
 import os
-import subprocess
+import sys
 import pytest
 from unittest.mock import patch, MagicMock
+
+# Import the CLI main function
+from micaflow.cli import main as cli_main
 
 # List of all available commands in the micaflow CLI
 COMMANDS = [
@@ -18,25 +21,19 @@ COMMANDS = [
     "apply_SDC",
     "synthseg",
     "texture_generation",
-    "normalize"
+    "normalize_intensity" # Fixed command name
 ]
 
 @pytest.mark.parametrize("command", COMMANDS)
 def test_help_display(command, capsys):
     """Test that each command correctly displays help information when --help is provided."""
-    with patch("subprocess.run") as mock_run:
-        # Set up the mock to simulate successful execution
-        mock_process = MagicMock()
-        mock_process.returncode = 0
-        mock_run.return_value = mock_process
-        
-        # Run the command with --help
-        result = subprocess.run(["micaflow", command, "--help"], capture_output=True, text=True)
-        
-        # Check if the execution was successful
-        assert mock_run.call_count == 1
-        assert mock_run.call_args[0][0][1] == command
-        assert mock_run.call_args[0][0][2] == "--help"
+    with patch("sys.argv", ["micaflow", command, "--help"]):
+        with pytest.raises(SystemExit):  # argparse --help calls sys.exit
+            cli_main()
+    
+    # Check that the help message was displayed
+    out, _ = capsys.readouterr()
+    assert "--help" in out
 
 @pytest.fixture
 def mock_subprocess_run():
@@ -48,35 +45,27 @@ def mock_subprocess_run():
         yield mock_run
 
 @pytest.mark.parametrize("command,required_args", [
-    ("bet", ["--input", "test.nii.gz", "--output", "out.nii.gz", "--output-mask", "mask.nii.gz"]),
+    ("bet", ["--input", "test.nii.gz", "--output", "out.nii.gz", "--input-mask", "mask.nii.gz"]), # Fixed inputs
     ("bias_correction", ["--input", "test.nii.gz", "--output", "out.nii.gz"]),
     ("synthseg", ["--i", "test.nii.gz", "--o", "out.nii.gz"]),
-    ("apply_warp", ["--moving", "img.nii.gz", "--reference", "ref.nii.gz", "--output", "out.nii.gz"]),
-    ("coregister", ["--fixed-file", "fixed.nii.gz", "--moving-file", "moving.nii.gz", "--out-file", "out.nii.gz"]),
-    ("denoise", ["--input", "dwi.nii.gz", "--output", "denoised.nii.gz"]),
-    ("motion_correction", ["--denoised", "dwi.nii.gz", "--bval", "dwi.bval", "--bvec", "dwi.bvec", "--output", "out.nii.gz"]),
+    ("apply_warp", ["--moving", "img.nii.gz", "--reference", "ref.nii.gz", "--output", "out.nii.gz", "--affine", "trans.mat"]),
+    ("coregister", ["--fixed-file", "fixed.nii.gz", "--moving-file", "moving.nii.gz", "--output", "out.nii.gz"]), # Fixed output
+    ("denoise", ["--input", "dwi.nii.gz", "--output", "denoised.nii.gz", "--bval", "d.bval", "--bvec", "d.bvec"]), # Added requirements
+    ("motion_correction", ["--denoised", "dwi.nii.gz", "--input-bvals", "dwi.bval", "--input-bvecs", "dwi.bvec", "--output", "o.nii.gz"]), # Fixed bval/bvec
     ("SDC", ["--input", "dwi.nii.gz", "--reverse-image", "rev.nii.gz", "--output", "out.nii.gz", "--output-warp", "warp.nii.gz"]),
-    ("apply_SDC", ["--input", "dwi.nii.gz", "--warp", "warp.nii.gz", "--output", "out.nii.gz"]),
-    ("calculate_dice", ["--segmentation1", "seg1.nii.gz", "--segmentation2", "seg2.nii.gz", "--output", "metrics.csv"]),
+    ("apply_SDC", ["--input", "dwi.nii.gz", "--warp", "warp.nii.gz", "--output", "out.nii.gz", "--affine", "aff.nii.gz"]),
+    ("calculate_dice", ["--input", "seg1.nii.gz", "--reference", "seg2.nii.gz", "--output", "metrics.csv"]),
     ("compute_fa_md", ["--input", "dwi.nii.gz", "--bval", "dwi.bval", "--bvec", "dwi.bvec", "--output-fa", "fa.nii.gz", "--output-md", "md.nii.gz"]),
     ("texture_generation", ["--input", "img.nii.gz", "--mask", "mask.nii.gz", "--output", "textures/"]),
-    ("normalize", ["--input", "img.nii.gz", "--mask", "mask.nii.gz", "--output", "norm.nii.gz"]),
+    ("normalize_intensity", ["--input", "img.nii.gz", "--output", "norm.nii.gz"]),
 ])
 def test_command_with_required_args(command, required_args, mock_subprocess_run):
     """Test that commands execute correctly with the required arguments."""
-    # Build the command
-    cmd = ["micaflow", command] + required_args
+    with patch("sys.argv", ["micaflow", command] + required_args):
+        cli_main()
     
-    # Execute the command (mocked)
-    subprocess.run(cmd)
-    
-    # Verify the command was executed correctly
+    # Verify the underlying submodule was called successfully
     assert mock_subprocess_run.call_count == 1
-    assert mock_subprocess_run.call_args[0][0][1] == command
-    
-    # Check that all required args were passed
-    for arg in required_args:
-        assert arg in mock_subprocess_run.call_args[0][0]
 
 @pytest.mark.parametrize("command,missing_args,expected_args", [
     ("bet", ["--input", "test.nii.gz"], ["--output", "--output-mask"]),
@@ -116,26 +105,22 @@ def test_command_with_optional_flags(command, args, optional_flag, mock_subproce
 
 def test_pipeline_defaults(mock_subprocess_run):
     """Test that the pipeline command accepts the required arguments."""
-    cmd = [
+    with patch("sys.argv", [
         "micaflow", "pipeline", 
         "--subject", "sub-01",
-        "--out-dir", "/output",
+        "--output", "/output", # Changed to --output
         "--t1w-file", "t1w.nii.gz"
-    ]
+    ]):
+        cli_main()
     
-    # Execute the command (mocked)
-    subprocess.run(cmd)
-    
-    # Verify the command was executed with the required arguments
     assert mock_subprocess_run.call_count == 1
-    assert mock_subprocess_run.call_args[0][0][1] == "pipeline"
 
 def test_pipeline_with_optional_args(mock_subprocess_run):
     """Test the pipeline command with various optional arguments."""
     cmd = [
         "micaflow", "pipeline", 
         "--subject", "sub-01",
-        "--out-dir", "/output",
+        "--output", "/output",
         "--t1w-file", "t1w.nii.gz",
         "--session", "ses-01",
         "--flair-file", "flair.nii.gz",
@@ -158,7 +143,7 @@ def test_pipeline_with_dwi(mock_subprocess_run):
     cmd = [
         "micaflow", "pipeline", 
         "--subject", "sub-01",
-        "--out-dir", "/output",
+        "--output", "/output",
         "--t1w-file", "t1w.nii.gz",
         "--run-dwi",
         "--dwi-file", "dwi.nii.gz",
