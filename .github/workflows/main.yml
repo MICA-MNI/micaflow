@@ -7,6 +7,7 @@ on:
       - 'scripts/**'
       - 'docs/**'
       - '.github/workflows/main.yml'
+  workflow_dispatch:  # <-- Allows triggering manually from GitHub UI
 
 jobs:
   build:
@@ -27,19 +28,20 @@ jobs:
             
           # Install project dependencies
           pip install -e .
-          pip install -r requirements.txt
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Build documentation
         run: |
           cd docs
           make html
+          # Note: If your sphinx outputs to _build/html, change the paths here and below
           touch build/html/.nojekyll
           
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/build/html
+          publish_dir: ./docs/build/html # <-- Ensure this matches Sphinx output (often ./docs/_build/html)
           force_orphan: true
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'
