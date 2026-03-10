@@ -33,7 +33,7 @@ def test_help_display(command, capsys):
     
     # Check that the help message was displayed
     out, _ = capsys.readouterr()
-    assert "--help" in out
+    assert "Help" in out
 
 @pytest.fixture
 def mock_subprocess_run():
