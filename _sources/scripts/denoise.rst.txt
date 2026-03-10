@@ -1,0 +1,252 @@
+Denoise
+=======
+
+denoise - Diffusion-Weighted Image Noise Reduction
+
+Part of the micaflow processing pipeline for neuroimaging data.
+
+This module denoises diffusion-weighted images (DWI) using the Patch2Self algorithm,
+which leverages redundant information across diffusion gradients to remove noise 
+without requiring additional reference scans. Patch2Self is a self-supervised learning 
+approach that improves image quality and enhances subsequent diffusion analyses by 
+removing random noise while preserving anatomical structures and signal characteristics.
+
+The Patch2Self Algorithm:
+------------------------
+Patch2Self is a denoising method that:
+- Uses the redundancy in diffusion MRI data across gradient directions
+- Learns to predict each volume from surrounding volumes in q-space
+- Requires no external training data or noise model
+- Preserves anatomical edges and tissue boundaries
+- Improves SNR without introducing spatial blurring
+
+Features:
+--------
+- Self-supervised learning approach requiring no separate reference data
+- Adapts to the unique noise characteristics of each dataset
+- Preserves anatomical structure while effectively removing noise
+- Compatible with standard diffusion MRI acquisition protocols
+- Improves subsequent analyses such as fiber tracking and diffusion metrics
+- Optional separate b0 volume denoising
+- Uses Ordinary Least Squares (OLS) regression model
+- Intensity shifting to ensure positive values
+
+Command-Line Usage:
+------------------
+# Standard denoising (recommended for most cases)
+micaflow denoise \
+    --input <path/to/dwi.nii.gz> \
+    --bval <path/to/dwi.bval> \
+    --bvec <path/to/dwi.bvec> \
+    --output <path/to/denoised_dwi.nii.gz>
+
+# With separate b0 denoising (experimental)
+micaflow denoise \
+    --input <path/to/dwi.nii.gz> \
+    --bval <path/to/dwi.bval> \
+    --bvec <path/to/dwi.bvec> \
+    --output <path/to/denoised_dwi.nii.gz> \
+    --b0-denoise
+
+# With Gibbs ringing removal
+micaflow denoise \
+    --input <path/to/dwi.nii.gz> \
+    --bval <path/to/dwi.bval> \
+    --bvec <path/to/dwi.bvec> \
+    --output <path/to/denoised_dwi.nii.gz> \
+    --gibbs
+
+Python API Usage:
+----------------
+>>> from micaflow.scripts.denoise import run_denoise
+>>> 
+>>> # Standard denoising
+>>> output = run_denoise(
+...     moving="raw_dwi.nii.gz",
+...     moving_bval="dwi.bval", 
+...     moving_bvec="dwi.bvec",
+...     output="denoised_dwi.nii.gz",
+...     b0_denoising=False  # Default
+... )
+>>> 
+>>> # With b0 denoising
+>>> output = run_denoise(
+...     moving="raw_dwi.nii.gz",
+...     moving_bval="dwi.bval", 
+...     moving_bvec="dwi.bvec",
+...     output="denoised_dwi.nii.gz",
+...     b0_denoising=True
+... )
+>>>
+>>> # With Gibbs ringing removal
+>>> output = run_denoise(
+...     moving="raw_dwi.nii.gz",
+...     moving_bval="dwi.bval", 
+...     moving_bvec="dwi.bvec",
+...     output="denoised_dwi.nii.gz",
+...     gibbs=True
+... )
+
+Pipeline Integration:
+--------------------
+Denoising is typically the FIRST step in diffusion preprocessing:
+1. Denoising (denoise) ← You are here
+2. Motion/eddy current correction (motion_correction)
+3. Susceptibility distortion correction (apply_SDC)
+4. Bias field correction (bias_correction)
+5. Brain extraction (bet)
+6. DTI metric calculation (compute_fa_md)
+
+Exit Codes:
+----------
+0 : Success - denoising completed
+1 : Error - invalid inputs, file not found, or processing failure
+
+Technical Notes:
+---------------
+- Patch2Self uses a self-supervised regression approach
+- Model type: Ordinary Least Squares (OLS) regression
+- B0 threshold: 50 s/mm² (volumes below this considered b0)
+- Intensity shifting: Enabled (ensures positive values)
+- Negative value clipping: Disabled (preserves signal characteristics)
+- Processing time: ~1-2 minutes for typical datasets (varies with # volumes)
+- Recommended to denoise BEFORE motion correction for best results
+- B0 denoising is experimental; standard mode excludes b0 from denoising
+
+See Also:
+--------
+- motion_correction : Apply after denoising for motion/eddy correction
+- bias_correction : Remove bias fields after motion correction
+- compute_fa_md : Compute DTI metrics from denoised data
+
+References:
+----------
+1. Fadnavis S, Batson J, Garyfallidis E. Patch2Self: Denoising Diffusion MRI with 
+   Self-Supervised Learning. Advances in Neural Information Processing Systems. 
+   2020;33:16293-16303.
+
+2. Fadnavis S, Farooq H, Theaud G, et al. Patch2Self denoising of diffusion MRI in 
+   the CLEAR test-retest dataset. Medical Imaging 2021: Image Processing. 
+   2021;11596:115962D. doi:10.1117/12.2582043
+
+Command Line Usage
+-----------------
+
+.. code-block:: bash
+
+    micaflow denoise [options]
+
+Source Code
+-----------
+
+View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/denoise.py>`_
+
+Description
+-----------
+
+This script denoises diffusion-weighted images (DWI) using the Patch2Self 
+    algorithm, which leverages redundant information across diffusion gradients
+    to remove noise without requiring additional reference scans.
+
+Full Help
+---------
+
+.. code-block:: text
+
+    
+        ╔════════════════════════════════════════════════════════════════╗
+        ║                     DWI IMAGE DENOISING                        ║
+        ╚════════════════════════════════════════════════════════════════╝
+        
+        This script denoises diffusion-weighted images (DWI) using the Patch2Self 
+        algorithm, which leverages redundant information across diffusion gradients
+        to remove noise without requiring additional reference scans.
+        
+        ────────────────────────── USAGE ──────────────────────────
+          micaflow denoise [options]
+        
+        ─────────────────── REQUIRED ARGUMENTS ───────────────────
+          --input     : Path to the input DWI image (.nii.gz)
+          --bval      : Path to the b-values file (.bval)
+          --bvec      : Path to the b-vectors file (.bvec)
+          --output    : Output path for the denoised image (.nii.gz)
+        
+        ─────────────────── OPTIONAL ARGUMENTS ───────────────────
+          --b0-denoise: Denoise b0 volumes separately (default: False)
+                       Experimental - not recommended for most cases
+          --gibbs     : Apply Gibbs ringing removal after denoising
+          --threads   : Number of threads for Gibbs removal (default: 1)
+        
+        ──────────────────── EXAMPLE USAGE ──────────────────────
+        
+        # Standard denoising (recommended)
+        micaflow denoise \
+          --input raw_dwi.nii.gz \
+          --bval dwi.bval \
+          --bvec dwi.bvec \
+          --output denoised_dwi.nii.gz
+        
+        # With b0 denoising (experimental)
+        micaflow denoise \
+          --input raw_dwi.nii.gz \
+          --bval dwi.bval \
+          --bvec dwi.bvec \
+          --output denoised_dwi.nii.gz \
+          --b0-denoise
+        
+        # With Gibbs ringing removal
+        micaflow denoise \
+          --input raw_dwi.nii.gz \
+          --bval dwi.bval \
+          --bvec dwi.bvec \
+          --output denoised_dwi.nii.gz \
+          --gibbs
+        
+        ────────────────── PATCH2SELF ALGORITHM ──────────────────
+        
+        How it works:
+        • Uses redundancy across diffusion gradient directions
+        • Predicts each volume from neighboring volumes in q-space
+        • Self-supervised learning (no external training data needed)
+        • Preserves edges and anatomical structures
+        
+        Benefits:
+        • Better visualization of white matter tracts
+        • More accurate DTI fitting and tractography
+        • Reduced bias in diffusion metrics (FA, MD)
+        • No spatial blurring (unlike traditional filters)
+        
+        ────────────────────────── NOTES ─────────────────────────
+        • Denoising should be the FIRST step in preprocessing pipeline
+        • Apply BEFORE motion correction for best results
+        • Uses Ordinary Least Squares (OLS) regression model
+        • B0 threshold: 50 s/mm² (volumes below this are b0)
+        • Intensity shifting enabled to ensure positive values
+        • Processing time: ~1-2 minutes (depends on # volumes)
+        • Standard mode excludes b0 volumes from denoising (recommended)
+        • --b0-denoise flag enables experimental b0 denoising
+        • Output preserves original image geometry and orientation
+        
+        ─────────────── PIPELINE POSITION ───────────────────────
+        1. Denoising (denoise)           ← You are here
+        2. Motion correction (motion_correction)
+        3. Distortion correction (apply_SDC)
+        4. Bias field correction (bias_correction)
+        5. Brain extraction (bet)
+        6. DTI metrics (compute_fa_md)
+        
+        ────────────────────── EXIT CODES ───────────────────────
+        0 : Success - denoising completed
+        1 : Error - invalid inputs, file not found, or processing failure
+        
+        ───────────────── COMMON ISSUES ─────────────────────────
+        Issue: Denoising takes very long
+        Solution: Typical processing is 2-5 minutes; longer suggests high resolution
+        
+        Issue: Output looks over-smoothed
+        Solution: Patch2Self preserves edges; check if input already denoised
+        
+        Issue: "Out of memory" error
+        Solution: Reduce image resolution or process on machine with more RAM
+        
+    

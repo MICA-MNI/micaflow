@@ -1,0 +1,202 @@
+Calculate Dice
+==============
+
+calculate_dice - Segmentation Overlap Measurement Tool
+
+Part of the micaflow processing pipeline for neuroimaging data.
+
+This module calculates the DICE coefficient (Sørensen-Dice coefficient) between
+two segmentation volumes. The DICE score is a statistic used for comparing the
+similarity and diversity of sample sets, with values ranging from 0 (no overlap) to
+1 (perfect overlap). It is particularly useful for evaluating the quality of
+segmentations against a ground truth or comparing results from different methods.
+
+The DICE coefficient is defined as:
+
+    DICE = 2 * |A ∩ B| / (|A| + |B|)
+
+where A and B are the sets of voxels belonging to a particular label in each 
+segmentation, |A ∩ B| is the number of voxels in common, and |A| + |B| is the
+total number of labeled voxels in both segmentations.
+
+This is a wrapper around the `compare_parcellations_dice` function from lamareg,
+which computes DICE scores for each unique label/ROI in the segmentation volumes.
+
+Features:
+--------
+- Computes DICE scores for multi-label segmentations
+- Calculates per-ROI/per-label DICE coefficients
+- Outputs results in CSV format for easy analysis
+- Handles both binary and multi-class segmentations
+- Background label (0) is typically excluded from calculations
+
+Command-Line Usage:
+------------------
+micaflow calculate_dice \
+    --input <path/to/segmentation.nii.gz> \
+    --reference <path/to/ground_truth.nii.gz> \
+    --output <path/to/results.csv>
+
+Python API Usage:
+----------------
+>>> from lamareg.scripts.dice_compare import compare_parcellations_dice
+>>> compare_parcellations_dice(
+...     "segmentation.nii.gz",
+...     "ground_truth.nii.gz",
+...     "dice_results.csv"
+... )
+
+Or use the command-line interface via subprocess:
+>>> import subprocess
+>>> result = subprocess.run([
+...     "micaflow", "calculate_dice",
+...     "--input", "segmentation.nii.gz",
+...     "--reference", "ground_truth.nii.gz",
+...     "--output", "dice_results.csv"
+... ], check=True)
+
+Output Format:
+-------------
+The output CSV file contains DICE scores for each label/ROI found in the segmentations:
+
+Header row: "Label,DICE_Score"
+Data format:
+  - Column 1 (Label): Integer label/ROI identifier
+  - Column 2 (DICE_Score): DICE coefficient (float, 0.0-1.0)
+
+Example CSV output:
+```
+Label,DICE_Score
+1,0.8523
+2,0.9102
+3,0.7845
+...
+```
+
+One row is generated for each unique label found in either segmentation.
+
+DICE Score Interpretation:
+-------------------------
+- 0.00 - 0.50: Poor overlap (needs improvement)
+- 0.50 - 0.70: Moderate overlap (acceptable for some applications)
+- 0.70 - 0.85: Good overlap (typical for automated methods)
+- 0.85 - 1.00: Excellent overlap (near-manual quality)
+
+Exit Codes:
+----------
+0 : Success - DICE scores computed and saved
+1 : Error - invalid inputs, file not found, or processing failure
+
+See Also:
+--------
+- synthseg : For generating segmentation/parcellation volumes
+- bet : For creating brain masks from parcellations
+
+Command Line Usage
+-----------------
+
+.. code-block:: bash
+
+    micaflow calculate_dice [options]
+
+Source Code
+-----------
+
+View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/calculate_dice.py>`_
+
+Description
+-----------
+
+This script calculates the DICE coefficient (Sørensen-Dice coefficient)
+    between two segmentation volumes. For multi-label segmentations, it computes
+    the DICE score separately for each label/ROI.
+
+Full Help
+---------
+
+.. code-block:: text
+
+    
+        ╔════════════════════════════════════════════════════════════════╗
+        ║                     DICE SCORE CALCULATOR                      ║
+        ╚════════════════════════════════════════════════════════════════╝
+        
+        This script calculates the DICE coefficient (Sørensen-Dice coefficient)
+        between two segmentation volumes. For multi-label segmentations, it computes
+        the DICE score separately for each label/ROI.
+        
+        ────────────────────────── USAGE ──────────────────────────
+          micaflow calculate_dice [options]
+        
+        ─────────────────── REQUIRED ARGUMENTS ───────────────────
+          --input, -i     : Path to the first input segmentation volume (.nii.gz)
+                          Typically the predicted/test segmentation
+          --reference, -r : Path to the reference/ground truth segmentation (.nii.gz)
+                          The gold standard for comparison
+          --output, -o    : Output path for the CSV file with DICE scores
+    
+        ──────────────────── EXAMPLE USAGE ──────────────────────
+        
+        # Compare automated vs manual segmentation
+        micaflow calculate_dice \
+          --input predicted_segmentation.nii.gz \
+          --reference ground_truth.nii.gz \
+          --output dice_scores.csv
+        
+        # Validate SynthSeg output against manual parcellation
+        micaflow calculate_dice \
+          --input subject_synthseg.nii.gz \
+          --reference manual_parcellation.nii.gz \
+          --output validation_metrics.csv
+        
+        # Compare two registration-based segmentations
+        micaflow calculate_dice \
+          --input atlas_warped_seg.nii.gz \
+          --reference subject_manual_seg.nii.gz \
+          --output registration_quality.csv
+        
+        ──────────────────── OUTPUT FORMAT ──────────────────────
+        The output CSV file contains two columns with a header row:
+        
+        Header: Label,DICE_Score
+        Row format:
+          • Label       : Integer label/ROI identifier (e.g., 1, 2, 3...)
+          • DICE_Score  : DICE coefficient (float, 0.0-1.0)
+        
+        Example output:
+        Label,DICE_Score
+        1,0.8523
+        2,0.9102
+        3,0.7845
+        
+        ───────────────── DICE COEFFICIENT FORMULA ───────────────
+        
+        DICE = 2 × |A ∩ B| / (|A| + |B|)
+        
+        Where:
+          • A = Set of voxels with label L in segmentation 1
+          • B = Set of voxels with label L in segmentation 2
+          • |A ∩ B| = Number of voxels in both A and B
+          • |A| + |B| = Total count of labeled voxels
+        
+        ─────────────────── DICE INTERPRETATION ──────────────────
+        0.00 - 0.50: Poor overlap       → Needs improvement
+        0.50 - 0.70: Moderate overlap  → Acceptable for some tasks
+        0.70 - 0.85: Good overlap      → Typical for automated methods
+        0.85 - 1.00: Excellent overlap → Near-manual quality
+        
+        ────────────────────────── NOTES ─────────────────────────
+        • For multi-label segmentations, DICE is computed independently per label
+        • Labels present in one volume but not the other will have DICE = 0
+        • Background (label 0) is typically excluded from calculation
+        • Both input volumes must have the same dimensions and orientation
+        • If dimensions don't match, the script will fail with an error
+        • DICE is symmetric: DICE(A,B) = DICE(B,A)
+        • This is a wrapper around lamareg's compare_parcellations_dice function
+        • DICE is sensitive to small structures (can be low even with good alignment)
+        
+        ────────────────────── EXIT CODES ───────────────────────
+        0 : Success - DICE scores computed and saved
+        1 : Error - invalid inputs, file not found, or processing failure
+        
+    

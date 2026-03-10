@@ -1,0 +1,164 @@
+Apply Warp
+==========
+
+apply_warp - Image registration transformation application
+
+Part of the micaflow processing pipeline for neuroimaging data.
+
+This module applies spatial transformations to register images from one space to another
+using affine and/or non-linear (warp field) transformations. It's commonly used to:
+- Transform subject images to a standard space (e.g., MNI152)
+- Apply previously calculated transformations to derived images (e.g., segmentations)
+- Chain multiple transformations together (e.g., subject→intermediate→template space)
+
+The module leverages ANTsPy to apply the transformations in the correct order, supporting
+both full nonlinear registration (warp + affine) and linear-only registration (affine only).
+Multiple warp fields can be chained using the --secondary-warp option.
+
+API Usage:
+---------
+micaflow apply_warp
+    --moving <path/to/source_image.nii.gz>
+    --reference <path/to/target_space.nii.gz>
+    [--affine <path/to/transform.mat>]
+    [--warp <path/to/warpfield.nii.gz>]
+    [--secondary-warp <path/to/second_warpfield.nii.gz>]
+    [--transforms <path/to/t2> <path/to/t1> ...]
+    [--output <path/to/registered_image.nii.gz>]
+    [--interpolation <method>]
+
+Note: At least one transform (--affine, --warp, --secondary-warp, or --transforms) must be provided.
+
+Transform Application Order:
+--------------------------
+ANTs applies transforms in REVERSE order from the transform list:
+1. Affine (applied first to moving image)
+2. Primary warp field (applied second)
+3. Secondary warp field (applied last, if provided)
+
+This allows proper composition: subject space → intermediate space → template space
+
+Python Usage:
+-----------
+>>> import ants
+>>> from micaflow.scripts.apply_warp import apply_warp
+>>> moving_img = ants.image_read("subject_t1w.nii.gz")
+>>> reference_img = ants.image_read("mni152.nii.gz")
+>>> 
+>>> # With both affine and warp field (nonlinear)
+>>> transformed = apply_warp(
+...     moving=moving_img,
+...     reference=reference_img,
+...     affine="transform.mat",
+...     warp="warpfield.nii.gz",
+...     output="registered_t1w.nii.gz"
+... )
+>>> 
+>>> # With affine only (linear)
+>>> transformed = apply_warp(
+...     moving="subject_t1w.nii.gz",  # Can also pass file paths
+...     reference="mni152.nii.gz",
+...     affine="transform.mat",
+...     output="linear_registered_t1w.nii.gz"
+... )
+>>> 
+>>> # With chained warp fields
+>>> transformed = apply_warp(
+...     moving=moving_img,
+...     reference=reference_img,
+...     affine="affine_to_intermediate.mat",
+...     warp="warp_to_intermediate.nii.gz",
+...     secondary_warp="warp_intermediate_to_template.nii.gz",
+...     output="template_space_t1w.nii.gz"
+... )
+
+Command Line Usage
+-----------------
+
+.. code-block:: bash
+
+    micaflow apply_warp [options]
+
+Source Code
+-----------
+
+View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/apply_warp.py>`_
+
+Description
+-----------
+
+This script applies spatial transformations (affine and/or warp field) to
+    register a moving image to a reference space. Multiple transformations can
+    be chained together for multi-step registration pipelines.
+
+Full Help
+---------
+
+.. code-block:: text
+
+    
+        ╔════════════════════════════════════════════════════════════════╗
+        ║                        APPLY WARP                              ║
+        ╚════════════════════════════════════════════════════════════════╝
+        
+        This script applies spatial transformations (affine and/or warp field) to
+        register a moving image to a reference space. Multiple transformations can
+        be chained together for multi-step registration pipelines.
+        
+        ────────────────────────── REQUIRED ARGUMENTS ──────────────────────────
+          --moving     : Path to the input image to be warped (.nii.gz)
+          --reference  : Path to the target/reference image (.nii.gz)
+          
+        
+        ────────────────────────── OPTIONAL ARGUMENTS ──────────────────────────
+          --affine          : Path to the affine transformation file (.mat)
+          --warp            : Path to the primary warp field (.nii.gz)
+          --secondary-warp  : Path to a secondary warp field (.nii.gz)
+                            Used for chaining transformations through intermediate spaces
+                            Note: At least one transform must be provided
+          --transforms      : List of transforms to apply in order (First -> Last)
+                            Can be used instead of named transform arguments.
+          --output          : Output path for the warped image (default: warped_image.nii.gz)
+          --interpolation   : Interpolation method (default: linear)
+                            Options: linear, nearestNeighbor, multiLabel, gaussian, 
+                                     bSpline, cosineWindowedSinc, welchWindowedSinc,
+                                     hammingWindowedSinc, lanczosWindowedSinc, genericLabel
+        
+        ────────────────────────── EXAMPLE USAGE ──────────────────────────
+        
+        # Apply both affine and warp transformation (nonlinear registration)
+        micaflow apply_warp --moving subject_t1w.nii.gz --reference mni152.nii.gz \
+          --affine transform.mat --warp warpfield.nii.gz --output registered_t1w.nii.gz
+        
+        # Apply only affine transformation (linear registration)
+        micaflow apply_warp --moving subject_t1w.nii.gz --reference mni152.nii.gz \
+          --affine transform.mat --output linear_registered_t1w.nii.gz
+        
+        # Chain multiple transformations (subject → intermediate → template)
+        micaflow apply_warp --moving subject_dwi.nii.gz --reference mni152.nii.gz \
+          --affine dwi_to_t1w.mat --warp dwi_to_t1w_warp.nii.gz \
+          --secondary-warp t1w_to_mni_warp.nii.gz --output dwi_in_mni.nii.gz
+        
+        # Use nearest neighbor interpolation for segmentation masks
+        micaflow apply_warp --moving segmentation.nii.gz --reference mni152.nii.gz \
+          --affine transform.mat --warp warp.nii.gz \
+          --interpolation nearestNeighbor --output registered_seg.nii.gz
+        
+        ────────────────────────── TRANSFORM ORDER ──────────────────────────
+        ANTs applies transforms in REVERSE order:
+          1. Affine is applied FIRST (linear alignment)
+          2. Primary warp is applied SECOND (nonlinear deformation)
+          3. Secondary warp is applied LAST (additional nonlinear deformation)
+        
+        This ordering allows proper composition through intermediate spaces:
+          Subject space → [affine] → Intermediate space → [warp] → Template space
+        
+        ────────────────────────── NOTES ──────────────────────────
+        • At least one transform (affine, warp, or secondary-warp) must be provided
+        • Both moving and reference can be file paths or ANTs image objects in Python API
+        • The function returns the transformed ANTs image object
+        • Use 'genericLabel' interpolation for discrete labels/masks
+        • Use 'linear' or 'bSpline' for continuous intensity images
+        • Transform files must be in ANTs format (.mat for affine, .nii.gz for warps)
+        
+    

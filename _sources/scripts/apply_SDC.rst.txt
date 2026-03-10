@@ -1,0 +1,126 @@
+Apply Sdc
+=========
+
+apply_SDC - Susceptibility Distortion Correction for diffusion MRI
+
+Part of the micaflow processing pipeline for neuroimaging data.
+
+This module applies susceptibility distortion correction (SDC) to diffusion MRI images
+by using a pre-calculated displacement field to unwarp geometric distortions caused by
+magnetic field inhomogeneities. These distortions occur along the phase-encoding
+direction, which can be anterior-posterior (AP/PA), left-right (LR/RL), or 
+superior-inferior (SI/IS).
+
+The module works by:
+1. Loading a distorted diffusion image (typically after motion correction)
+2. Loading a 3D warp field containing displacement values (expected shape: nx, ny, nz)
+3. Determining the phase-encoding direction from the provided argument
+4. Applying the warp field to each 3D volume independently along the specified direction
+5. Using linear interpolation (scipy.ndimage.map_coordinates with order=1) to resample
+7. Saving the unwarped image with the specified affine transformation
+
+API Usage:
+---------
+micaflow apply_SDC 
+    --input <path/to/distorted_image.nii.gz>
+    --warp <path/to/warp_field.nii.gz>
+    --affine <path/to/reference_image.nii.gz>
+    --phase-encoding <ap|pa|lr|rl|si|is>
+    --output <path/to/corrected_output.nii.gz>
+
+Python Usage:
+-----------
+>>> from micaflow.scripts.apply_SDC import apply_SD_correction
+>>> apply_SD_correction(
+...     motion_corr_path="distorted_image.nii.gz",
+...     warp_field=warp_field_array,  # Must be 3D numpy array (nx, ny, nz)
+...     moving_affine=affine_matrix,
+...     output="corrected_output.nii.gz",
+...     ped="ap"  # Phase encoding direction
+... )
+
+Command Line Usage
+-----------------
+
+.. code-block:: bash
+
+    micaflow apply_SDC [options]
+
+Source Code
+-----------
+
+View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/apply_SDC.py>`_
+
+Description
+-----------
+
+This script applies susceptibility distortion correction to diffusion images
+    using a pre-calculated warp field. It takes a 4D diffusion image (typically
+    motion-corrected) and applies the displacement field to each 3D volume 
+    independently along the specified phase-encoding direction.
+
+Full Help
+---------
+
+.. code-block:: text
+
+    
+        ╔════════════════════════════════════════════════════════════════╗
+        ║          APPLY SUSCEPTIBILITY DISTORTION CORRECTION            ║
+        ╚════════════════════════════════════════════════════════════════╝
+        
+        This script applies susceptibility distortion correction to diffusion images
+        using a pre-calculated warp field. It takes a 4D diffusion image (typically
+        motion-corrected) and applies the displacement field to each 3D volume 
+        independently along the specified phase-encoding direction.
+        
+        ────────────────────────── USAGE ──────────────────────────
+          micaflow apply_SDC [options]
+        
+        ────────────────── REQUIRED ARGUMENTS ───────────────────
+          --input            : Path to the input 4D DWI image (.nii.gz)
+                            Typically motion-corrected, but any 4D image is accepted
+          --warp             : Path to the 3D warp field (.nii.gz)
+                            Contains displacement values along the phase-encoding direction
+                            Expected shape after squeezing: (nx, ny, nz)
+          --affine           : Path to a reference image (.nii.gz)
+                            Used to extract the affine matrix for the output image
+          --output           : Output path for the corrected 4D image (.nii.gz)
+        
+        ──────────────── OPTIONAL ARGUMENTS ─────────────────────
+          --phase-encoding   : Phase-encoding direction (default: ap)
+                            Options: ap, pa, lr, rl, si, is
+                            • ap/pa: Anterior-Posterior/Posterior-Anterior (y-axis)
+                            • lr/rl: Left-Right/Right-Left (x-axis)
+                            • si/is: Superior-Inferior/Inferior-Superior (z-axis)
+        
+        ─────────────────── EXAMPLE USAGE ───────────────────────
+        
+        # Apply SDC with anterior-posterior phase encoding (default)
+        micaflow apply_SDC \
+          --input motion_corrected_dwi.nii.gz \
+          --warp sdc_warpfield.nii.gz \
+          --affine original_dwi.nii.gz \
+          --output corrected_dwi.nii.gz
+        
+        # Apply SDC with left-right phase encoding
+        micaflow apply_SDC \
+          --input motion_corrected_dwi.nii.gz \
+          --warp sdc_warpfield.nii.gz \
+          --affine original_dwi.nii.gz \
+          --phase-encoding lr \
+          --output corrected_dwi.nii.gz
+        
+        ────────────────────────── NOTES ───────────────────────
+        • The warp field contains displacement values along the phase-encoding direction
+        • Phase-encoding direction must match the direction used in SDC warp calculation
+        • Uses linear interpolation (scipy.ndimage.map_coordinates, order=1)
+        • Each 3D volume in the 4D input is warped independently
+        • Output affine is taken from the --affine reference image, not from --input
+        • Common phase-encoding directions:
+                  - AP (anterior to posterior): y-axis, posterior distortion
+                  - PA (posterior to anterior): y-axis, anterior distortion
+                  - LR (left to right): x-axis, right distortion
+                  - RL (right to left): x-axis, left distortion
+        
+    

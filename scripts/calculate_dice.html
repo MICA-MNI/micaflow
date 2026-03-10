@@ -1,0 +1,331 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculate Dice &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#batch-processing-bids">Batch Processing (BIDS)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">MicaFlow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#batch-processing-bids">Batch Processing (BIDS)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../scripts.html">Scripts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Calculate Dice</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/scripts/calculate_dice.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="calculate-dice">
+<h1>Calculate Dice<a class="headerlink" href="#calculate-dice" title="Link to this heading"></a></h1>
+<p>calculate_dice - Segmentation Overlap Measurement Tool</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module calculates the DICE coefficient (Sørensen-Dice coefficient) between
+two segmentation volumes. The DICE score is a statistic used for comparing the
+similarity and diversity of sample sets, with values ranging from 0 (no overlap) to
+1 (perfect overlap). It is particularly useful for evaluating the quality of
+segmentations against a ground truth or comparing results from different methods.</p>
+<p>The DICE coefficient is defined as:</p>
+<blockquote>
+<div><p>DICE = 2 * <a href="#id2"><span class="problematic" id="id3">|A ∩ B|</span></a> / (<a href="#id4"><span class="problematic" id="id5">|A|</span></a> + <a href="#id6"><span class="problematic" id="id7">|B|</span></a>)</p>
+</div></blockquote>
+<p>where A and B are the sets of voxels belonging to a particular label in each
+segmentation, <a href="#id8"><span class="problematic" id="id9">|A ∩ B|</span></a> is the number of voxels in common, and <a href="#id10"><span class="problematic" id="id11">|A|</span></a> + <a href="#id12"><span class="problematic" id="id13">|B|</span></a> is the
+total number of labeled voxels in both segmentations.</p>
+<p>This is a wrapper around the <cite>compare_parcellations_dice</cite> function from lamareg,
+which computes DICE scores for each unique label/ROI in the segmentation volumes.</p>
+<section id="features">
+<h2>Features:<a class="headerlink" href="#features" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Computes DICE scores for multi-label segmentations</p></li>
+<li><p>Calculates per-ROI/per-label DICE coefficients</p></li>
+<li><p>Outputs results in CSV format for easy analysis</p></li>
+<li><p>Handles both binary and multi-class segmentations</p></li>
+<li><p>Background label (0) is typically excluded from calculations</p></li>
+</ul>
+</section>
+<section id="command-line-usage">
+<h2>Command-Line Usage:<a class="headerlink" href="#command-line-usage" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>micaflow calculate_dice </dt><dd><p>–input &lt;path/to/segmentation.nii.gz&gt; –reference &lt;path/to/ground_truth.nii.gz&gt; –output &lt;path/to/results.csv&gt;</p>
+</dd>
+</dl>
+</section>
+<section id="python-api-usage">
+<h2>Python API Usage:<a class="headerlink" href="#python-api-usage" title="Link to this heading"></a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">lamareg.scripts.dice_compare</span><span class="w"> </span><span class="kn">import</span> <span class="n">compare_parcellations_dice</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">compare_parcellations_dice</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="s2">&quot;segmentation.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s2">&quot;ground_truth.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s2">&quot;dice_results.csv&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Or use the command-line interface via subprocess:
+&gt;&gt;&gt; import subprocess
+&gt;&gt;&gt; result = subprocess.run([
+…     “micaflow”, “calculate_dice”,
+…     “–input”, “segmentation.nii.gz”,
+…     “–reference”, “ground_truth.nii.gz”,
+…     “–output”, “dice_results.csv”
+… ], check=True)</p>
+</section>
+<section id="output-format">
+<h2>Output Format:<a class="headerlink" href="#output-format" title="Link to this heading"></a></h2>
+<p>The output CSV file contains DICE scores for each label/ROI found in the segmentations:</p>
+<p>Header row: “Label,DICE_Score”
+Data format:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Column 1 (Label): Integer label/ROI identifier</p></li>
+<li><p>Column 2 (DICE_Score): DICE coefficient (float, 0.0-1.0)</p></li>
+</ul>
+</div></blockquote>
+<p>Example CSV output:
+<code class="docutils literal notranslate"><span class="pre">`</span>
+<span class="pre">Label,DICE_Score</span>
+<span class="pre">1,0.8523</span>
+<span class="pre">2,0.9102</span>
+<span class="pre">3,0.7845</span>
+<span class="pre">...</span>
+<span class="pre">`</span></code></p>
+<p>One row is generated for each unique label found in either segmentation.</p>
+</section>
+<section id="dice-score-interpretation">
+<h2>DICE Score Interpretation:<a class="headerlink" href="#dice-score-interpretation" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>0.00 - 0.50: Poor overlap (needs improvement)</p></li>
+<li><p>0.50 - 0.70: Moderate overlap (acceptable for some applications)</p></li>
+<li><p>0.70 - 0.85: Good overlap (typical for automated methods)</p></li>
+<li><p>0.85 - 1.00: Excellent overlap (near-manual quality)</p></li>
+</ul>
+</section>
+<section id="exit-codes">
+<h2>Exit Codes:<a class="headerlink" href="#exit-codes" title="Link to this heading"></a></h2>
+<p>0 : Success - DICE scores computed and saved
+1 : Error - invalid inputs, file not found, or processing failure</p>
+</section>
+<section id="see-also">
+<h2>See Also:<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>synthseg : For generating segmentation/parcellation volumes</p></li>
+<li><p>bet : For creating brain masks from parcellations</p></li>
+</ul>
+</section>
+<section id="id1">
+<h2>Command Line Usage<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>calculate_dice<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="source-code">
+<h2>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h2>
+<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/calculate_dice.py">GitHub Repository</a></p>
+</section>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>This script calculates the DICE coefficient (Sørensen-Dice coefficient)</dt><dd><p>between two segmentation volumes. For multi-label segmentations, it computes
+the DICE score separately for each label/ROI.</p>
+</dd>
+</dl>
+</section>
+<section id="full-help">
+<h2>Full Help<a class="headerlink" href="#full-help" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>╔════════════════════════════════════════════════════════════════╗
+║                     DICE SCORE CALCULATOR                      ║
+╚════════════════════════════════════════════════════════════════╝
+
+This script calculates the DICE coefficient (Sørensen-Dice coefficient)
+between two segmentation volumes. For multi-label segmentations, it computes
+the DICE score separately for each label/ROI.
+
+────────────────────────── USAGE ──────────────────────────
+  micaflow calculate_dice [options]
+
+─────────────────── REQUIRED ARGUMENTS ───────────────────
+  --input, -i     : Path to the first input segmentation volume (.nii.gz)
+                  Typically the predicted/test segmentation
+  --reference, -r : Path to the reference/ground truth segmentation (.nii.gz)
+                  The gold standard for comparison
+  --output, -o    : Output path for the CSV file with DICE scores
+
+──────────────────── EXAMPLE USAGE ──────────────────────
+
+# Compare automated vs manual segmentation
+micaflow calculate_dice \
+  --input predicted_segmentation.nii.gz \
+  --reference ground_truth.nii.gz \
+  --output dice_scores.csv
+
+# Validate SynthSeg output against manual parcellation
+micaflow calculate_dice \
+  --input subject_synthseg.nii.gz \
+  --reference manual_parcellation.nii.gz \
+  --output validation_metrics.csv
+
+# Compare two registration-based segmentations
+micaflow calculate_dice \
+  --input atlas_warped_seg.nii.gz \
+  --reference subject_manual_seg.nii.gz \
+  --output registration_quality.csv
+
+──────────────────── OUTPUT FORMAT ──────────────────────
+The output CSV file contains two columns with a header row:
+
+Header: Label,DICE_Score
+Row format:
+  • Label       : Integer label/ROI identifier (e.g., 1, 2, 3...)
+  • DICE_Score  : DICE coefficient (float, 0.0-1.0)
+
+Example output:
+Label,DICE_Score
+1,0.8523
+2,0.9102
+3,0.7845
+
+───────────────── DICE COEFFICIENT FORMULA ───────────────
+
+DICE = 2 × |A ∩ B| / (|A| + |B|)
+
+Where:
+  • A = Set of voxels with label L in segmentation 1
+  • B = Set of voxels with label L in segmentation 2
+  • |A ∩ B| = Number of voxels in both A and B
+  • |A| + |B| = Total count of labeled voxels
+
+─────────────────── DICE INTERPRETATION ──────────────────
+0.00 - 0.50: Poor overlap       → Needs improvement
+0.50 - 0.70: Moderate overlap  → Acceptable for some tasks
+0.70 - 0.85: Good overlap      → Typical for automated methods
+0.85 - 1.00: Excellent overlap → Near-manual quality
+
+────────────────────────── NOTES ─────────────────────────
+• For multi-label segmentations, DICE is computed independently per label
+• Labels present in one volume but not the other will have DICE = 0
+• Background (label 0) is typically excluded from calculation
+• Both input volumes must have the same dimensions and orientation
+• If dimensions don&#39;t match, the script will fail with an error
+• DICE is symmetric: DICE(A,B) = DICE(B,A)
+• This is a wrapper around lamareg&#39;s compare_parcellations_dice function
+• DICE is sensitive to small structures (can be low even with good alignment)
+
+────────────────────── EXIT CODES ───────────────────────
+0 : Success - DICE scores computed and saved
+1 : Error - invalid inputs, file not found, or processing failure
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

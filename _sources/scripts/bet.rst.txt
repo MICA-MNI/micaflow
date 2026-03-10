@@ -1,0 +1,205 @@
+Bet
+===
+
+bet - Brain Extraction Tool
+
+Part of the micaflow processing pipeline for neuroimaging data.
+
+This module provides brain extraction (skull stripping) functionality using either:
+1. SynthSeg-generated parcellations to create brain masks
+2. User-provided binary masks
+
+It accurately segments the brain from surrounding tissues in MR images and offers 
+options for cerebellum removal.
+
+Features:
+--------
+- Brain extraction based on SynthSeg parcellation or user-provided mask
+- Optional cerebellum removal for specific analyses (FreeSurfer labels: 7, 8, 46, 47, 16, 15, 24)
+- Produces skull-stripped images and binary brain masks
+- Automatic resampling when input mask/parcellation dimensions don't match the input image
+
+Command-Line Usage:
+------------------
+# Using SynthSeg parcellation:
+micaflow bet \
+    --input <path/to/image.nii.gz> \
+    --output <path/to/brain.nii.gz> \
+    --parcellation <path/to/synthseg_parcellation.nii.gz> \
+    --output-mask <path/to/brain_mask.nii.gz> \
+    [--remove-cerebellum]
+
+# Using pre-computed mask:
+micaflow bet \
+    --input <path/to/image.nii.gz> \
+    --output <path/to/brain.nii.gz> \
+    --input-mask <path/to/mask.nii.gz>
+
+Note: Either --parcellation OR --input-mask must be provided.
+
+Python API Usage (subprocess):
+-----------------------------
+>>> import subprocess
+>>> 
+>>> # Using SynthSeg parcellation
+>>> result = subprocess.run([
+...     "micaflow", "bet",
+...     "--input", "t1w.nii.gz",
+...     "--output", "t1w_brain.nii.gz",
+...     "--output-mask", "brain_mask.nii.gz",
+...     "--parcellation", "synthseg_parcellation.nii.gz",
+...     "--remove-cerebellum"
+... ], check=True)
+>>> 
+>>> # Using pre-computed mask
+>>> result = subprocess.run([
+...     "micaflow", "bet",
+...     "--input", "t1w.nii.gz",
+...     "--output", "t1w_brain.nii.gz",
+...     "--input-mask", "brain_mask.nii.gz"
+... ], check=True)
+
+Python API Usage (direct):
+-------------------------
+>>> import nibabel as nib
+>>> from nilearn.image import resample_to_img
+>>> import numpy as np
+>>> 
+>>> # Load images
+>>> input_img = nib.load("t1w.nii.gz")
+>>> parcellation_img = nib.load("synthseg_parc.nii.gz")
+>>> 
+>>> # Resample parcellation to match input
+>>> resampled_parc = resample_to_img(parcellation_img, input_img, interpolation="nearest")
+>>> parc_data = resampled_parc.get_fdata()
+>>> 
+>>> # Create brain mask (exclude background label 0)
+>>> mask = parc_data > 0
+>>> 
+>>> # Optional: Remove cerebellum
+>>> cerebellum_labels = [7, 8, 46, 47, 16, 15, 24]
+>>> for label in cerebellum_labels:
+...     mask = mask & (parc_data != label)
+>>> 
+>>> # Apply mask
+>>> brain_data = input_img.get_fdata()
+>>> brain_data[~mask] = 0
+>>> 
+>>> # Save results
+>>> brain_img = nib.Nifti1Image(brain_data, input_img.affine)
+>>> brain_img.to_filename("t1w_brain.nii.gz")
+>>> 
+>>> mask_img = nib.Nifti1Image(mask.astype(np.int8), input_img.affine)
+>>> mask_img.to_filename("brain_mask.nii.gz")
+
+Exit Codes:
+----------
+0 : Success
+1 : Error (missing required arguments, invalid inputs, or processing failure)
+
+FreeSurfer Label Reference:
+--------------------------
+Cerebellum and related structures (removed with --remove-cerebellum):
+  7  : Left-Cerebellum-White-Matter
+  8  : Left-Cerebellum-Cortex
+  46 : Right-Cerebellum-White-Matter
+  47 : Right-Cerebellum-Cortex
+  16 : Brain-Stem
+  15 : 4th-Ventricle
+  24 : CSF
+
+See Also:
+--------
+- synthseg : For generating the input parcellation
+- For more on FreeSurfer labels: https://surfer.nmr.mgh.harvard.edu/fswiki/FsTutorial/AnatomicalROI/FreeSurferColorLUT
+
+References:
+----------
+1. Billot B, Greve DN, Puonti O, et al. SynthSeg: Segmentation of brain MRI scans of 
+   any contrast and resolution without retraining. Medical Image Analysis. 2023;86:102789.
+   doi:10.1016/j.media.2023.102789
+
+Command Line Usage
+-----------------
+
+.. code-block:: bash
+
+    micaflow bet [options]
+
+Source Code
+-----------
+
+View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/bet.py>`_
+
+Description
+-----------
+
+This script performs brain extraction (skull stripping) on MRI images using
+    either SynthSeg parcellations or user-provided masks.
+
+Full Help
+---------
+
+.. code-block:: text
+
+    
+        ╔════════════════════════════════════════════════════════════════╗
+        ║                     BRAIN EXTRACTION TOOL                      ║
+        ╚════════════════════════════════════════════════════════════════╝
+        
+        This script performs brain extraction (skull stripping) on MRI images using
+        either SynthSeg parcellations or user-provided masks.
+        
+        ────────────────────────── USAGE ──────────────────────────
+          micaflow bet [options]
+        
+        ─────────────────── REQUIRED ARGUMENTS ───────────────────
+          --input, -i      : Path to the input MR image (.nii.gz)
+          --output, -o     : Path for the output brain-extracted image (.nii.gz)
+          
+          Note: Must provide ONE of the following:
+          --parcellation, -p : Path to SynthSeg parcellation file (.nii.gz)
+          --input-mask        : Path to binary brain mask (.nii.gz)
+        
+        ─────────────────── OPTIONAL ARGUMENTS ───────────────────
+          --output-mask, -m   : Path for the output brain mask (.nii.gz)
+                             Only used when --parcellation is provided
+          --remove-cerebellum, -r: Remove cerebellum from the brain mask
+                             Only works with --parcellation mode
+                             Removes FreeSurfer labels: 7, 8, 46, 47, 16, 15, 24
+        
+        ────────────────── EXAMPLE USAGE ────────────────────────
+        
+        # Mode 1: Using SynthSeg parcellation
+        micaflow bet --input t1w.nii.gz --output t1w_brain.nii.gz \
+          --parcellation synthseg_parc.nii.gz --output-mask brain_mask.nii.gz
+        
+        # Mode 2: Using SynthSeg parcellation with cerebellum removal
+        micaflow bet --input t1w.nii.gz --output t1w_brain.nii.gz \
+          --parcellation synthseg_parc.nii.gz --output-mask brain_mask.nii.gz \
+          --remove-cerebellum
+        
+        # Mode 3: Using pre-computed mask
+        micaflow bet --input flair.nii.gz --output flair_brain.nii.gz \
+          --input-mask precomputed_mask.nii.gz
+        
+        ────────────────────────── NOTES ─────────────────────────
+        • Either --parcellation OR --input-mask must be provided (not both)
+        • When using --parcellation:
+          - Creates brain mask from all non-zero parcellation labels
+          - Can optionally save the mask with --output-mask
+          - Can remove cerebellum regions with --remove-cerebellum
+        • When using --input-mask:
+          - Directly applies the provided binary mask
+          - --output-mask and --remove-cerebellum options are ignored
+        • Automatic resampling is performed if mask/parcellation doesn't match input image
+        • Resampling uses nearest neighbor interpolation to preserve discrete labels
+        • Cerebellum labels (FreeSurfer): 
+          7=L-Cereb-WM, 8=L-Cereb-Cortex, 46=R-Cereb-WM, 47=R-Cereb-Cortex, 
+          16=Brain-Stem, 15=4th-Ventricle, 24=CSF
+        
+        ──────────────────── EXIT CODES ─────────────────────────
+        0 : Success - brain extraction completed
+        1 : Error - invalid arguments or processing failure
+        
+    

@@ -1,0 +1,425 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Coregister &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Denoise" href="denoise.html" />
+    <link rel="prev" title="Compute Fa Md" href="compute_fa_md.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#batch-processing-bids">Batch Processing (BIDS)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">MicaFlow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#batch-processing-bids">Batch Processing (BIDS)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../scripts.html">Scripts</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../scripts.html">Scripts</a></li>
+      <li class="breadcrumb-item active">Coregister</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/scripts/coregister.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="coregister">
+<h1>Coregister<a class="headerlink" href="#coregister" title="Link to this heading"></a></h1>
+<p>coregister - Label-Augmented Image Registration for Aligning Neuroimaging Data</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module performs comprehensive image registration between two images using LAMAReg
+(Label-Augmented Modality-Agnostic Registration), which combines anatomical image information
+with segmentation labels to achieve more accurate registration across different imaging modalities.
+The registration aligns a moving image with a fixed reference space, enabling spatial normalization
+of neuroimaging data for group analysis, multimodal integration, or atlas-based analyses.</p>
+<p>LAMAReg improves upon traditional intensity-based registration by incorporating structural
+segmentation information, making it particularly robust for registering images with different
+contrasts (e.g., T1w to T2w, structural to diffusion) or when anatomical correspondence is
+challenging to establish from intensity alone.</p>
+<section id="features">
+<h2>Features:<a class="headerlink" href="#features" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Label-augmented registration for improved accuracy across different modalities</p></li>
+<li><p>Automatic segmentation generation using SynthSeg when not provided</p></li>
+<li><p>Combined rigid, affine, and SyN nonlinear registration in one step</p></li>
+<li><p>Linear-only registration option (rigid + affine) for faster processing</p></li>
+<li><p>DWI processing support with shell/volume extraction capabilities</p></li>
+<li><p>Bidirectional transformation capability (forward and inverse)</p></li>
+<li><p>Option to save all transformation components for later application</p></li>
+<li><p>Modality-agnostic approach for consistent registration across different contrasts</p></li>
+<li><p>Support for multi-threaded processing for both ANTs and SynthSeg components</p></li>
+<li><p>Secondary warp file support for complex multi-step registration pipelines</p></li>
+</ul>
+</section>
+<section id="registration-modes">
+<h2>Registration Modes:<a class="headerlink" href="#registration-modes" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>Full Nonlinear (Default):</dt><dd><ul class="simple">
+<li><p>Rigid alignment (6 DOF: 3 translations + 3 rotations)</p></li>
+<li><p>Affine transformation (12 DOF: adds scaling and shearing)</p></li>
+<li><p>SyN nonlinear deformation (captures local anatomical differences)</p></li>
+<li><p>Best for: Normalizing subjects to standard space, high accuracy needed</p></li>
+<li><p>Processing time: ~1-15 minutes (depending on image resolution and threads)</p></li>
+</ul>
+</dd>
+<dt>Linear Only (–linear-only):</dt><dd><ul class="simple">
+<li><p>Rigid alignment + Affine transformation only</p></li>
+<li><p>No nonlinear deformation</p></li>
+<li><p>Best for: Intra-subject registration, quick alignment, motion correction</p></li>
+<li><p>Processing time: ~2-4 minutes</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="command-line-usage">
+<h2>Command-Line Usage:<a class="headerlink" href="#command-line-usage" title="Link to this heading"></a></h2>
+<p># Full nonlinear registration with automatic segmentation
+micaflow coregister </p>
+<blockquote>
+<div><p>–fixed-file &lt;path/to/reference.nii.gz&gt; –moving-file &lt;path/to/source.nii.gz&gt; –output &lt;path/to/registered.nii.gz&gt; [–warp-file &lt;path/to/warp.nii.gz&gt;] [–affine-file &lt;path/to/affine.mat&gt;] [–rev-warp-file &lt;path/to/reverse_warp.nii.gz&gt;] [–output-segmentation &lt;path/to/output_seg.nii.gz&gt;] [–threads &lt;int&gt;]</p>
+</div></blockquote>
+<p># With pre-computed segmentations (faster)
+micaflow coregister </p>
+<blockquote>
+<div><p>–fixed-file &lt;path/to/reference.nii.gz&gt; –moving-file &lt;path/to/source.nii.gz&gt; –fixed-segmentation &lt;path/to/fixed_seg.nii.gz&gt; –moving-segmentation &lt;path/to/moving_seg.nii.gz&gt; –output &lt;path/to/registered.nii.gz&gt;</p>
+</div></blockquote>
+<p># Linear-only registration
+micaflow coregister </p>
+<blockquote>
+<div><p>–fixed-file &lt;path/to/reference.nii.gz&gt; –moving-file &lt;path/to/source.nii.gz&gt; –output &lt;path/to/registered.nii.gz&gt; –linear-only</p>
+</div></blockquote>
+</section>
+<section id="python-api-usage">
+<h2>Python API Usage:<a class="headerlink" href="#python-api-usage" title="Link to this heading"></a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.coregister</span><span class="w"> </span><span class="kn">import</span> <span class="n">coregister</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Full nonlinear registration</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output</span> <span class="o">=</span> <span class="n">coregister</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">fixed_file</span><span class="o">=</span><span class="s2">&quot;mni152.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">moving_file</span><span class="o">=</span><span class="s2">&quot;subject_t1w.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output</span><span class="o">=</span><span class="s2">&quot;registered_t1w.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">warp_file</span><span class="o">=</span><span class="s2">&quot;warp.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">affine_file</span><span class="o">=</span><span class="s2">&quot;affine.mat&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">rev_warp_file</span><span class="o">=</span><span class="s2">&quot;reverse_warp.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">threads</span><span class="o">=</span><span class="mi">4</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Linear-only registration</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output</span> <span class="o">=</span> <span class="n">coregister</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">fixed_file</span><span class="o">=</span><span class="s2">&quot;mni152.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">moving_file</span><span class="o">=</span><span class="s2">&quot;subject_t1w.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output</span><span class="o">=</span><span class="s2">&quot;registered_t1w.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">linear_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">affine_file</span><span class="o">=</span><span class="s2">&quot;affine.mat&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Or use the LAMAReg function directly:
+&gt;&gt;&gt; from lamareg.scripts.lamar import lamareg
+&gt;&gt;&gt; lamareg(
+…     input_image=”subject_t1w.nii.gz”,
+…     reference_image=”mni152.nii.gz”,
+…     output_image=”registered_t1w.nii.gz”,
+…     input_parc=”subject_seg.nii.gz”,  # Optional
+…     reference_parc=”mni152_seg.nii.gz”,  # Optional
+…     output_parc=”registered_seg.nii.gz”,
+…     warp_file=”warp.nii.gz”,
+…     affine_file=”affine.mat”,
+…     inverse_warp_file=”reverse_warp.nii.gz”,
+…     skip_moving_parc=False,  # Generate if not provided
+…     skip_fixed_parc=False,   # Generate if not provided
+…     ants_threads=4,
+…     synthseg_threads=2
+… )</p>
+</section>
+<section id="exit-codes">
+<h2>Exit Codes:<a class="headerlink" href="#exit-codes" title="Link to this heading"></a></h2>
+<p>0 : Success - registration completed
+1 : Error - invalid inputs, file not found, or processing failure</p>
+</section>
+<section id="technical-notes">
+<h2>Technical Notes:<a class="headerlink" href="#technical-notes" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>LAMAReg uses ANTs SyN (Symmetric Normalization) for nonlinear registration</p></li>
+<li><p>Segmentations are generated using SynthSeg (deep learning-based segmentation)</p></li>
+<li><p>Forward transforms: moving → fixed space</p></li>
+<li><p>Reverse transforms: fixed → moving space</p></li>
+<li><p>Secondary warp files allow enable greater accuracy in due to less interpolation</p></li>
+<li><p>When secondary warps are not provided, warp fields are composed into single transform</p></li>
+<li><p>Multi-threading significantly reduces processing time on multi-core systems</p></li>
+<li><p>SynthSeg can process nearly any MRI contrast without retraining</p></li>
+</ul>
+</section>
+<section id="see-also">
+<h2>See Also:<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>synthseg : For generating segmentation/parcellation volumes</p></li>
+<li><p>apply_warp : For applying saved transformations to other images</p></li>
+<li><p>calculate_dice : For validating registration quality</p></li>
+</ul>
+</section>
+<section id="references">
+<h2>References:<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<ol class="arabic simple" start="2">
+<li><p>Billot B, Greve DN, Puonti O, et al. SynthSeg: Segmentation of brain MRI scans of
+any contrast and resolution without retraining. Medical Image Analysis. 2023;86:102789.
+doi:10.1016/j.media.2023.102789</p></li>
+<li><p>Tustison NJ, Cook PA, Klein A, et al. Large-scale evaluation of ANTs and FreeSurfer
+cortical thickness measurements. Neuroimage. 2014;99:166-179.
+doi:10.1016/j.neuroimage.2014.05.044</p></li>
+</ol>
+</section>
+<section id="id1">
+<h2>Command Line Usage<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>coregister<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="source-code">
+<h2>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h2>
+<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/coregister.py">GitHub Repository</a></p>
+</section>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>This script performs label-augmented modality-agnostic registration (LAMAReg)</dt><dd><p>between two images. The registration aligns the moving image to match the fixed
+reference image space, utilizing segmentation labels to improve accuracy across
+different modalities.</p>
+</dd>
+</dl>
+</section>
+<section id="full-help">
+<h2>Full Help<a class="headerlink" href="#full-help" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>╔════════════════════════════════════════════════════════════════╗
+║                LABEL-AUGMENTED COREGISTRATION                  ║
+╚════════════════════════════════════════════════════════════════╝
+
+This script performs label-augmented modality-agnostic registration (LAMAReg)
+between two images. The registration aligns the moving image to match the fixed
+reference image space, utilizing segmentation labels to improve accuracy across
+different modalities.
+
+────────────────────────── USAGE ──────────────────────────
+  micaflow coregister [options]
+
+─────────────────── REQUIRED ARGUMENTS ───────────────────
+  --fixed-file   : Path to the fixed/reference image (.nii.gz)
+                 The target space for registration
+  --moving-file  : Path to the moving image to be registered (.nii.gz)
+                 Will be transformed to match fixed image
+  --output       : Output path for the registered image (.nii.gz)
+
+─────────────────── OPTIONAL ARGUMENTS ───────────────────
+  --fixed-segmentation   : Path to fixed image segmentation (.nii.gz)
+                        Auto-generated if not provided
+  --moving-segmentation  : Path to moving image segmentation (.nii.gz)
+                        Auto-generated if not provided
+  --output-segmentation  : Path to save registered segmentation (.nii.gz)
+  --warp-file            : Path to save forward warp field (.nii.gz)
+                        Moving → Fixed transformation
+  --affine-file          : Path to save forward affine (.mat)
+  --rev-warp-file        : Path to save reverse warp field (.nii.gz)
+                        Fixed → Moving transformation
+  --secondary-warp-file  : Path for secondary warp (multi-step pipelines)
+                        More accurate but complex to apply
+  --secondary-rev-warp-file: Path for secondary reverse warp
+  --linear-only          : Only perform rigid + affine (no SyN)
+                        Faster but less accurate
+  --threads              : Number of threads for ANTs and SynthSeg (default: 1)
+
+────────────────── EXAMPLE USAGE ────────────────────────
+
+# Example 1: Basic nonlinear registration (automatic segmentation)
+micaflow coregister \
+  --fixed-file mni152.nii.gz \
+  --moving-file subject_t1w.nii.gz \
+  --output registered_t1w.nii.gz \
+  --warp-file warp.nii.gz \
+  --affine-file affine.mat
+
+# Example 2: With pre-computed segmentations (faster)
+micaflow coregister \
+  --fixed-file mni152.nii.gz \
+  --moving-file subject_t1w.nii.gz \
+  --fixed-segmentation mni152_seg.nii.gz \
+  --moving-segmentation subject_seg.nii.gz \
+  --output registered_t1w.nii.gz \
+  --output-segmentation registered_seg.nii.gz
+
+# Example 3: Linear-only registration (fast)
+micaflow coregister \
+  --fixed-file subject_t1w.nii.gz \
+  --moving-file subject_t2w.nii.gz \
+  --output t2w_in_t1w_space.nii.gz \
+  --linear-only \
+  --affine-file t2w_to_t1w.mat
+
+# Example 4: Multi-threaded registration
+micaflow coregister \
+  --fixed-file mni152.nii.gz \
+  --moving-file subject_t1w.nii.gz \
+  --output registered_t1w.nii.gz \
+  --threads 4
+
+# Example 5: Multi-step registration with secondary warps
+micaflow coregister \
+  --fixed-file mni152.nii.gz \
+  --moving-file subject_dwi.nii.gz \
+  --output dwi_in_mni.nii.gz \
+  --warp-file primary_warp.nii.gz \
+  --secondary-warp-file secondary_warp.nii.gz
+
+────────────────── REGISTRATION MODES ───────────────────
+
+Full Nonlinear (Default):
+• Rigid → Affine → SyN deformation
+• Best accuracy for inter-subject registration
+• Processing time: ~5-15 minutes
+• Use for: Normalizing to standard space (e.g., MNI152)
+
+Linear Only (--linear-only):
+• Rigid → Affine only (no nonlinear deformation)
+• Faster but less accurate
+• Processing time: ~1-3 minutes
+• Use for: Intra-subject registration, motion correction
+
+────────────────────────── NOTES ───────────────────────
+• LAMAReg combines anatomical and label information for robust registration
+• Segmentations are automatically generated using SynthSeg if not provided
+• SynthSeg adds ~1-3 minutes per image to processing time
+• Forward transforms: moving space → fixed space
+• Reverse transforms: fixed space → moving space
+• Save transforms to apply to other images later (use apply_warp)
+• Multi-threading significantly reduces processing time
+• Secondary warps enable greate accuracy due to skipping an interpolation step
+• LAMAReg works across different MRI contrasts (T1w, T2w, FLAIR, etc.)
+• Registration quality can be validated using calculate_dice
+
+────────────────────── EXIT CODES ───────────────────────
+0 : Success - registration completed
+1 : Error - invalid inputs, file not found, or processing failure
+
+───────────────── COMMON ISSUES ─────────────────────────
+Issue: Registration takes very long
+Solution: Increase --threads, provide pre-computed segmentations
+
+Issue: Poor registration quality
+Solution: Ensure images have similar FOV, try providing segmentations
+
+Issue: &quot;Out of memory&quot; error
+Solution: Reduce number of threads or image resolution
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="compute_fa_md.html" class="btn btn-neutral float-left" title="Compute Fa Md" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="denoise.html" class="btn btn-neutral float-right" title="Denoise" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,422 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Synthseg &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Texture Generation" href="texture_generation.html" />
+    <link rel="prev" title="Sdc" href="SDC.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#batch-processing-bids">Batch Processing (BIDS)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">MicaFlow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#batch-processing-bids">Batch Processing (BIDS)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../scripts.html">Scripts</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../scripts.html">Scripts</a></li>
+      <li class="breadcrumb-item active">Synthseg</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/scripts/synthseg.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="synthseg">
+<h1>Synthseg<a class="headerlink" href="#synthseg" title="Link to this heading"></a></h1>
+<p>synthseg - Neural Network-Based Brain MRI Segmentation</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module provides an interface to SynthSeg, a deep learning-based tool for automated
+brain MRI segmentation that works across different MRI contrasts without retraining.
+SynthSeg segments brain anatomical structures in T1w, T2w, FLAIR, and other MR contrasts,
+providing both whole-brain segmentation and optional cortical parcellation.</p>
+<section id="what-is-synthseg">
+<h2>What is SynthSeg?<a class="headerlink" href="#what-is-synthseg" title="Link to this heading"></a></h2>
+<p>SynthSeg is a contrast-agnostic segmentation tool that:
+- Segments brain MRI scans regardless of acquisition contrast
+- Works with T1w, T2w, FLAIR, PD, and other MRI modalities
+- Provides robust segmentation across different scanners and protocols</p>
+<p>How It Works:
+1. Load input MRI (any contrast)
+2. Optional preprocessing (cropping, resampling)
+3. Run 3D U-Net inference
+4. Optional postprocessing (CRF, largest component)
+5. Output segmentation labels
+6. Optional: Compute volumes and QC scores</p>
+</section>
+<section id="segmentation-labels">
+<h2>Segmentation Labels:<a class="headerlink" href="#segmentation-labels" title="Link to this heading"></a></h2>
+<p>Standard mode (37 labels):
+- Cortical gray matter (left/right)
+- White matter (left/right)
+- Lateral ventricles (left/right)
+- Cerebellum (left/right)
+- Thalamus (left/right)
+- Caudate (left/right)
+- Putamen (left/right)
+- Pallidum (left/right)
+- Hippocampus (left/right)
+- Amygdala (left/right)
+- Brainstem
+- … and more subcortical structures</p>
+<p>Parcellation mode (up to 132 labels):
+- All standard labels
+- Cortical parcellation (FreeSurfer-style)
+- Frontal, parietal, temporal, occipital regions
+- Gyral and sulcal subdivisions</p>
+</section>
+<section id="features">
+<h2>Features:<a class="headerlink" href="#features" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Contrast-agnostic: Works with T1w, T2w, FLAIR, PD, etc.</p></li>
+<li><p>Whole-brain segmentation: 37 anatomical structures</p></li>
+<li><p>Cortical parcellation: Optional FreeSurfer-style parcellation</p></li>
+<li><p>Batch processing: Process multiple subjects efficiently</p></li>
+<li><p>Multi-threading: CPU parallelization support</p></li>
+</ul>
+</section>
+<section id="command-line-usage">
+<h2>Command-Line Usage:<a class="headerlink" href="#command-line-usage" title="Link to this heading"></a></h2>
+<p># Basic segmentation
+micaflow synthseg </p>
+<blockquote>
+<div><p>–i &lt;path/to/image.nii.gz&gt; –o &lt;path/to/segmentation.nii.gz&gt;</p>
+</div></blockquote>
+<p># With cortical parcellation (detailed)
+micaflow synthseg </p>
+<blockquote>
+<div><p>–i &lt;path/to/image.nii.gz&gt; –o &lt;path/to/segmentation.nii.gz&gt; –parc</p>
+</div></blockquote>
+<p># Robust mode for highest quality
+micaflow synthseg </p>
+<blockquote>
+<div><p>–i &lt;path/to/image.nii.gz&gt; –o &lt;path/to/segmentation.nii.gz&gt; –robust</p>
+</div></blockquote>
+<p># Fast mode for quick processing
+micaflow synthseg </p>
+<blockquote>
+<div><p>–i &lt;path/to/image.nii.gz&gt; –o &lt;path/to/segmentation.nii.gz&gt; –fast</p>
+</div></blockquote>
+<p># With volume measurements
+micaflow synthseg </p>
+<blockquote>
+<div><p>–i &lt;path/to/image.nii.gz&gt; –o &lt;path/to/segmentation.nii.gz&gt; –vol &lt;path/to/volumes.csv&gt;</p>
+</div></blockquote>
+<p># With quality control scores
+micaflow synthseg </p>
+<blockquote>
+<div><p>–i &lt;path/to/image.nii.gz&gt; –o &lt;path/to/segmentation.nii.gz&gt; –qc &lt;path/to/qc_scores.csv&gt;</p>
+</div></blockquote>
+<p># Batch processing with all outputs
+micaflow synthseg </p>
+<blockquote>
+<div><p>–i &lt;path/to/input_folder/&gt; –o &lt;path/to/output_folder/&gt; –parc –vol &lt;path/to/volumes.csv&gt; –qc &lt;path/to/qc_scores.csv&gt; –post &lt;path/to/posteriors/&gt; –threads 8</p>
+</div></blockquote>
+<p># CPU-only execution
+micaflow synthseg </p>
+<blockquote>
+<div><p>–i &lt;path/to/image.nii.gz&gt; –o &lt;path/to/segmentation.nii.gz&gt; –cpu –threads 8</p>
+</div></blockquote>
+<p># CT scan segmentation
+micaflow synthseg </p>
+<blockquote>
+<div><p>–i &lt;path/to/ct_scan.nii.gz&gt; –o &lt;path/to/segmentation.nii.gz&gt; –ct</p>
+</div></blockquote>
+</section>
+<section id="python-api-usage">
+<h2>Python API Usage:<a class="headerlink" href="#python-api-usage" title="Link to this heading"></a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.synthseg</span><span class="w"> </span><span class="kn">import</span> <span class="n">main</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Basic usage</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="o">=</span> <span class="p">[</span>
+<span class="gp">... </span>    <span class="s1">&#39;synthseg&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s1">&#39;--i&#39;</span><span class="p">,</span> <span class="s1">&#39;T1w.nii.gz&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s1">&#39;--o&#39;</span><span class="p">,</span> <span class="s1">&#39;segmentation.nii.gz&#39;</span>
+<span class="gp">... </span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">main</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># With options (alternative approach)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">main</span><span class="p">({</span>
+<span class="gp">... </span>    <span class="s1">&#39;i&#39;</span><span class="p">:</span> <span class="s1">&#39;T1w.nii.gz&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s1">&#39;o&#39;</span><span class="p">:</span> <span class="s1">&#39;segmentation.nii.gz&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s1">&#39;parc&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s1">&#39;robust&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s1">&#39;vol&#39;</span><span class="p">:</span> <span class="s1">&#39;volumes.csv&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s1">&#39;qc&#39;</span><span class="p">:</span> <span class="s1">&#39;qc_scores.csv&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s1">&#39;threads&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s1">&#39;cpu&#39;</span><span class="p">:</span> <span class="kc">False</span>
+<span class="gp">... </span><span class="p">})</span>
+</pre></div>
+</div>
+</section>
+<section id="pipeline-integration">
+<h2>Pipeline Integration:<a class="headerlink" href="#pipeline-integration" title="Link to this heading"></a></h2>
+<p>SynthSeg is typically used early in the processing pipeline for:
+1. Quality control of acquisitions
+2. Brain masking
+3. Registration targets
+4. Volume-based analysis</p>
+<p>Structural MRI Pipeline:
+1. Segmentation (synthseg)
+2. Surface reconstruction (optional)
+3. Registration to template
+4. Morphometric analysis</p>
+<p>Multimodal Pipeline:
+1. Structural segmentation (synthseg)
+2. Functional/diffusion preprocessing
+3. Coregistration to anatomical
+4. ROI-based analysis using segmentation</p>
+</section>
+<section id="exit-codes">
+<h2>Exit Codes:<a class="headerlink" href="#exit-codes" title="Link to this heading"></a></h2>
+<p>0 : Success - segmentation completed
+1 : Error - invalid inputs, file not found, or processing failure</p>
+</section>
+<section id="limitations">
+<h2>Limitations:<a class="headerlink" href="#limitations" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Optimized for adult brain anatomy</p></li>
+<li><p>May struggle with severe pathology</p></li>
+</ul>
+</section>
+<section id="see-also">
+<h2>See Also:<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>coregister : Register segmentation to functional data</p></li>
+<li><p>apply_warp : Apply transformations to segmentation</p></li>
+<li><p>extract_rois : Extract ROI time series using segmentation</p></li>
+</ul>
+</section>
+<section id="references">
+<h2>References:<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Billot B, Greve DN, Puonti O, et al. SynthSeg: Segmentation of brain MRI scans
+of any contrast and resolution without retraining. Med Image Anal.
+2023;86:102789. doi:10.1016/j.media.2023.102789</p></li>
+</ol>
+</section>
+<section id="id1">
+<h2>Command Line Usage<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>synthseg<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="source-code">
+<h2>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h2>
+<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/synthseg.py">GitHub Repository</a></p>
+</section>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
+<p>║              Contrast-Agnostic Brain Segmentation              ║</p>
+<blockquote>
+<div><p>This script runs the SynthSeg neural network for automated brain MRI
+segmentation. It works across different MRI contrasts (T1w, T2w, FLAIR, etc.)
+without retraining, providing robust anatomical segmentation.</p>
+</div></blockquote>
+</section>
+<section id="full-help">
+<h2>Full Help<a class="headerlink" href="#full-help" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>╔════════════════════════════════════════════════════════════════╗
+║                         SYNTHSEG                               ║
+║              Contrast-Agnostic Brain Segmentation              ║
+╚════════════════════════════════════════════════════════════════╝
+
+This script runs the SynthSeg neural network for automated brain MRI
+segmentation. It works across different MRI contrasts (T1w, T2w, FLAIR, etc.)
+without retraining, providing robust anatomical segmentation.
+
+────────────────────────── USAGE ──────────────────────────
+  micaflow synthseg [options]
+
+─────────────────── REQUIRED ARGUMENTS ───────────────────
+  --i PATH       : Input image(s) to segment (file or folder)
+  --o PATH       : Output segmentation file(s) or folder
+
+─────────────────── OPTIONAL ARGUMENTS ───────────────────
+  --parc         : Enable cortical parcellation (132 labels vs 37)
+  --robust       : Use robust mode (higher quality, ~5x slower)
+  --fast         : Faster processing (minimal postprocessing)
+  --threads N    : Number of CPU threads (default: 1)
+  --cpu          : Force CPU processing (instead of GPU)
+  --vol PATH     : Output CSV file with region volumes
+  --qc PATH      : Output CSV file with quality control scores
+  --post PATH    : Output posterior probability maps
+  --resample PATH: Output resampled images
+  --crop N [N ...]: Size of 3D patches (default: 192)
+  --ct           : Clip intensities [0,80] for CT scans
+  --v1           : Use SynthSeg 1.0 (legacy version)
+
+────────────────── EXAMPLE USAGE ────────────────────────
+
+# Example 1: Basic segmentation
+micaflow synthseg \
+  --i T1w.nii.gz \
+  --o segmentation.nii.gz
+
+# Example 2: With cortical parcellation
+micaflow synthseg \
+  --i T1w.nii.gz \
+  --o segmentation.nii.gz \
+  --parc
+
+# Example 3: Robust mode for research
+micaflow synthseg \
+  --i T1w.nii.gz \
+  --o segmentation.nii.gz \
+  --parc \
+  --robust
+
+# Example 4: Batch processing with volumes
+micaflow synthseg \
+  --i input_folder/ \
+  --o output_folder/ \
+  --vol volumes.csv \
+  --qc qc_scores.csv \
+  --threads 8
+
+# Example 5: Fast mode for exploration
+micaflow synthseg \
+  --i T2w.nii.gz \
+  --o segmentation.nii.gz \
+  --fast
+
+# Example 6: CPU-only with all outputs
+micaflow synthseg \
+  --i FLAIR.nii.gz \
+  --o segmentation.nii.gz \
+  --parc \
+  --vol volumes.csv \
+  --qc qc_scores.csv \
+  --post posteriors.nii.gz \
+  --cpu \
+  --threads 8
+
+───────────────── COMMON ISSUES ─────────────────────────
+Issue: Poor segmentation quality
+Solution: Try --robust mode, check image quality, verify contrast
+
+Issue: Out of memory error
+Solution: Use --crop for smaller patches, or --cpu mode
+
+Issue: Very slow processing
+Solution: Use GPU if available, or --fast mode for quick results
+
+Issue: Missing structures in segmentation
+Solution: Check QC scores, use --robust mode, verify input quality
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="SDC.html" class="btn btn-neutral float-left" title="Sdc" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="texture_generation.html" class="btn btn-neutral float-right" title="Texture Generation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

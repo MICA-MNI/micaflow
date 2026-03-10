@@ -1,0 +1,541 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Synth B0 &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#batch-processing-bids">Batch Processing (BIDS)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">MicaFlow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#batch-processing-bids">Batch Processing (BIDS)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../scripts.html">Scripts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Synth B0</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/scripts/synth_b0.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="synth-b0">
+<h1>Synth B0<a class="headerlink" href="#synth-b0" title="Link to this heading"></a></h1>
+<p>synth_b0 - Synthetic Undistorted B0 Generation using Deep Learning</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module generates synthetic undistorted B0 images from T1-weighted anatomical
+images and distorted B0 images using the SynB0-DISCO deep learning framework. The
+approach uses an ensemble of 3D U-Net models trained to predict undistorted B0
+contrast from T1w images, enabling distortion correction even when opposite
+phase-encoding acquisitions are unavailable.</p>
+<section id="what-is-synb0-disco">
+<h2>What is SynB0-DISCO?<a class="headerlink" href="#what-is-synb0-disco" title="Link to this heading"></a></h2>
+<p>SynB0-DISCO (Synthetic B0 for DIStortion COrrection) is a deep learning method that:
+- Learns the relationship between T1w anatomy and undistorted B0 contrast
+- Generates synthetic undistorted B0 images without requiring field maps
+- Uses multiple 3D U-Net models in an ensemble for robust predictions
+- Enables distortion correction when only single phase-encoding data is available</p>
+</section>
+<section id="why-synthetic-b0">
+<h2>Why Synthetic B0?<a class="headerlink" href="#why-synthetic-b0" title="Link to this heading"></a></h2>
+<p>Traditional susceptibility distortion correction requires two acquisitions with
+opposite phase-encoding directions (e.g., AP and PA). However:
+- Legacy datasets often lack reverse phase-encoding acquisitions
+- Some protocols only acquire data in one direction
+- Acquiring reverse PE images adds scan time
+- SynB0-DISCO enables correction with just T1w + single PE B0</p>
+<p>The Problem:
+- EPI images (DWI, fMRI) suffer from susceptibility distortions
+- Distortions cause misalignment with anatomical images
+- Affected regions: orbitofrontal cortex, temporal poles, brainstem
+- Traditional correction needs blip-up/blip-down pairs</p>
+<p>The Solution:
+- Train deep learning models on datasets WITH reverse PE
+- Models learn to predict undistorted B0 from T1w images
+- Apply to new data that only has single PE acquisition
+- Generate synthetic undistorted B0 for distortion correction</p>
+</section>
+<section id="deep-learning-architecture">
+<h2>Deep Learning Architecture:<a class="headerlink" href="#deep-learning-architecture" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Model: 3D U-Net with skip connections</p></li>
+<li><p>Input channels: 2 (T1w + distorted B0)</p></li>
+<li><p>Output: 1 (synthetic undistorted B0)</p></li>
+<li><p>Training: Paired T1w and undistorted B0 images</p></li>
+<li><p>Ensemble: 5 models for robust prediction (reduces variance)</p></li>
+<li><p>Framework: PyTorch with GPU acceleration</p></li>
+</ul>
+<p>How It Works:
+1. Load T1w and distorted B0 images
+2. Register B0 to T1w space (affine)
+3. Run inference with ensemble of 5 models
+4. Average predictions for robust result
+5. Register synthetic B0 back to original B0 space
+6. Compute distortion field (synthetic B0 → distorted B0)
+7. Apply correction to all DWI volumes</p>
+</section>
+<section id="features">
+<h2>Features:<a class="headerlink" href="#features" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Ensemble of 5 models for robust predictions</p></li>
+<li><p>GPU acceleration with PyTorch (CUDA support)</p></li>
+<li><p>ANTs-based registration for spatial alignment</p></li>
+<li><p>Restricted transformations along phase-encoding direction</p></li>
+<li><p>4D DWI support with volume-by-volume correction</p></li>
+<li><p>Automatic temporary file cleanup</p></li>
+<li><p>Multi-threading support for CPU operations</p></li>
+</ul>
+</section>
+<section id="when-to-use">
+<h2>When to Use:<a class="headerlink" href="#when-to-use" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>When reverse phase-encoding data is unavailable</p></li>
+<li><p>For legacy datasets with single PE direction</p></li>
+<li><p>When scan time doesn’t allow reverse PE acquisition</p></li>
+<li><p>After motion correction (for DWI)</p></li>
+<li><p>Before registration to anatomical space</p></li>
+</ul>
+</section>
+<section id="when-not-to-use">
+<h2>When NOT to Use:<a class="headerlink" href="#when-not-to-use" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>If you have reverse PE data (use SDC instead)</p></li>
+<li><p>For non-EPI sequences without distortion</p></li>
+<li><p>If T1w image has severe artifacts or pathology</p></li>
+<li><p>When anatomical-functional alignment is already good</p></li>
+</ul>
+</section>
+<section id="command-line-usage">
+<h2>Command-Line Usage:<a class="headerlink" href="#command-line-usage" title="Link to this heading"></a></h2>
+<p># Basic usage with AP phase-encoding (default)
+micaflow synth_b0 </p>
+<blockquote>
+<div><p>–t1 &lt;path/to/T1w.nii.gz&gt; –b0 &lt;path/to/distorted_b0.nii.gz&gt; –dwi &lt;path/to/dwi_no_b0.nii.gz&gt; –output &lt;path/to/corrected_dwi.nii.gz&gt; –intermediate &lt;path/to/synthetic_b0_t1space.nii.gz&gt; –warp &lt;path/to/warp_field.nii.gz&gt; –b0-to-T1-affine &lt;path/to/b0_to_t1_affine.mat&gt; –b0-to-T1-warp &lt;path/to/b0_to_t1_warp.nii.gz&gt;</p>
+</div></blockquote>
+<p># With LR phase-encoding
+micaflow synth_b0 </p>
+<blockquote>
+<div><p>–t1 &lt;path/to/T1w.nii.gz&gt; –b0 &lt;path/to/distorted_b0.nii.gz&gt; –dwi &lt;path/to/dwi_no_b0.nii.gz&gt; –output &lt;path/to/corrected_dwi.nii.gz&gt; –intermediate &lt;path/to/synthetic_b0_t1space.nii.gz&gt; –warp &lt;path/to/warp_field.nii.gz&gt; –phase-encoding lr –b0-to-T1-affine &lt;path/to/b0_to_t1_affine.mat&gt; –b0-to-T1-warp &lt;path/to/b0_to_t1_warp.nii.gz&gt;</p>
+</div></blockquote>
+<p># Force CPU usage (no GPU)
+micaflow synth_b0 </p>
+<blockquote>
+<div><p>–t1 &lt;path/to/T1w.nii.gz&gt; –b0 &lt;path/to/distorted_b0.nii.gz&gt; –dwi &lt;path/to/dwi_no_b0.nii.gz&gt; –output &lt;path/to/corrected_dwi.nii.gz&gt; –intermediate &lt;path/to/synthetic_b0_t1space.nii.gz&gt; –warp &lt;path/to/warp_field.nii.gz&gt; –cpu –b0-to-T1-affine &lt;path/to/b0_to_t1_affine.mat&gt; –b0-to-T1-warp &lt;path/to/b0_to_t1_warp.nii.gz&gt;</p>
+</div></blockquote>
+<p># With custom thread count
+micaflow synth_b0 </p>
+<blockquote>
+<div><p>–t1 &lt;path/to/T1w.nii.gz&gt; –b0 &lt;path/to/distorted_b0.nii.gz&gt; –dwi &lt;path/to/dwi_no_b0.nii.gz&gt; –output &lt;path/to/corrected_dwi.nii.gz&gt; –intermediate &lt;path/to/synthetic_b0_t1space.nii.gz&gt; –warp &lt;path/to/warp_field.nii.gz&gt; –threads 8 –b0-to-T1-affine &lt;path/to/b0_to_t1_affine.mat&gt; –b0-to-T1-warp &lt;path/to/b0_to_t1_warp.nii.gz&gt;</p>
+</div></blockquote>
+<p># Save corrected B0 for QC
+micaflow synth_b0 </p>
+<blockquote>
+<div><p>–t1 &lt;path/to/T1w.nii.gz&gt; –b0 &lt;path/to/distorted_b0.nii.gz&gt; –dwi &lt;path/to/dwi_no_b0.nii.gz&gt; –output &lt;path/to/corrected_dwi.nii.gz&gt; –intermediate &lt;path/to/synthetic_b0_t1space.nii.gz&gt; –warp &lt;path/to/warp_field.nii.gz&gt; –corrected-b0 &lt;path/to/corrected_b0.nii.gz&gt; –b0-to-T1-affine &lt;path/to/b0_to_t1_affine.mat&gt; –b0-to-T1-warp &lt;path/to/b0_to_t1_warp.nii.gz&gt;</p>
+</div></blockquote>
+</section>
+<section id="python-api-usage">
+<h2>Python API Usage:<a class="headerlink" href="#python-api-usage" title="Link to this heading"></a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.synth_b0</span><span class="w"> </span><span class="kn">import</span> <span class="n">main</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Set up arguments</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="o">=</span> <span class="p">[</span>
+<span class="gp">... </span>    <span class="s1">&#39;synth_b0&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s1">&#39;--t1&#39;</span><span class="p">,</span> <span class="s1">&#39;T1w.nii.gz&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s1">&#39;--b0&#39;</span><span class="p">,</span> <span class="s1">&#39;distorted_b0.nii.gz&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s1">&#39;--dwi&#39;</span><span class="p">,</span> <span class="s1">&#39;dwi_no_b0.nii.gz&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s1">&#39;--output&#39;</span><span class="p">,</span> <span class="s1">&#39;corrected_dwi.nii.gz&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s1">&#39;--intermediate&#39;</span><span class="p">,</span> <span class="s1">&#39;synthetic_b0_t1space.nii.gz&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s1">&#39;--warp&#39;</span><span class="p">,</span> <span class="s1">&#39;warp_field.nii.gz&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s1">&#39;--b0-to-T1-affine&#39;</span><span class="p">,</span> <span class="s1">&#39;b0_to_t1_affine.mat&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s1">&#39;--b0-to-T1-warp&#39;</span><span class="p">,</span> <span class="s1">&#39;b0_to_t1_warp.nii.gz&#39;</span>
+<span class="gp">... </span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Run</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="pipeline-integration">
+<h2>Pipeline Integration:<a class="headerlink" href="#pipeline-integration" title="Link to this heading"></a></h2>
+<p>SynB0-DISCO is an alternative to traditional SDC when reverse PE data unavailable:</p>
+<p>Diffusion MRI Pipeline (with reverse PE):
+1. Denoising (denoise)
+2. Motion correction (motion_correction)
+3. Susceptibility correction (SDC)
+4. Registration (coregister)
+5. DTI metrics (compute_fa_md)</p>
+<p>Diffusion MRI Pipeline (without reverse PE):
+1. Denoising (denoise)
+2. Motion correction (motion_correction)
+3. B0 extraction (extract_b0)
+4. Synthetic B0 generation (synth_b0)
+5. Registration (coregister)
+6. DTI metrics (compute_fa_md)</p>
+</section>
+<section id="exit-codes">
+<h2>Exit Codes:<a class="headerlink" href="#exit-codes" title="Link to this heading"></a></h2>
+<p>0 : Success - synthetic B0 generation completed
+1 : Error - invalid inputs, file not found, or processing failure</p>
+</section>
+<section id="technical-notes">
+<h2>Technical Notes:<a class="headerlink" href="#technical-notes" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Model architecture: 3D U-Net with 2 input channels, 1 output channel</p></li>
+<li><p>Ensemble size: 5 models (or fewer if models unavailable)</p></li>
+<li><p>Inference: Average of all model predictions</p></li>
+<li><p>Registration: ANTs affine for initial alignment</p></li>
+<li><p>Distortion field: ANTs SyN with restricted transformation</p></li>
+<li><p>Phase-encoding restriction: Only allows deformation along PE axis</p></li>
+<li><p>Multi-threading: Supports both PyTorch and ANTs threading</p></li>
+<li><p>Temporary files: Automatically cleaned up after completion</p></li>
+</ul>
+</section>
+<section id="registration-parameters">
+<h2>Registration Parameters:<a class="headerlink" href="#registration-parameters" title="Link to this heading"></a></h2>
+<p>Initial alignment (B0 → T1):
+- Type: Affine (12 DOF)
+- Metric: Mattes mutual information</p>
+<p>Distortion field computation:
+- Type: SyN (symmetric normalization)
+- Iterations: (20, 10, 5) - reduced for gentler warps
+- Gradient step: 0.1 (smaller than default 0.2)
+- Flow sigma: 3 (smoothing of velocity field)
+- Total sigma: 1 (smoothing of total deformation)
+- Restriction: Along phase-encoding direction only</p>
+</section>
+<section id="phase-encoding-directions">
+<h2>Phase-Encoding Directions:<a class="headerlink" href="#phase-encoding-directions" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>AP (Anterior-Posterior): y-axis restriction (0,1,0)</p></li>
+<li><p>PA (Posterior-Anterior): y-axis restriction (0,1,0)</p></li>
+<li><p>LR (Left-Right): x-axis restriction (1,0,0)</p></li>
+<li><p>RL (Right-Left): x-axis restriction (1,0,0)</p></li>
+<li><p>SI (Superior-Inferior): z-axis restriction (0,0,1)</p></li>
+<li><p>IS (Inferior-Superior): z-axis restriction (0,0,1)</p></li>
+</ul>
+</section>
+<section id="quality-control">
+<h2>Quality Control:<a class="headerlink" href="#quality-control" title="Link to this heading"></a></h2>
+<p>Visual inspection recommended:
+1. Check alignment of synthetic B0 with T1w
+2. Verify distortion field is smooth and localized
+3. Compare corrected B0 with synthetic B0
+4. Assess DWI alignment with anatomical after correction
+5. Look for residual distortions in affected regions</p>
+</section>
+<section id="limitations">
+<h2>Limitations:<a class="headerlink" href="#limitations" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Requires high-quality T1w image</p></li>
+<li><p>May not generalize to severe pathology</p></li>
+<li><p>Less accurate than field map-based correction</p></li>
+<li><p>Assumes typical brain anatomy</p></li>
+</ul>
+</section>
+<section id="see-also">
+<h2>See Also:<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>SDC : Traditional distortion correction with reverse PE</p></li>
+<li><p>extract_b0 : Extract B0 volumes from DWI</p></li>
+<li><p>motion_correction : Apply before synthetic B0</p></li>
+<li><p>coregister : Register corrected images to anatomical</p></li>
+</ul>
+</section>
+<section id="references">
+<h2>References:<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Schilling KG, Blaber J, Huo Y, et al. Synthesized b0 for diffusion distortion
+correction (Synb0-DisCo). Magn Reson Imaging. 2019;64:62-70.
+doi:10.1016/j.mri.2019.05.008</p></li>
+</ol>
+</section>
+<section id="id1">
+<h2>Command Line Usage<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>synth_b0<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="source-code">
+<h2>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h2>
+<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/synth_b0.py">GitHub Repository</a></p>
+</section>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
+<p>║                      (SynB0-DISCO)                            ║</p>
+<blockquote>
+<div><p>This script generates a synthetic undistorted B0 image from T1w and
+distorted B0 images using deep learning (SynB0-DISCO). The process uses
+an ensemble of 3D U-Net models to predict undistorted B0 contrast,
+enabling distortion correction without reverse phase-encoding acquisitions.</p>
+</div></blockquote>
+</section>
+<section id="full-help">
+<h2>Full Help<a class="headerlink" href="#full-help" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>╔════════════════════════════════════════════════════════════════╗
+║                  SYNTHETIC B0 GENERATION                       ║
+║                      (SynB0-DISCO)                            ║
+╚════════════════════════════════════════════════════════════════╝
+
+This script generates a synthetic undistorted B0 image from T1w and
+distorted B0 images using deep learning (SynB0-DISCO). The process uses
+an ensemble of 3D U-Net models to predict undistorted B0 contrast,
+enabling distortion correction without reverse phase-encoding acquisitions.
+
+────────────────────────── USAGE ──────────────────────────
+  micaflow synth_b0 [options]
+
+─────────────────── REQUIRED ARGUMENTS ───────────────────
+  --t1                : Path to T1w image (.nii.gz)
+  --b0                : Path to distorted B0 image (.nii.gz)
+  --dwi               : Path to DWI image without B0 volumes (.nii.gz)
+  --output            : Path for corrected DWI output (.nii.gz)
+  --intermediate      : Path to save synthetic B0 in T1 space (.nii.gz)
+  --warp              : Path to save the warp field (.nii.gz)
+  --b0-to-T1-affine   : Path to B0→T1 affine transform (.mat)
+  --b0-to-T1-warp     : Path to B0→T1 warp field (.nii.gz)
+
+─────────────────── OPTIONAL ARGUMENTS ───────────────────
+  --phase-encoding           : Phase-encoding direction
+                               Choices: &#39;ap&#39;, &#39;pa&#39;, &#39;lr&#39;, &#39;rl&#39;, &#39;si&#39;, &#39;is&#39;
+                               Default: &#39;ap&#39;
+  --cpu                      : Force CPU usage (default: use GPU)
+  --threads                  : Number of CPU threads (default: all)
+  --temp-dir                 : Directory for temporary files
+  --corrected-b0             : Path to save corrected B0 (for QC)
+  --shell-dimension          : Volume dimension in 4D (default: 3)
+  --b0-to-T1-warp-secondary  : Secondary warp field (optional)
+
+──────────────────── EXAMPLE USAGE ───────────────────────
+
+# Example 1: Basic usage with AP phase-encoding
+micaflow synth_b0 \
+  --t1 T1w.nii.gz \
+  --b0 distorted_b0.nii.gz \
+  --dwi dwi_no_b0.nii.gz \
+  --output corrected_dwi.nii.gz \
+  --intermediate synthetic_b0_t1space.nii.gz \
+  --warp warp_field.nii.gz \
+  --b0-to-T1-affine b0_to_t1.mat \
+  --b0-to-T1-warp b0_to_t1_warp.nii.gz
+
+# Example 2: With LR phase-encoding
+micaflow synth_b0 \
+  --t1 T1w.nii.gz \
+  --b0 distorted_b0.nii.gz \
+  --dwi dwi_no_b0.nii.gz \
+  --output corrected_dwi.nii.gz \
+  --intermediate synthetic_b0_t1space.nii.gz \
+  --warp warp_field.nii.gz \
+  --phase-encoding lr \
+  --b0-to-T1-affine b0_to_t1.mat \
+  --b0-to-T1-warp b0_to_t1_warp.nii.gz
+
+# Example 3: CPU only, save corrected B0 for QC
+micaflow synth_b0 \
+  --t1 T1w.nii.gz \
+  --b0 distorted_b0.nii.gz \
+  --dwi dwi_no_b0.nii.gz \
+  --output corrected_dwi.nii.gz \
+  --intermediate synthetic_b0_t1space.nii.gz \
+  --warp warp_field.nii.gz \
+  --cpu \
+  --corrected-b0 corrected_b0.nii.gz \
+  --threads 8 \
+  --b0-to-T1-affine b0_to_t1.mat \
+  --b0-to-T1-warp b0_to_t1_warp.nii.gz
+
+────────────── WHY SYNTHETIC B0? ───────────────────────
+
+The Problem:
+• EPI images suffer from susceptibility distortions
+• Traditional correction needs reverse phase-encoding scans
+• Legacy datasets often lack reverse PE acquisitions
+• Some protocols only acquire single PE direction
+
+The Solution:
+• Deep learning predicts undistorted B0 from T1w + distorted B0
+• No reverse PE acquisition needed
+• Works with existing datasets
+• Enables distortion correction for legacy data
+
+──────────────── SynB0-DISCO METHOD ────────────────────
+
+Deep Learning Architecture:
+• 3D U-Net with skip connections
+• Input: T1w + distorted B0 (2 channels)
+• Output: Synthetic undistorted B0 (1 channel)
+• Ensemble: 5 models averaged for robust prediction
+
+How It Works:
+1. Register B0 to T1 space (affine)
+2. Run inference with 5 models
+3. Average predictions
+4. Register synthetic B0 to original space
+5. Compute distortion field (restricted to PE direction)
+6. Apply correction to all DWI volumes
+
+────────────────────── WHEN TO USE ──────────────────────
+
+Recommended:
+• Reverse phase-encoding data unavailable
+• Legacy datasets with single PE direction
+• Scan time doesn&#39;t allow reverse PE
+• After motion correction (for DWI)
+• Before registration to anatomical space
+
+Not recommended:
+• If reverse PE data available (use SDC instead)
+• T1w has severe artifacts or pathology
+• Non-EPI sequences without distortion
+
+────────────────────────── NOTES ─────────────────────────
+• Model ensemble: Up to 5 models (uses all available)
+• Requires high-quality T1w image
+• Distortion field restricted to PE direction only
+• Supports 4D DWI with multiple volumes
+• Automatic temporary file cleanup
+• Multi-threading supported for CPU operations
+
+─────────────── PIPELINE POSITION ───────────────────────
+With reverse PE (use traditional SDC):
+1. Denoising
+2. Motion correction
+3. Susceptibility correction (SDC)
+
+Without reverse PE (use SynB0-DISCO):
+1. Denoising
+2. Motion correction
+3. B0 extraction
+4. Synthetic B0 generation (synth_b0) ← You are here
+5. Registration
+
+────────────────────── EXIT CODES ───────────────────────
+0 : Success - synthetic B0 generation completed
+1 : Error - invalid inputs, file not found, or processing failure
+
+───────────────── COMMON ISSUES ─────────────────────────
+Issue: Poor correction quality
+Solution: Check T1w quality, verify phase-encoding direction
+
+Issue: Out of memory error
+Solution: Use CPU mode, reduce number of threads
+
+Issue: Very slow processing
+Solution: Use GPU if available (10-30x speedup)
+
+Issue: Models not found
+Solution: Check micaflow installation, verify models directory
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

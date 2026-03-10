@@ -1,0 +1,316 @@
+Motion Correction
+=================
+
+motion_correction - Diffusion MRI Motion and Eddy Current Artifact Correction
+
+Part of the micaflow processing pipeline for neuroimaging data.
+
+This module corrects for subject motion and eddy current distortions in diffusion-weighted 
+images (DWI) by registering each volume to a reference B0 image. Subject movement during 
+acquisition is one of the primary sources of artifacts in diffusion MRI, causing misalignment 
+between volumes that can severely impact tractography, metric calculation, and analysis. 
+
+Motion Artifacts in Diffusion MRI:
+----------------------------------
+Subject motion during DWI acquisition causes several problems:
+- Volume misalignment: Different diffusion directions acquired at different head positions
+- Signal dropout: Severe motion can cause complete signal loss in some slices
+- Bias in metrics: FA, MD, and other metrics become inaccurate
+- Registration errors: Multi-modal registration becomes unreliable
+
+Eddy Current Distortions:
+-------------------------
+Rapidly switching diffusion gradients induce eddy currents that cause:
+- Image stretching/compression
+- Translations and shearing of volumes
+- Different distortions for each gradient direction
+- Systematic bias that varies with b-value and gradient direction
+
+This Implementation:
+-------------------
+Uses ANTs' SyN (Symmetric Normalization) algorithm which combines:
+- Rigid transformation (6 DOF: 3 translations + 3 rotations)
+- Affine transformation (12 DOF: adds scaling and shearing)
+- Deformable transformation (captures eddy current distortions)
+
+Features:
+--------
+- Volume-by-volume registration to a reference B0 image
+- Option to use an external B0 image or the first volume as reference
+- Combines rigid, affine, and deformable transformations using ANTs SyN
+- Automatic b-vector rotation to account for head motion
+- Preserves original image header information and coordinates
+- Progress visualization with volume-wise completion tracking
+- Compatible with standard diffusion acquisition protocols
+- Handles multi-shell and high b-value acquisitions
+
+Why B-vector Rotation is Critical:
+----------------------------------
+When the head moves, the gradient directions relative to the head coordinate 
+system change. If we don't rotate the b-vectors accordingly:
+- Gradient directions are incorrect relative to brain anatomy
+- Tensor fitting produces incorrect fiber orientations
+- Tractography generates spurious or missing fiber tracts
+- Metrics like FA can be artificially inflated or reduced
+
+Command-Line Usage:
+------------------
+# Using first volume as reference (standard)
+micaflow motion_correction \
+    --denoised <path/to/dwi.nii.gz> \
+    --input-bvecs <path/to/dwi.bvec> \
+    --output-bvecs <path/to/corrected.bvec> \
+    --output <path/to/motion_corrected_dwi.nii.gz>
+
+# Using external B0 as reference (recommended for better alignment)
+micaflow motion_correction \
+    --denoised <path/to/dwi.nii.gz> \
+    --input-bvecs <path/to/dwi.bvec> \
+    --output-bvecs <path/to/corrected.bvec> \
+    --output <path/to/motion_corrected_dwi.nii.gz> \
+    --b0 <path/to/reference_b0.nii.gz>
+
+# Custom shell dimension and threading
+micaflow motion_correction \
+    --denoised <path/to/dwi.nii.gz> \
+    --input-bvecs <path/to/dwi.bvec> \
+    --output-bvecs <path/to/corrected.bvec> \
+    --output <path/to/motion_corrected_dwi.nii.gz> \
+    --shell-dimension 3 \
+    --threads 8
+
+Python API Usage:
+----------------
+>>> from micaflow.scripts.motion_correction import run_motion_correction
+>>> 
+>>> # Using first volume as reference
+>>> output = run_motion_correction(
+...     dwi_path="denoised_dwi.nii.gz",
+...     input_bvec_path="dwi.bvec",
+...     output_bvec_path="corrected.bvec",
+...     output="motion_corrected_dwi.nii.gz"
+... )
+>>> 
+>>> # Using external B0 reference (recommended)
+>>> output = run_motion_correction(
+...     dwi_path="denoised_dwi.nii.gz",
+...     input_bvec_path="dwi.bvec",
+...     output_bvec_path="corrected.bvec",
+...     output="motion_corrected_dwi.nii.gz",
+...     b0_path="extracted_b0.nii.gz"
+... )
+
+Pipeline Integration:
+--------------------
+Motion correction is typically the SECOND step in diffusion preprocessing:
+1. Denoising (denoise)
+2. Motion/eddy correction (motion_correction) ← You are here
+3. Susceptibility distortion correction (apply_SDC)
+4. Bias field correction (bias_correction)
+5. Brain extraction (bet)
+6. DTI metric calculation (compute_fa_md)
+
+Exit Codes:
+----------
+0 : Success - motion correction completed
+1 : Error - invalid inputs, file not found, or processing failure
+
+Technical Notes:
+---------------
+- Registration type: ANTs SyN (Symmetric Normalization)
+- Affine metric: Mattes mutual information
+- Affine sampling: 32 samples with 20% random sampling
+- Affine iterations: 100, 50, 25 (coarse to fine)
+- SyN iterations: 20, 10, 0 (deformable registration)
+- B-vector rotation: Applies inverse of registration rotation matrix
+- Processing time: ~30-90 minutes for typical datasets (varies with # volumes)
+- First volume used as reference if no external B0 provided
+- External B0 recommended for better initial alignment
+- B-vectors automatically normalized after rotation
+- Preserves NIfTI header and spatial information
+- Winsorization applied to reduce outlier effects
+
+Registration Parameters:
+-----------------------
+- grad_step: 0.01 (gradient descent step size)
+- aff_metric: 'mattes' (Mattes mutual information)
+- aff_sampling: 32 (number of samples for metric computation)
+- aff_random_sampling_rate: 0.2 (20% random sampling)
+- aff_iterations: (100, 50, 25) (multi-resolution iterations)
+- aff_shrink_factors: (2, 1, 1) (downsampling at each level)
+- aff_smoothing_sigmas: (2.0, 0.0, 0.0) (Gaussian smoothing)
+- reg_iterations: (20, 10, 0) (deformable registration iterations)
+- winsorize_lower_quantile: 0.0001
+- winsorize_upper_quantile: 0.9998
+
+B-vector Rotation Details:
+--------------------------
+For each volume:
+1. Extract affine transformation matrix from ANTs output
+2. Extract 3×3 rotation component from affine matrix
+3. Apply rotation to corresponding b-vector
+4. Normalize rotated b-vector to unit length
+5. Save updated b-vectors to output file
+
+Why rotation (not inverse)?
+- Registration moves image FROM original TO aligned position
+- B-vectors must follow the same transformation
+- This maintains correct gradient directions relative to anatomy
+
+See Also:
+--------
+- denoise : Denoise DWI before motion correction
+- extract_b0 : Extract B0 for external reference
+- apply_SDC : Apply susceptibility distortion correction
+- bias_correction : Correct bias fields after motion correction
+
+Command Line Usage
+-----------------
+
+.. code-block:: bash
+
+    micaflow motion_correction [options]
+
+Source Code
+-----------
+
+View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/motion_correction.py>`_
+
+Description
+-----------
+
+This script corrects for subject motion and eddy current distortions in 
+    diffusion-weighted images (DWI) by registering each volume to a reference 
+    B0 image. It uses ANTs SyN registration which combines rigid, affine, and
+    deformable transformations, and automatically rotates b-vectors to account
+    for head motion.
+
+Full Help
+---------
+
+.. code-block:: text
+
+    
+        ╔════════════════════════════════════════════════════════════════╗
+        ║              MOTION & EDDY CURRENT CORRECTION                  ║
+        ╚════════════════════════════════════════════════════════════════╝
+        
+        This script corrects for subject motion and eddy current distortions in 
+        diffusion-weighted images (DWI) by registering each volume to a reference 
+        B0 image. It uses ANTs SyN registration which combines rigid, affine, and
+        deformable transformations, and automatically rotates b-vectors to account
+        for head motion.
+        
+        ────────────────────────── USAGE ──────────────────────────
+          micaflow motion_correction [options]
+        
+        ─────────────────── REQUIRED ARGUMENTS ───────────────────
+          --denoised       : Path to the input denoised DWI image (.nii.gz)
+          --input-bvecs    : Path to the input b-vectors file (.bvec)
+          --output-bvecs   : Path for the rotated b-vectors file (.bvec)
+          --output         : Output path for motion-corrected image (.nii.gz)
+        
+        ─────────────────── OPTIONAL ARGUMENTS ───────────────────
+          --b0             : Path to external B0 image as reference
+                             If not provided, first volume is used
+          --shell-dimension: Dimension of volume axis (default: 3)
+          --threads        : Number of threads for ANTs registration (default: 1)
+        
+        ──────────────────── EXAMPLE USAGE ───────────────────────
+        
+        # Standard: Using first volume as reference
+        micaflow motion_correction \
+          --denoised denoised_dwi.nii.gz \
+          --input-bvecs dwi.bvec \
+          --output-bvecs corrected.bvec \
+          --output motion_corrected_dwi.nii.gz
+        
+        # Recommended: Using external B0 as reference
+        micaflow motion_correction \
+          --denoised denoised_dwi.nii.gz \
+          --input-bvecs dwi.bvec \
+          --output-bvecs corrected.bvec \
+          --output motion_corrected_dwi.nii.gz \
+          --b0 extracted_b0.nii.gz
+        
+        # Custom shell dimension and threading
+        micaflow motion_correction \
+          --denoised denoised_dwi.nii.gz \
+          --input-bvecs dwi.bvec \
+          --output-bvecs corrected.bvec \
+          --output motion_corrected_dwi.nii.gz \
+          --shell-dimension 3 \
+          --threads 8
+        
+        ───────────── WHY MOTION CORRECTION? ────────────────────
+        
+        Motion Artifacts:
+        • Volume misalignment from head movement
+        • Signal dropout in severe motion
+        • Biased diffusion metrics (FA, MD)
+        • Failed tractography
+        
+        Eddy Current Distortions:
+        • Image stretching/compression
+        • Translations and shearing
+        • Different for each gradient direction
+        • Systematic bias varying with b-value
+        
+        Why B-vector Rotation:
+        • Head motion changes gradient directions relative to brain
+        • Must rotate b-vectors to maintain correct orientations
+        • Without rotation: incorrect fiber orientations
+        • Critical for accurate tractography and tensor fitting
+        
+        ────────────────── REGISTRATION METHOD ──────────────────
+        
+        ANTs SyN (Symmetric Normalization):
+        1. Rigid registration (6 DOF): translations + rotations
+        2. Affine registration (12 DOF): adds scaling + shearing
+        3. Deformable registration: captures eddy distortions
+        
+        Parameters:
+        • Metric: Mattes mutual information
+        • Multi-resolution: 3 levels (coarse to fine)
+        • Affine iterations: 100, 50, 25
+        • SyN iterations: 20, 10, 0
+        • Sampling: 32 samples, 20% random
+        
+        ────────────────────────── NOTES ─────────────────────────
+        • Denoising should be performed BEFORE motion correction
+        • If no external B0: first volume used as reference
+        • External B0 recommended for better alignment
+        • Each volume registered independently to minimize cumulative drift
+        • B-vectors automatically rotated based on transformation
+        • Rotated b-vectors saved to --output-bvecs
+        • Processing time: ~30-90 seconds (depends on # volumes)
+        • Progress bar shows volume-by-volume registration
+        • Output preserves input image geometry and header
+        • Winsorization reduces outlier effects during registration
+        
+        ─────────────── PIPELINE POSITION ───────────────────────
+        1. Denoising (denoise)
+        2. Motion correction (motion_correction) ← You are here
+        3. Distortion correction (apply_SDC)
+        4. Bias field correction (bias_correction)
+        5. Brain extraction (bet)
+        6. DTI metrics (compute_fa_md)
+        
+        ────────────────────── EXIT CODES ───────────────────────
+        0 : Success - motion correction completed
+        1 : Error - invalid inputs, file not found, or processing failure
+        
+        ───────────────── COMMON ISSUES ─────────────────────────
+        Issue: Registration takes very long
+        Solution: Normal processing is 30-90 min; reduce volumes if needed
+        
+        Issue: Poor alignment after correction
+        Solution: Use external B0 reference, check for severe motion
+        
+        Issue: "Out of memory" error
+        Solution: Reduce image resolution or process on machine with more RAM
+        
+        Issue: B-vector dimensions mismatch
+        Solution: Ensure bvec file has 3 rows × N volumes format
+        
+    

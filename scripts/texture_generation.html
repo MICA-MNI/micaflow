@@ -1,0 +1,445 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Texture Generation &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Normalize" href="normalize.html" />
+    <link rel="prev" title="Synthseg" href="synthseg.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#batch-processing-bids">Batch Processing (BIDS)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">MicaFlow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#batch-processing-bids">Batch Processing (BIDS)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../scripts.html">Scripts</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../scripts.html">Scripts</a></li>
+      <li class="breadcrumb-item active">Texture Generation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/scripts/texture_generation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="texture-generation">
+<h1>Texture Generation<a class="headerlink" href="#texture-generation" title="Link to this heading"></a></h1>
+<p>texture_generation - MRI Texture Feature Extraction for Radiomics</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module computes advanced texture features from MRI data that can be used for
+tissue characterization, lesion analysis, radiomics applications, and quantitative
+imaging biomarker development. It performs automatic tissue segmentation and extracts
+quantitative imaging features including gradient magnitude and relative intensity maps,
+which capture local intensity variations and tissue contrast properties respectively.</p>
+<section id="what-are-texture-features">
+<h2>What are Texture Features?<a class="headerlink" href="#what-are-texture-features" title="Link to this heading"></a></h2>
+<p>Texture features quantify spatial patterns and intensity variations in medical images:
+- Provide information beyond simple intensity statistics
+- Capture tissue heterogeneity and structural organization
+- Enable quantitative characterization of pathology
+- Support radiomics and machine learning applications
+- Complement traditional volumetric measurements</p>
+</section>
+<section id="computed-features">
+<h2>Computed Features:<a class="headerlink" href="#computed-features" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Gradient Magnitude:
+- Measures local intensity changes
+- Highlights edges and boundaries
+- Captures tissue transitions
+- Sensitive to structural organization
+- Range: 0 to maximum gradient</p></li>
+<li><p>Relative Intensity (RI):
+- Normalized intensity relative to tissue peaks
+- Accounts for scanner/protocol variations
+- Centers around GM-WM boundary
+- Range: Typically 0-200 (100 = background)
+- Provides contrast-normalized values</p></li>
+</ol>
+</section>
+<section id="how-it-works">
+<h2>How It Works:<a class="headerlink" href="#how-it-works" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Load input MRI and brain mask</p></li>
+<li><p>Calculate brain-masked mean intensity for background reference</p></li>
+<li><p>Compute gradient magnitude (edge detection)</p></li>
+<li><p>Calculate relative intensity (normalized contrast mapping)</p></li>
+<li><p>Apply smoothing to relative intensity map</p></li>
+<li><p>Save all feature maps as NIfTI files</p></li>
+</ol>
+</section>
+<section id="relative-intensity-calculation">
+<h2>Relative Intensity Calculation:<a class="headerlink" href="#relative-intensity-calculation" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Calculate mean intensity within the brain mask as background reference (BG)</p></li>
+<li><p>Normalization: RI = 100 * (I / BG) (Centers the mean intensity at 100)</p></li>
+<li><p>Smooth with Gaussian (σ=3mm FWHM)</p></li>
+<li><p>Re-mask to ensure background remains clean</p></li>
+</ol>
+</section>
+<section id="command-line-usage">
+<h2>Command-Line Usage:<a class="headerlink" href="#command-line-usage" title="Link to this heading"></a></h2>
+<p># Basic usage
+micaflow texture_generation </p>
+<blockquote>
+<div><p>–input &lt;path/to/image.nii.gz&gt; –mask &lt;path/to/brain_mask.nii.gz&gt; –output &lt;path/to/output_prefix&gt;</p>
+</div></blockquote>
+<p># Example with T1w image
+micaflow texture_generation </p>
+<blockquote>
+<div><p>–input T1w_preprocessed.nii.gz –mask brain_mask.nii.gz –output subject01_textures</p>
+</div></blockquote>
+<p># Example with short flags
+micaflow texture_generation </p>
+<blockquote>
+<div><p>-i T1w.nii.gz -m mask.nii.gz -o output/features</p>
+</div></blockquote>
+</section>
+<section id="python-api-usage">
+<h2>Python API Usage:<a class="headerlink" href="#python-api-usage" title="Link to this heading"></a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.texture_generation</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_texture_pipeline</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Basic usage</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">run_texture_pipeline</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="nb">input</span><span class="o">=</span><span class="s2">&quot;preprocessed_t1w.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">mask</span><span class="o">=</span><span class="s2">&quot;brain_mask.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;output_texture_maps&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># With variables</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">input_file</span> <span class="o">=</span> <span class="s2">&quot;data/T1w.nii.gz&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mask_file</span> <span class="o">=</span> <span class="s2">&quot;data/mask.nii.gz&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output_prefix</span> <span class="o">=</span> <span class="s2">&quot;results/subject01&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">run_texture_pipeline</span><span class="p">(</span><span class="n">input_file</span><span class="p">,</span> <span class="n">mask_file</span><span class="p">,</span> <span class="n">output_prefix</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="pipeline-integration">
+<h2>Pipeline Integration:<a class="headerlink" href="#pipeline-integration" title="Link to this heading"></a></h2>
+<p>Texture generation typically follows preprocessing:</p>
+<p>Structural MRI Pipeline:
+1. Preprocessing (N4 bias correction, denoising)
+2. Brain extraction (skull stripping)
+3. Tissue segmentation (optional: use synthseg instead)
+4. Texture feature extractiom
+5. Statistical analysis or machine learning</p>
+<p>Radiomics Pipeline:
+1. Image acquisition and quality control
+2. Preprocessing and standardization
+3. ROI/lesion segmentation
+4. Feature extraction (texture_generation)
+5. Feature selection
+6. Model training/prediction</p>
+</section>
+<section id="exit-codes">
+<h2>Exit Codes:<a class="headerlink" href="#exit-codes" title="Link to this heading"></a></h2>
+<p>0 : Success - texture features computed successfully
+1 : Error - invalid inputs, file not found, or processing failure</p>
+</section>
+<section id="see-also">
+<h2>See Also:<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>synthseg : Alternative segmentation method</p></li>
+<li><p>n4_bias_correction : Recommended preprocessing</p></li>
+<li><p>denoise : Noise reduction before feature extraction</p></li>
+</ul>
+</section>
+<section id="id1">
+<h2>Command Line Usage<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>texture_generation<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="source-code">
+<h2>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h2>
+<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/texture_generation.py">GitHub Repository</a></p>
+</section>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
+<p>║                        (Radiomics)                             ║</p>
+<blockquote>
+<div><p>This script generates quantitative texture feature maps from MRI data
+for radiomics, tissue characterization, and quantitative imaging biomarker
+development. Features include gradient magnitude and relative intensity.</p>
+</div></blockquote>
+</section>
+<section id="full-help">
+<h2>Full Help<a class="headerlink" href="#full-help" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>╔════════════════════════════════════════════════════════════════╗
+║                  TEXTURE FEATURE EXTRACTION                    ║
+║                        (Radiomics)                             ║
+╚════════════════════════════════════════════════════════════════╝
+
+This script generates quantitative texture feature maps from MRI data
+for radiomics, tissue characterization, and quantitative imaging biomarker
+development. Features include gradient magnitude and relative intensity.
+
+────────────────────────── USAGE ──────────────────────────
+  micaflow texture_generation [options]
+
+─────────────────── REQUIRED ARGUMENTS ───────────────────
+  --input, -i   : Path to the input MRI image (.nii.gz)
+  --mask, -m    : Path to the binary brain mask (.nii.gz)
+  --output, -o  : Output prefix for texture feature maps
+
+──────────────────── EXAMPLE USAGE ──────────────────────
+
+# Example 1: Basic usage
+micaflow texture_generation \
+  --input T1w_preprocessed.nii.gz \
+  --mask brain_mask.nii.gz \
+  --output subject01_textures
+
+# Example 2: With short flags
+micaflow texture_generation \
+  -i T1w.nii.gz \
+  -m mask.nii.gz \
+  -o output/features
+
+# Example 3: From preprocessed data
+micaflow texture_generation \
+  -i data/preprocessed/T1w_n4.nii.gz \
+  -m data/masks/brain_mask.nii.gz \
+  -o results/radiomics/sub-01
+
+────────── WHAT ARE TEXTURE FEATURES? ──────────────────
+
+Texture features quantify spatial patterns in medical images:
+• Go beyond simple intensity statistics
+• Capture tissue heterogeneity and organization
+• Provide quantitative imaging biomarkers
+• Enable radiomics and machine learning
+• Support precision medicine approaches
+
+Common applications:
+• Tumor characterization and grading
+• Neurodegenerative disease staging
+• White matter lesion analysis
+• Age-related changes
+• Treatment response monitoring
+
+─────────────── COMPUTED FEATURES ──────────────────────
+
+1. Gradient Magnitude:
+• Measures local intensity changes
+• Highlights edges and tissue boundaries
+• Sensitive to structural organization
+• Range: 0 to maximum gradient
+• Higher values at GM/WM boundaries
+
+2. Relative Intensity (RI):
+• Normalized intensity relative to tissue peaks
+• Accounts for scanner/protocol variations
+• Centers around GM-WM boundary (value = 100)
+• Range: Typically 50-150
+• Provides contrast-normalized values
+
+3. Tissue Segmentation (intermediate):
+• Gray matter mask
+• White matter mask
+• CSF identification
+• Used for feature computation
+
+────────────────── HOW IT WORKS ────────────────────────
+
+Processing pipeline:
+1. Load input MRI and brain mask
+2. Calculate mean intensity within mask (background reference)
+3. Compute gradient magnitude (edge detection)
+4. Calculate relative intensity (normalized contrast globally scaled)
+5. Apply smoothing (σ=3mm FWHM)
+6. Save feature maps as NIfTI files
+
+Atropos segmentation:
+• K-means clustering (3 tissue classes)
+• MRF spatial prior (0.2 weight, 1x1x1 neighborhood)
+• 3 iterations for convergence
+• Masked to brain tissue only
+• Output: 1=CSF, 2=GM, 3=WM
+
+────────────────────── OUTPUT FILES ─────────────────────
+
+Given output prefix &quot;subject01_textures&quot;, creates:
+
+subject01_textures_gradient-magnitude.nii.gz
+  - Edge and boundary detection map
+  - Higher values at tissue transitions
+  - Range: 0 to ~50 (depends on contrast)
+
+subject01_textures_relative-intensity.nii.gz
+  - Normalized contrast map
+  - Centered at GM-WM boundary (100)
+  - Range: Typically 50-150
+  - Smoothed with σ=3mm FWHM
+
+────────────────────────── NOTES ─────────────────────────
+• Preprocessing recommended: N4 bias correction, denoising
+• Processing time: 2-5 minutes per subject
+• Memory: ~2-4 GB RAM
+• All operations masked to brain only
+• No resampling (preserves input resolution)
+• Values outside mask are zero
+• Gradient uses first-order finite differences
+• Peak finding uses 1st-99.5th percentile range
+
+─────────────── PIPELINE POSITION ───────────────────────
+Structural MRI Pipeline:
+1. Preprocessing (N4, denoising)
+2. Brain extraction (skull stripping)
+3. Tissue segmentation (optional)
+4. Texture feature extraction ← You are here
+5. Statistical analysis or ML
+
+Radiomics Pipeline:
+1. Image acquisition and QC
+2. Preprocessing and standardization
+3. ROI/lesion segmentation
+4. Feature extraction ← You are here
+5. Feature selection
+6. Model training/prediction
+
+────────────────────── EXIT CODES ───────────────────────
+0 : Success - texture features computed
+1 : Error - invalid inputs, file not found, or processing failure
+
+───────────── QUALITY CONTROL ───────────────────────────
+Visual inspection:
+1. Check gradient magnitude highlights tissue boundaries
+2. Verify relative intensity centered around 100
+3. Ensure smooth transitions (no edge artifacts)
+4. Confirm brain mask coverage is complete
+5. Look for segmentation errors
+
+Expected ranges:
+• Gradient magnitude: 0 to ~50
+• Relative intensity: 50-150 (100 = background)
+• Values outside mask: 0
+
+───────────────── COMMON ISSUES ─────────────────────────
+Issue: Poor segmentation quality
+Solution: Use N4 bias correction first, verify mask quality
+
+Issue: Extreme gradient values
+Solution: Check image quality, reduce noise with denoising
+
+Issue: Relative intensity not centered at 100
+Solution: Verify tissue segmentation, check for artifacts
+
+Issue: Processing takes very long
+Solution: Normal for high-resolution images (2-5 min typical)
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="synthseg.html" class="btn btn-neutral float-left" title="Synthseg" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="normalize.html" class="btn btn-neutral float-right" title="Normalize" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

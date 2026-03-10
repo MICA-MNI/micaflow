@@ -1,0 +1,383 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Denoise &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Motion Correction" href="motion_correction.html" />
+    <link rel="prev" title="Coregister" href="coregister.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#batch-processing-bids">Batch Processing (BIDS)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">MicaFlow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#batch-processing-bids">Batch Processing (BIDS)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../scripts.html">Scripts</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../scripts.html">Scripts</a></li>
+      <li class="breadcrumb-item active">Denoise</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/scripts/denoise.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="denoise">
+<h1>Denoise<a class="headerlink" href="#denoise" title="Link to this heading"></a></h1>
+<p>denoise - Diffusion-Weighted Image Noise Reduction</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module denoises diffusion-weighted images (DWI) using the Patch2Self algorithm,
+which leverages redundant information across diffusion gradients to remove noise
+without requiring additional reference scans. Patch2Self is a self-supervised learning
+approach that improves image quality and enhances subsequent diffusion analyses by
+removing random noise while preserving anatomical structures and signal characteristics.</p>
+<section id="the-patch2self-algorithm">
+<h2>The Patch2Self Algorithm:<a class="headerlink" href="#the-patch2self-algorithm" title="Link to this heading"></a></h2>
+<p>Patch2Self is a denoising method that:
+- Uses the redundancy in diffusion MRI data across gradient directions
+- Learns to predict each volume from surrounding volumes in q-space
+- Requires no external training data or noise model
+- Preserves anatomical edges and tissue boundaries
+- Improves SNR without introducing spatial blurring</p>
+</section>
+<section id="features">
+<h2>Features:<a class="headerlink" href="#features" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Self-supervised learning approach requiring no separate reference data</p></li>
+<li><p>Adapts to the unique noise characteristics of each dataset</p></li>
+<li><p>Preserves anatomical structure while effectively removing noise</p></li>
+<li><p>Compatible with standard diffusion MRI acquisition protocols</p></li>
+<li><p>Improves subsequent analyses such as fiber tracking and diffusion metrics</p></li>
+<li><p>Optional separate b0 volume denoising</p></li>
+<li><p>Uses Ordinary Least Squares (OLS) regression model</p></li>
+<li><p>Intensity shifting to ensure positive values</p></li>
+</ul>
+</section>
+<section id="command-line-usage">
+<h2>Command-Line Usage:<a class="headerlink" href="#command-line-usage" title="Link to this heading"></a></h2>
+<p># Standard denoising (recommended for most cases)
+micaflow denoise </p>
+<blockquote>
+<div><p>–input &lt;path/to/dwi.nii.gz&gt; –bval &lt;path/to/dwi.bval&gt; –bvec &lt;path/to/dwi.bvec&gt; –output &lt;path/to/denoised_dwi.nii.gz&gt;</p>
+</div></blockquote>
+<p># With separate b0 denoising (experimental)
+micaflow denoise </p>
+<blockquote>
+<div><p>–input &lt;path/to/dwi.nii.gz&gt; –bval &lt;path/to/dwi.bval&gt; –bvec &lt;path/to/dwi.bvec&gt; –output &lt;path/to/denoised_dwi.nii.gz&gt; –b0-denoise</p>
+</div></blockquote>
+<p># With Gibbs ringing removal
+micaflow denoise </p>
+<blockquote>
+<div><p>–input &lt;path/to/dwi.nii.gz&gt; –bval &lt;path/to/dwi.bval&gt; –bvec &lt;path/to/dwi.bvec&gt; –output &lt;path/to/denoised_dwi.nii.gz&gt; –gibbs</p>
+</div></blockquote>
+</section>
+<section id="python-api-usage">
+<h2>Python API Usage:<a class="headerlink" href="#python-api-usage" title="Link to this heading"></a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.denoise</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_denoise</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Standard denoising</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output</span> <span class="o">=</span> <span class="n">run_denoise</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">moving</span><span class="o">=</span><span class="s2">&quot;raw_dwi.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">moving_bval</span><span class="o">=</span><span class="s2">&quot;dwi.bval&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">moving_bvec</span><span class="o">=</span><span class="s2">&quot;dwi.bvec&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output</span><span class="o">=</span><span class="s2">&quot;denoised_dwi.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">b0_denoising</span><span class="o">=</span><span class="kc">False</span>  <span class="c1"># Default</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># With b0 denoising</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output</span> <span class="o">=</span> <span class="n">run_denoise</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">moving</span><span class="o">=</span><span class="s2">&quot;raw_dwi.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">moving_bval</span><span class="o">=</span><span class="s2">&quot;dwi.bval&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">moving_bvec</span><span class="o">=</span><span class="s2">&quot;dwi.bvec&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output</span><span class="o">=</span><span class="s2">&quot;denoised_dwi.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">b0_denoising</span><span class="o">=</span><span class="kc">True</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># With Gibbs ringing removal</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output</span> <span class="o">=</span> <span class="n">run_denoise</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">moving</span><span class="o">=</span><span class="s2">&quot;raw_dwi.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">moving_bval</span><span class="o">=</span><span class="s2">&quot;dwi.bval&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">moving_bvec</span><span class="o">=</span><span class="s2">&quot;dwi.bvec&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output</span><span class="o">=</span><span class="s2">&quot;denoised_dwi.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">gibbs</span><span class="o">=</span><span class="kc">True</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="pipeline-integration">
+<h2>Pipeline Integration:<a class="headerlink" href="#pipeline-integration" title="Link to this heading"></a></h2>
+<p>Denoising is typically the FIRST step in diffusion preprocessing:
+1. Denoising (denoise) ← You are here
+2. Motion/eddy current correction (motion_correction)
+3. Susceptibility distortion correction (apply_SDC)
+4. Bias field correction (bias_correction)
+5. Brain extraction (bet)
+6. DTI metric calculation (compute_fa_md)</p>
+</section>
+<section id="exit-codes">
+<h2>Exit Codes:<a class="headerlink" href="#exit-codes" title="Link to this heading"></a></h2>
+<p>0 : Success - denoising completed
+1 : Error - invalid inputs, file not found, or processing failure</p>
+</section>
+<section id="technical-notes">
+<h2>Technical Notes:<a class="headerlink" href="#technical-notes" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Patch2Self uses a self-supervised regression approach</p></li>
+<li><p>Model type: Ordinary Least Squares (OLS) regression</p></li>
+<li><p>B0 threshold: 50 s/mm² (volumes below this considered b0)</p></li>
+<li><p>Intensity shifting: Enabled (ensures positive values)</p></li>
+<li><p>Negative value clipping: Disabled (preserves signal characteristics)</p></li>
+<li><p>Processing time: ~1-2 minutes for typical datasets (varies with # volumes)</p></li>
+<li><p>Recommended to denoise BEFORE motion correction for best results</p></li>
+<li><p>B0 denoising is experimental; standard mode excludes b0 from denoising</p></li>
+</ul>
+</section>
+<section id="see-also">
+<h2>See Also:<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>motion_correction : Apply after denoising for motion/eddy correction</p></li>
+<li><p>bias_correction : Remove bias fields after motion correction</p></li>
+<li><p>compute_fa_md : Compute DTI metrics from denoised data</p></li>
+</ul>
+</section>
+<section id="references">
+<h2>References:<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Fadnavis S, Batson J, Garyfallidis E. Patch2Self: Denoising Diffusion MRI with
+Self-Supervised Learning. Advances in Neural Information Processing Systems.
+2020;33:16293-16303.</p></li>
+<li><p>Fadnavis S, Farooq H, Theaud G, et al. Patch2Self denoising of diffusion MRI in
+the CLEAR test-retest dataset. Medical Imaging 2021: Image Processing.
+2021;11596:115962D. doi:10.1117/12.2582043</p></li>
+</ol>
+</section>
+<section id="id1">
+<h2>Command Line Usage<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>denoise<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="source-code">
+<h2>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h2>
+<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/denoise.py">GitHub Repository</a></p>
+</section>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>This script denoises diffusion-weighted images (DWI) using the Patch2Self</dt><dd><p>algorithm, which leverages redundant information across diffusion gradients
+to remove noise without requiring additional reference scans.</p>
+</dd>
+</dl>
+</section>
+<section id="full-help">
+<h2>Full Help<a class="headerlink" href="#full-help" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>╔════════════════════════════════════════════════════════════════╗
+║                     DWI IMAGE DENOISING                        ║
+╚════════════════════════════════════════════════════════════════╝
+
+This script denoises diffusion-weighted images (DWI) using the Patch2Self
+algorithm, which leverages redundant information across diffusion gradients
+to remove noise without requiring additional reference scans.
+
+────────────────────────── USAGE ──────────────────────────
+  micaflow denoise [options]
+
+─────────────────── REQUIRED ARGUMENTS ───────────────────
+  --input     : Path to the input DWI image (.nii.gz)
+  --bval      : Path to the b-values file (.bval)
+  --bvec      : Path to the b-vectors file (.bvec)
+  --output    : Output path for the denoised image (.nii.gz)
+
+─────────────────── OPTIONAL ARGUMENTS ───────────────────
+  --b0-denoise: Denoise b0 volumes separately (default: False)
+               Experimental - not recommended for most cases
+  --gibbs     : Apply Gibbs ringing removal after denoising
+  --threads   : Number of threads for Gibbs removal (default: 1)
+
+──────────────────── EXAMPLE USAGE ──────────────────────
+
+# Standard denoising (recommended)
+micaflow denoise \
+  --input raw_dwi.nii.gz \
+  --bval dwi.bval \
+  --bvec dwi.bvec \
+  --output denoised_dwi.nii.gz
+
+# With b0 denoising (experimental)
+micaflow denoise \
+  --input raw_dwi.nii.gz \
+  --bval dwi.bval \
+  --bvec dwi.bvec \
+  --output denoised_dwi.nii.gz \
+  --b0-denoise
+
+# With Gibbs ringing removal
+micaflow denoise \
+  --input raw_dwi.nii.gz \
+  --bval dwi.bval \
+  --bvec dwi.bvec \
+  --output denoised_dwi.nii.gz \
+  --gibbs
+
+────────────────── PATCH2SELF ALGORITHM ──────────────────
+
+How it works:
+• Uses redundancy across diffusion gradient directions
+• Predicts each volume from neighboring volumes in q-space
+• Self-supervised learning (no external training data needed)
+• Preserves edges and anatomical structures
+
+Benefits:
+• Better visualization of white matter tracts
+• More accurate DTI fitting and tractography
+• Reduced bias in diffusion metrics (FA, MD)
+• No spatial blurring (unlike traditional filters)
+
+────────────────────────── NOTES ─────────────────────────
+• Denoising should be the FIRST step in preprocessing pipeline
+• Apply BEFORE motion correction for best results
+• Uses Ordinary Least Squares (OLS) regression model
+• B0 threshold: 50 s/mm² (volumes below this are b0)
+• Intensity shifting enabled to ensure positive values
+• Processing time: ~1-2 minutes (depends on # volumes)
+• Standard mode excludes b0 volumes from denoising (recommended)
+• --b0-denoise flag enables experimental b0 denoising
+• Output preserves original image geometry and orientation
+
+─────────────── PIPELINE POSITION ───────────────────────
+1. Denoising (denoise)           ← You are here
+2. Motion correction (motion_correction)
+3. Distortion correction (apply_SDC)
+4. Bias field correction (bias_correction)
+5. Brain extraction (bet)
+6. DTI metrics (compute_fa_md)
+
+────────────────────── EXIT CODES ───────────────────────
+0 : Success - denoising completed
+1 : Error - invalid inputs, file not found, or processing failure
+
+───────────────── COMMON ISSUES ─────────────────────────
+Issue: Denoising takes very long
+Solution: Typical processing is 2-5 minutes; longer suggests high resolution
+
+Issue: Output looks over-smoothed
+Solution: Patch2Self preserves edges; check if input already denoised
+
+Issue: &quot;Out of memory&quot; error
+Solution: Reduce image resolution or process on machine with more RAM
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="coregister.html" class="btn btn-neutral float-left" title="Coregister" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="motion_correction.html" class="btn btn-neutral float-right" title="Motion Correction" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

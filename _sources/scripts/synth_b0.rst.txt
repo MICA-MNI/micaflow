@@ -1,0 +1,439 @@
+Synth B0
+========
+
+synth_b0 - Synthetic Undistorted B0 Generation using Deep Learning
+
+Part of the micaflow processing pipeline for neuroimaging data.
+
+This module generates synthetic undistorted B0 images from T1-weighted anatomical 
+images and distorted B0 images using the SynB0-DISCO deep learning framework. The 
+approach uses an ensemble of 3D U-Net models trained to predict undistorted B0 
+contrast from T1w images, enabling distortion correction even when opposite 
+phase-encoding acquisitions are unavailable.
+
+What is SynB0-DISCO?
+-------------------
+SynB0-DISCO (Synthetic B0 for DIStortion COrrection) is a deep learning method that:
+- Learns the relationship between T1w anatomy and undistorted B0 contrast
+- Generates synthetic undistorted B0 images without requiring field maps
+- Uses multiple 3D U-Net models in an ensemble for robust predictions
+- Enables distortion correction when only single phase-encoding data is available
+
+Why Synthetic B0?
+----------------
+Traditional susceptibility distortion correction requires two acquisitions with 
+opposite phase-encoding directions (e.g., AP and PA). However:
+- Legacy datasets often lack reverse phase-encoding acquisitions
+- Some protocols only acquire data in one direction
+- Acquiring reverse PE images adds scan time
+- SynB0-DISCO enables correction with just T1w + single PE B0
+
+The Problem:
+- EPI images (DWI, fMRI) suffer from susceptibility distortions
+- Distortions cause misalignment with anatomical images
+- Affected regions: orbitofrontal cortex, temporal poles, brainstem
+- Traditional correction needs blip-up/blip-down pairs
+
+The Solution:
+- Train deep learning models on datasets WITH reverse PE
+- Models learn to predict undistorted B0 from T1w images
+- Apply to new data that only has single PE acquisition
+- Generate synthetic undistorted B0 for distortion correction
+
+Deep Learning Architecture:
+--------------------------
+- Model: 3D U-Net with skip connections
+- Input channels: 2 (T1w + distorted B0)
+- Output: 1 (synthetic undistorted B0)
+- Training: Paired T1w and undistorted B0 images
+- Ensemble: 5 models for robust prediction (reduces variance)
+- Framework: PyTorch with GPU acceleration
+
+How It Works:
+1. Load T1w and distorted B0 images
+2. Register B0 to T1w space (affine)
+3. Run inference with ensemble of 5 models
+4. Average predictions for robust result
+5. Register synthetic B0 back to original B0 space
+6. Compute distortion field (synthetic B0 → distorted B0)
+7. Apply correction to all DWI volumes
+
+Features:
+--------
+- Ensemble of 5 models for robust predictions
+- GPU acceleration with PyTorch (CUDA support)
+- ANTs-based registration for spatial alignment
+- Restricted transformations along phase-encoding direction
+- 4D DWI support with volume-by-volume correction
+- Automatic temporary file cleanup
+- Multi-threading support for CPU operations
+
+When to Use:
+-----------
+- When reverse phase-encoding data is unavailable
+- For legacy datasets with single PE direction
+- When scan time doesn't allow reverse PE acquisition
+- After motion correction (for DWI)
+- Before registration to anatomical space
+
+When NOT to Use:
+---------------
+- If you have reverse PE data (use SDC instead)
+- For non-EPI sequences without distortion
+- If T1w image has severe artifacts or pathology
+- When anatomical-functional alignment is already good
+
+Command-Line Usage:
+------------------
+# Basic usage with AP phase-encoding (default)
+micaflow synth_b0 \
+    --t1 <path/to/T1w.nii.gz> \
+    --b0 <path/to/distorted_b0.nii.gz> \
+    --dwi <path/to/dwi_no_b0.nii.gz> \
+    --output <path/to/corrected_dwi.nii.gz> \
+    --intermediate <path/to/synthetic_b0_t1space.nii.gz> \
+    --warp <path/to/warp_field.nii.gz> \
+    --b0-to-T1-affine <path/to/b0_to_t1_affine.mat> \
+    --b0-to-T1-warp <path/to/b0_to_t1_warp.nii.gz>
+
+# With LR phase-encoding
+micaflow synth_b0 \
+    --t1 <path/to/T1w.nii.gz> \
+    --b0 <path/to/distorted_b0.nii.gz> \
+    --dwi <path/to/dwi_no_b0.nii.gz> \
+    --output <path/to/corrected_dwi.nii.gz> \
+    --intermediate <path/to/synthetic_b0_t1space.nii.gz> \
+    --warp <path/to/warp_field.nii.gz> \
+    --phase-encoding lr \
+    --b0-to-T1-affine <path/to/b0_to_t1_affine.mat> \
+    --b0-to-T1-warp <path/to/b0_to_t1_warp.nii.gz>
+
+# Force CPU usage (no GPU)
+micaflow synth_b0 \
+    --t1 <path/to/T1w.nii.gz> \
+    --b0 <path/to/distorted_b0.nii.gz> \
+    --dwi <path/to/dwi_no_b0.nii.gz> \
+    --output <path/to/corrected_dwi.nii.gz> \
+    --intermediate <path/to/synthetic_b0_t1space.nii.gz> \
+    --warp <path/to/warp_field.nii.gz> \
+    --cpu \
+    --b0-to-T1-affine <path/to/b0_to_t1_affine.mat> \
+    --b0-to-T1-warp <path/to/b0_to_t1_warp.nii.gz>
+
+# With custom thread count
+micaflow synth_b0 \
+    --t1 <path/to/T1w.nii.gz> \
+    --b0 <path/to/distorted_b0.nii.gz> \
+    --dwi <path/to/dwi_no_b0.nii.gz> \
+    --output <path/to/corrected_dwi.nii.gz> \
+    --intermediate <path/to/synthetic_b0_t1space.nii.gz> \
+    --warp <path/to/warp_field.nii.gz> \
+    --threads 8 \
+    --b0-to-T1-affine <path/to/b0_to_t1_affine.mat> \
+    --b0-to-T1-warp <path/to/b0_to_t1_warp.nii.gz>
+
+# Save corrected B0 for QC
+micaflow synth_b0 \
+    --t1 <path/to/T1w.nii.gz> \
+    --b0 <path/to/distorted_b0.nii.gz> \
+    --dwi <path/to/dwi_no_b0.nii.gz> \
+    --output <path/to/corrected_dwi.nii.gz> \
+    --intermediate <path/to/synthetic_b0_t1space.nii.gz> \
+    --warp <path/to/warp_field.nii.gz> \
+    --corrected-b0 <path/to/corrected_b0.nii.gz> \
+    --b0-to-T1-affine <path/to/b0_to_t1_affine.mat> \
+    --b0-to-T1-warp <path/to/b0_to_t1_warp.nii.gz>
+
+Python API Usage:
+----------------
+>>> from micaflow.scripts.synth_b0 import main
+>>> import sys
+>>> 
+>>> # Set up arguments
+>>> sys.argv = [
+...     'synth_b0',
+...     '--t1', 'T1w.nii.gz',
+...     '--b0', 'distorted_b0.nii.gz',
+...     '--dwi', 'dwi_no_b0.nii.gz',
+...     '--output', 'corrected_dwi.nii.gz',
+...     '--intermediate', 'synthetic_b0_t1space.nii.gz',
+...     '--warp', 'warp_field.nii.gz',
+...     '--b0-to-T1-affine', 'b0_to_t1_affine.mat',
+...     '--b0-to-T1-warp', 'b0_to_t1_warp.nii.gz'
+... ]
+>>> 
+>>> # Run
+>>> main()
+
+Pipeline Integration:
+--------------------
+SynB0-DISCO is an alternative to traditional SDC when reverse PE data unavailable:
+
+Diffusion MRI Pipeline (with reverse PE):
+1. Denoising (denoise)
+2. Motion correction (motion_correction)
+3. Susceptibility correction (SDC) 
+4. Registration (coregister)
+5. DTI metrics (compute_fa_md)
+
+Diffusion MRI Pipeline (without reverse PE):
+1. Denoising (denoise)
+2. Motion correction (motion_correction)
+3. B0 extraction (extract_b0)
+4. Synthetic B0 generation (synth_b0) 
+5. Registration (coregister)
+6. DTI metrics (compute_fa_md)
+
+Exit Codes:
+----------
+0 : Success - synthetic B0 generation completed
+1 : Error - invalid inputs, file not found, or processing failure
+
+Technical Notes:
+---------------
+- Model architecture: 3D U-Net with 2 input channels, 1 output channel
+- Ensemble size: 5 models (or fewer if models unavailable)
+- Inference: Average of all model predictions
+- Registration: ANTs affine for initial alignment
+- Distortion field: ANTs SyN with restricted transformation
+- Phase-encoding restriction: Only allows deformation along PE axis
+- Multi-threading: Supports both PyTorch and ANTs threading
+- Temporary files: Automatically cleaned up after completion
+
+Registration Parameters:
+-----------------------
+Initial alignment (B0 → T1):
+- Type: Affine (12 DOF)
+- Metric: Mattes mutual information
+
+Distortion field computation:
+- Type: SyN (symmetric normalization)
+- Iterations: (20, 10, 5) - reduced for gentler warps
+- Gradient step: 0.1 (smaller than default 0.2)
+- Flow sigma: 3 (smoothing of velocity field)
+- Total sigma: 1 (smoothing of total deformation)
+- Restriction: Along phase-encoding direction only
+
+Phase-Encoding Directions:
+-------------------------
+- AP (Anterior-Posterior): y-axis restriction (0,1,0)
+- PA (Posterior-Anterior): y-axis restriction (0,1,0)
+- LR (Left-Right): x-axis restriction (1,0,0)
+- RL (Right-Left): x-axis restriction (1,0,0)
+- SI (Superior-Inferior): z-axis restriction (0,0,1)
+- IS (Inferior-Superior): z-axis restriction (0,0,1)
+
+
+Quality Control:
+---------------
+Visual inspection recommended:
+1. Check alignment of synthetic B0 with T1w
+2. Verify distortion field is smooth and localized
+3. Compare corrected B0 with synthetic B0
+4. Assess DWI alignment with anatomical after correction
+5. Look for residual distortions in affected regions
+
+Limitations:
+-----------
+- Requires high-quality T1w image
+- May not generalize to severe pathology
+- Less accurate than field map-based correction
+- Assumes typical brain anatomy
+
+See Also:
+--------
+- SDC : Traditional distortion correction with reverse PE
+- extract_b0 : Extract B0 volumes from DWI
+- motion_correction : Apply before synthetic B0
+- coregister : Register corrected images to anatomical
+
+References:
+----------
+1. Schilling KG, Blaber J, Huo Y, et al. Synthesized b0 for diffusion distortion 
+   correction (Synb0-DisCo). Magn Reson Imaging. 2019;64:62-70. 
+   doi:10.1016/j.mri.2019.05.008
+
+Command Line Usage
+-----------------
+
+.. code-block:: bash
+
+    micaflow synth_b0 [options]
+
+Source Code
+-----------
+
+View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/synth_b0.py>`_
+
+Description
+-----------
+
+║                      (SynB0-DISCO)                            ║
+    
+    This script generates a synthetic undistorted B0 image from T1w and 
+    distorted B0 images using deep learning (SynB0-DISCO). The process uses 
+    an ensemble of 3D U-Net models to predict undistorted B0 contrast, 
+    enabling distortion correction without reverse phase-encoding acquisitions.
+
+Full Help
+---------
+
+.. code-block:: text
+
+    
+        ╔════════════════════════════════════════════════════════════════╗
+        ║                  SYNTHETIC B0 GENERATION                       ║
+        ║                      (SynB0-DISCO)                            ║
+        ╚════════════════════════════════════════════════════════════════╝
+        
+        This script generates a synthetic undistorted B0 image from T1w and 
+        distorted B0 images using deep learning (SynB0-DISCO). The process uses 
+        an ensemble of 3D U-Net models to predict undistorted B0 contrast, 
+        enabling distortion correction without reverse phase-encoding acquisitions.
+        
+        ────────────────────────── USAGE ──────────────────────────
+          micaflow synth_b0 [options]
+        
+        ─────────────────── REQUIRED ARGUMENTS ───────────────────
+          --t1                : Path to T1w image (.nii.gz)
+          --b0                : Path to distorted B0 image (.nii.gz)
+          --dwi               : Path to DWI image without B0 volumes (.nii.gz)
+          --output            : Path for corrected DWI output (.nii.gz)
+          --intermediate      : Path to save synthetic B0 in T1 space (.nii.gz)
+          --warp              : Path to save the warp field (.nii.gz)
+          --b0-to-T1-affine   : Path to B0→T1 affine transform (.mat)
+          --b0-to-T1-warp     : Path to B0→T1 warp field (.nii.gz)
+        
+        ─────────────────── OPTIONAL ARGUMENTS ───────────────────
+          --phase-encoding           : Phase-encoding direction
+                                       Choices: 'ap', 'pa', 'lr', 'rl', 'si', 'is'
+                                       Default: 'ap'
+          --cpu                      : Force CPU usage (default: use GPU)
+          --threads                  : Number of CPU threads (default: all)
+          --temp-dir                 : Directory for temporary files
+          --corrected-b0             : Path to save corrected B0 (for QC)
+          --shell-dimension          : Volume dimension in 4D (default: 3)
+          --b0-to-T1-warp-secondary  : Secondary warp field (optional)
+        
+        ──────────────────── EXAMPLE USAGE ───────────────────────
+        
+        # Example 1: Basic usage with AP phase-encoding
+        micaflow synth_b0 \
+          --t1 T1w.nii.gz \
+          --b0 distorted_b0.nii.gz \
+          --dwi dwi_no_b0.nii.gz \
+          --output corrected_dwi.nii.gz \
+          --intermediate synthetic_b0_t1space.nii.gz \
+          --warp warp_field.nii.gz \
+          --b0-to-T1-affine b0_to_t1.mat \
+          --b0-to-T1-warp b0_to_t1_warp.nii.gz
+        
+        # Example 2: With LR phase-encoding
+        micaflow synth_b0 \
+          --t1 T1w.nii.gz \
+          --b0 distorted_b0.nii.gz \
+          --dwi dwi_no_b0.nii.gz \
+          --output corrected_dwi.nii.gz \
+          --intermediate synthetic_b0_t1space.nii.gz \
+          --warp warp_field.nii.gz \
+          --phase-encoding lr \
+          --b0-to-T1-affine b0_to_t1.mat \
+          --b0-to-T1-warp b0_to_t1_warp.nii.gz
+        
+        # Example 3: CPU only, save corrected B0 for QC
+        micaflow synth_b0 \
+          --t1 T1w.nii.gz \
+          --b0 distorted_b0.nii.gz \
+          --dwi dwi_no_b0.nii.gz \
+          --output corrected_dwi.nii.gz \
+          --intermediate synthetic_b0_t1space.nii.gz \
+          --warp warp_field.nii.gz \
+          --cpu \
+          --corrected-b0 corrected_b0.nii.gz \
+          --threads 8 \
+          --b0-to-T1-affine b0_to_t1.mat \
+          --b0-to-T1-warp b0_to_t1_warp.nii.gz
+        
+        ────────────── WHY SYNTHETIC B0? ───────────────────────
+        
+        The Problem:
+        • EPI images suffer from susceptibility distortions
+        • Traditional correction needs reverse phase-encoding scans
+        • Legacy datasets often lack reverse PE acquisitions
+        • Some protocols only acquire single PE direction
+        
+        The Solution:
+        • Deep learning predicts undistorted B0 from T1w + distorted B0
+        • No reverse PE acquisition needed
+        • Works with existing datasets
+        • Enables distortion correction for legacy data
+        
+        ──────────────── SynB0-DISCO METHOD ────────────────────
+        
+        Deep Learning Architecture:
+        • 3D U-Net with skip connections
+        • Input: T1w + distorted B0 (2 channels)
+        • Output: Synthetic undistorted B0 (1 channel)
+        • Ensemble: 5 models averaged for robust prediction
+        
+        How It Works:
+        1. Register B0 to T1 space (affine)
+        2. Run inference with 5 models
+        3. Average predictions
+        4. Register synthetic B0 to original space
+        5. Compute distortion field (restricted to PE direction)
+        6. Apply correction to all DWI volumes
+        
+        ────────────────────── WHEN TO USE ──────────────────────
+        
+        Recommended:
+        • Reverse phase-encoding data unavailable
+        • Legacy datasets with single PE direction
+        • Scan time doesn't allow reverse PE
+        • After motion correction (for DWI)
+        • Before registration to anatomical space
+        
+        Not recommended:
+        • If reverse PE data available (use SDC instead)
+        • T1w has severe artifacts or pathology
+        • Non-EPI sequences without distortion
+        
+        ────────────────────────── NOTES ─────────────────────────
+        • Model ensemble: Up to 5 models (uses all available)
+        • Requires high-quality T1w image
+        • Distortion field restricted to PE direction only
+        • Supports 4D DWI with multiple volumes
+        • Automatic temporary file cleanup
+        • Multi-threading supported for CPU operations
+        
+        ─────────────── PIPELINE POSITION ───────────────────────
+        With reverse PE (use traditional SDC):
+        1. Denoising
+        2. Motion correction
+        3. Susceptibility correction (SDC)
+        
+        Without reverse PE (use SynB0-DISCO):
+        1. Denoising
+        2. Motion correction
+        3. B0 extraction
+        4. Synthetic B0 generation (synth_b0) ← You are here
+        5. Registration
+        
+        ────────────────────── EXIT CODES ───────────────────────
+        0 : Success - synthetic B0 generation completed
+        1 : Error - invalid inputs, file not found, or processing failure
+        
+        ───────────────── COMMON ISSUES ─────────────────────────
+        Issue: Poor correction quality
+        Solution: Check T1w quality, verify phase-encoding direction
+        
+        Issue: Out of memory error
+        Solution: Use CPU mode, reduce number of threads
+        
+        Issue: Very slow processing
+        Solution: Use GPU if available (10-30x speedup)
+        
+        Issue: Models not found
+        Solution: Check micaflow installation, verify models directory
+        
+    

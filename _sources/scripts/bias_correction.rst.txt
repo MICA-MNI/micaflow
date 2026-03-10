@@ -1,0 +1,526 @@
+Bias Correction
+===============
+
+bias_correction - N4 Bias Field Correction for MRI Data
+
+Part of the micaflow processing pipeline for neuroimaging data.
+
+This module corrects intensity non-uniformity (bias field) in MR images using the 
+N4ITK algorithm from Advanced Normalization Tools (ANTs). Bias field artifacts appear 
+as smooth, spatially-varying intensity distortions caused by magnetic field 
+inhomogeneities and are a common problem in MRI that can negatively impact 
+quantitative analysis, segmentation, and registration.
+
+What is Bias Field?
+------------------
+Bias field (also called intensity non-uniformity or INU) is a low-frequency,
+smooth variation in signal intensity across an MRI scan that doesn't reflect 
+true tissue properties. It's caused by:
+- Main magnetic field (B0) inhomogeneities
+- Radio-frequency (RF) field (B1) inhomogeneities  
+- Patient positioning and anatomy
+- Receiver coil sensitivity variations
+- Gradient non-linearities
+
+Effects of bias field:
+- Same tissue appears with different intensities in different locations
+- Degrades tissue segmentation accuracy
+- Affects quantitative intensity measurements
+- Impairs image registration
+- Reduces reproducibility across scanners/sessions
+
+Why N4 Bias Field Correction?
+-----------------------------
+The N4ITK (N4) algorithm is the current state-of-the-art for bias correction:
+- Improved version of the classic N3 algorithm
+- Non-parametric, doesn't assume specific bias field shape
+- Works on variety of MRI contrasts (T1w, T2w, FLAIR, DWI)
+- Fast iterative B-spline approximation
+- Robust to different tissue contrasts
+- Widely validated and adopted in neuroimaging
+
+Advantages over N3:
+- Better convergence properties
+- More accurate field estimation
+- Faster computation
+- Better handling of noise
+
+How N4 Works:
+------------
+1. Initialize smooth bias field estimate (B-spline)
+2. Iterate to refine estimate:
+   a. Sharpen histogram by dividing image by current bias estimate
+   b. Smooth the sharpened image
+   c. Update bias field estimate
+   d. Check convergence
+3. Apply final bias field correction: corrected = original / bias_field
+4. Return corrected image
+
+Key parameters:
+- Convergence threshold: When to stop iterations
+- B-spline fitting: Distance between knots
+- Shrink factor: Speed up by processing at lower resolution
+- Number of iterations: Maximum refinement steps
+
+Algorithm Details:
+-----------------
+N4 uses a multi-resolution B-spline approximation:
+- Level 1: Coarse bias field estimate (large B-spline knot spacing)
+- Level 2-4: Progressively finer estimates (smaller knot spacing)
+- Iterative refinement at each level
+- Convergence when change in coefficients falls below threshold
+
+For 4D images (DWI):
+- Bias field estimated from b=0 volume (best SNR)
+- Same bias field applied to all diffusion volumes
+- Assumes bias field is constant across all b-values
+- More efficient than per-volume correction
+
+Features:
+--------
+- Supports both 3D anatomical and 4D diffusion-weighted images
+- Automatic detection of image dimensionality (3D vs 4D)
+- Optional brain mask input for improved correction accuracy
+- Automatic mask generation if not provided (3D only)
+- Efficient 4D processing: estimates bias from b=0, applies to all volumes
+- Automatic resampling of mismatched masks
+- Maintains all image header information (spacing, origin, direction)
+- Returns bias field for quality control (optional)
+- Multi-resolution processing for speed
+
+Command-Line Usage:
+------------------
+# 3D anatomical image (auto-detects dimensionality)
+micaflow bias_correction \
+    --input T1w.nii.gz \
+    --output T1w_corrected.nii.gz
+
+# 3D with explicit mask
+micaflow bias_correction \
+    --input T1w.nii.gz \
+    --output T1w_corrected.nii.gz \
+    --mask brain_mask.nii.gz
+
+# 4D diffusion image (requires b0 and mask)
+micaflow bias_correction \
+    --input DWI.nii.gz \
+    --output DWI_corrected.nii.gz \
+    --mask brain_mask.nii.gz \
+    --b0 b0.nii.gz \
+    --b0-output b0_corrected.nii.gz \
+    --mode 4d
+
+# Explicit 3D mode
+micaflow bias_correction \
+    --input FLAIR.nii.gz \
+    --output FLAIR_corrected.nii.gz \
+    --mask brain_mask.nii.gz \
+    --mode 3d
+
+# Custom shell dimension (if volumes not in dimension 3)
+micaflow bias_correction \
+    --input DWI.nii.gz \
+    --output DWI_corrected.nii.gz \
+    --b0 b0.nii.gz \
+    --b0-output b0_corrected.nii.gz \
+    --shell-dimension 4
+
+# With Gibbs ringing removal (requires DIPY)
+micaflow bias_correction \
+    --input DWI.nii.gz \
+    --output DWI_corrected.nii.gz \
+    --mask brain_mask.nii.gz \
+    --b0 b0.nii.gz \
+    --b0-output b0_corrected.nii.gz \
+    --mode 4d \
+    --gibbs
+
+Python API Usage:
+----------------
+>>> from micaflow.scripts.bias_correction import run_bias_field_correction
+>>> 
+>>> # Basic 3D usage (auto mode)
+>>> run_bias_field_correction(
+...     image_path="T1w.nii.gz",
+...     output_path="T1w_corrected.nii.gz"
+... )
+>>> 
+>>> # 3D with mask
+>>> run_bias_field_correction(
+...     image_path="T1w.nii.gz",
+...     output_path="T1w_corrected.nii.gz",
+...     mask_path="brain_mask.nii.gz"
+... )
+>>> 
+>>> # 4D diffusion image
+>>> run_bias_field_correction(
+...     image_path="DWI.nii.gz",
+...     output_path="DWI_corrected.nii.gz",
+...     mask_path="brain_mask.nii.gz",
+...     b0_path="b0.nii.gz",
+...     b0_corrected_path="b0_corrected.nii.gz",
+...     mode="4d",
+...     shell_dimension=3
+... )
+
+Pipeline Integration:
+--------------------
+Bias correction is typically the FIRST preprocessing step:
+
+Structural MRI Pipeline:
+1. Bias field correction ← You are here
+2. Brain extraction (skull stripping)
+3. Tissue segmentation
+4. Registration to template
+5. Morphometric analysis
+
+Diffusion MRI Pipeline:
+1. Bias field correction (from b=0) ← You are here
+2. Denoising
+3. Motion and eddy current correction
+4. Susceptibility distortion correction
+5. Tensor fitting and tractography
+
+Why first?
+- Most other algorithms assume uniform intensities
+- Improves brain extraction accuracy
+- Essential for accurate segmentation
+- Improves registration convergence
+- Must be done before normalization
+
+Exit Codes:
+----------
+0 : Success - bias correction completed
+1 : Error - invalid inputs, file not found, or processing failure
+
+Output Files:
+------------
+For 3D images:
+- Corrected image with same dimensions as input
+- Intensity values divided by estimated bias field
+
+For 4D images:
+- Corrected 4D DWI volume
+- Corrected b=0 volume (if --b0-output specified)
+- Same number of volumes as input
+
+Technical Notes:
+---------------
+- Algorithm: N4ITK (Improved N3)
+- Convergence: Typically 3-5 iterations
+- B-spline knot spacing: 200mm (coarse to fine)
+- Processing time: 
+  * 3D: 30-120 seconds depending on resolution
+  * 4D: 1-5 minutes (bias from b=0, applied to all)
+- Memory: ~2-4 GB for typical 3D volumes
+- Shrink factor: 4 (processes at 1/4 resolution internally)
+- Number of fitting levels: 4
+- Wiener filter noise: 0.01
+
+3D vs 4D Processing:
+--------------------
+3D Mode (Anatomical):
+- Single volume processing
+- Mask optional (auto-generated if not provided)
+- Direct N4 application
+- ~30-120 seconds
+
+4D Mode (Diffusion):
+- Bias estimated from b=0 volume only
+- Same bias applied to all volumes
+- Mask required (or auto-generated from b=0)
+- Assumes bias constant across b-values
+- More efficient than per-volume correction
+- ~1-5 minutes for typical DWI
+
+Quality Control:
+---------------
+Visual inspection recommended:
+1. Check that bias field is smooth and plausible
+2. Verify improved intensity uniformity
+3. Look for over-correction (intensity inversions)
+4. Ensure tissue contrast is preserved
+5. Compare before/after histograms
+
+Expected improvements:
+- More uniform white matter intensities
+- Sharper tissue boundaries
+- Better tissue separability in histogram
+- Reduced intensity variation in same tissue
+
+Warning signs:
+- Rippling or oscillations in corrected image
+- Inverted intensities in some regions
+- Loss of contrast between tissues
+- Extreme intensity changes
+- Artifacts at image boundaries
+
+Limitations:
+-----------
+- Assumes bias field is smooth and slowly varying
+- May struggle with very low SNR images
+- Can amplify noise in homogeneous regions
+- Requires sufficient tissue contrast
+- May fail with extreme field inhomogeneities
+- Assumes multiplicative bias model
+- Not designed for correction of gradient distortions
+
+For 4D images specifically:
+- Assumes bias field constant across all b-values
+- Less accurate if bias varies with diffusion weighting
+- Requires good quality b=0 volume
+
+Best Practices:
+--------------
+1. Always provide a mask when possible (improves accuracy)
+2. For 3D: mask can be loose (includes some background)
+3. For 4D: use tight brain mask from skull-stripped b=0
+4. Run before denoising (bias affects noise distribution)
+5. Visual QC of outputs is essential
+6. Save bias field for quality assessment
+7. Check that tissue histograms are improved
+
+Comparison with Other Methods:
+------------------------------
+N3 (predecessor):
++ Well-established
++ Similar principle
+- Slower convergence
+- Less accurate
+- Older algorithm
+
+FAST (FSL):
++ Integrated with segmentation
++ Fast processing
+- Requires good initial segmentation
+- Less flexible for different contrasts
+
+SPM Unified Segmentation:
++ Joint bias correction and segmentation
++ Well-integrated in SPM
+- Slower processing
+- Less modular
+
+N4ITK (this implementation):
++ State-of-the-art accuracy
++ Fast convergence
++ Works with any contrast
++ Flexible and robust
++ Widely adopted standard
+
+See Also:
+--------
+- denoise : Noise reduction (run after bias correction)
+- bet : Brain extraction (run after bias correction)
+- normalize : Intensity normalization (after bias correction)
+
+References:
+----------
+1. Tustison NJ, Avants BB, Cook PA, et al. N4ITK: Improved N3 Bias Correction.
+   IEEE Trans Med Imaging. 2010;29(6):1310-1320. doi:10.1109/TMI.2010.2046908
+
+2. Sled JG, Zijdenbos AP, Evans AC. A nonparametric method for automatic 
+   correction of intensity nonuniformity in MRI data. IEEE Trans Med Imaging.
+   1998;17(1):87-97. doi:10.1109/42.668698
+
+3. Tustison NJ, Gee JC. N4ITK: Nick's N3 ITK Implementation For MRI Bias Field
+   Correction. Insight J. 2009. http://hdl.handle.net/10380/3053
+
+4. Avants BB, Tustison NJ, Song G, et al. A reproducible evaluation of ANTs
+   similarity metric performance in brain image registration. Neuroimage.
+   2011;54(3):2033-2044. doi:10.1016/j.neuroimage.2010.09.025
+
+Command Line Usage
+-----------------
+
+.. code-block:: bash
+
+    micaflow bias_correction [options]
+
+Source Code
+-----------
+
+View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/bias_correction.py>`_
+
+Description
+-----------
+
+This script corrects intensity non-uniformity (bias field) in MR images 
+    using the N4ITK algorithm from ANTs. It supports both 3D anatomical images 
+    and 4D diffusion-weighted images.
+
+Full Help
+---------
+
+.. code-block:: text
+
+    
+        ╔════════════════════════════════════════════════════════════════╗
+        ║                    N4 BIAS FIELD CORRECTION                    ║
+        ╚════════════════════════════════════════════════════════════════╝
+        
+        This script corrects intensity non-uniformity (bias field) in MR images 
+        using the N4ITK algorithm from ANTs. It supports both 3D anatomical images 
+        and 4D diffusion-weighted images.
+        
+        ────────────────────────── USAGE ──────────────────────────
+          micaflow bias_correction [options]
+        
+        ─────────────────── REQUIRED ARGUMENTS ───────────────────
+          --input, -i    : Path to the input image (.nii.gz)
+          --output, -o   : Path for the output bias-corrected image
+        
+        ─────────────────── OPTIONAL ARGUMENTS ───────────────────
+          --mask, -m     : Path to brain mask (recommended, required for 4D)
+          --mode         : Processing mode: 3d, 4d, or auto (default: auto)
+          --b0           : b=0 image path (required for 4D mode)
+          --b0-output    : Path for corrected b=0 output (4D mode)
+          --shell-dimension: Dimension for diffusion volumes (default: 3)
+          --gibbs        : Apply Gibbs ringing removal (requires DIPY)
+        
+        ──────────────────── EXAMPLE USAGE ──────────────────────
+        
+        # Example 1: Basic 3D image (auto-detects)
+        micaflow bias_correction \
+          --input T1w.nii.gz \
+          --output T1w_corrected.nii.gz
+        
+        # Example 2: 3D with mask (recommended)
+        micaflow bias_correction \
+          --input T1w.nii.gz \
+          --output T1w_corrected.nii.gz \
+          --mask brain_mask.nii.gz
+        
+        # Example 3: 4D diffusion image
+        micaflow bias_correction \
+          --input DWI.nii.gz \
+          --output DWI_corrected.nii.gz \
+          --mask brain_mask.nii.gz \
+          --b0 b0.nii.gz \
+          --b0-output b0_corrected.nii.gz \
+          --mode 4d
+        
+        # Example 4: Explicit 3D mode
+        micaflow bias_correction \
+          --input FLAIR.nii.gz \
+          --output FLAIR_corrected.nii.gz \
+          --mode 3d
+        
+        # Example 5: Custom shell dimension
+        micaflow bias_correction \
+          --input DWI.nii.gz \
+          --output DWI_corrected.nii.gz \
+          --b0 b0.nii.gz \
+          --b0-output b0_corrected.nii.gz \
+          --shell-dimension 4
+        
+        # Example 6: With Gibbs ringing removal
+        micaflow bias_correction \
+          --input DWI.nii.gz \
+          --output DWI_corrected.nii.gz \
+          --mask brain_mask.nii.gz \
+          --b0 b0.nii.gz \
+          --b0-output b0_corrected.nii.gz \
+          --mode 4d \
+          --gibbs
+        
+        ────────── WHAT IS BIAS FIELD? ────────────────────────
+        
+        Bias field (intensity non-uniformity):
+        • Smooth variation in signal intensity across the image
+        • Doesn't reflect true tissue properties
+        • Caused by magnetic field inhomogeneities
+        • Affects segmentation, registration, and quantification
+        • Common artifact in all MRI scans
+        
+        Why correction is important:
+        • Same tissue appears with different intensities
+        • Degrades automated analysis accuracy
+        • Reduces reproducibility across sessions/scanners
+        • Must be corrected before most analyses
+        
+        ────────────── HOW N4 WORKS ────────────────────────────
+        
+        N4ITK Algorithm:
+        1. Initialize smooth bias field estimate (B-spline)
+        2. Iteratively refine:
+           • Sharpen histogram by dividing by current estimate
+           • Smooth the sharpened image
+           • Update bias field estimate
+        3. Apply final correction: corrected = original / bias_field
+        4. Converges in 3-5 iterations typically
+        
+        Multi-resolution processing:
+        • Level 1: Coarse estimate (large B-spline knots)
+        • Levels 2-4: Progressively finer estimates
+        • Fast convergence at each level
+        
+        ────────────── 3D vs 4D PROCESSING ─────────────────────
+        
+        3D Mode (Anatomical images):
+        • Single volume processing
+        • Mask optional (auto-generated if not provided)
+        • Direct N4 application
+        • Processing time: 30-120 seconds
+        • Best for T1w, T2w, FLAIR, etc.
+        
+        4D Mode (Diffusion images):
+        • Bias estimated from b=0 volume only
+        • Same bias applied to all volumes
+        • Mask required (or auto-generated from b=0)
+        • Processing time: 1-5 minutes
+        • Assumes bias constant across b-values
+        • More efficient than per-volume correction
+        
+        ────────────────────────── NOTES ─────────────────────────
+        • Auto mode detects 3D vs 4D automatically
+        • Always provide mask when possible (improves accuracy)
+        • For 4D: b=0 image required for bias estimation
+        • Mask will be automatically resampled if needed
+        • Run as FIRST preprocessing step (before denoising)
+        • Visual QC recommended after correction
+        
+        ─────────────── PIPELINE POSITION ───────────────────────
+        Structural MRI Pipeline:
+        1. Bias field correction ← You are here
+        2. Brain extraction
+        3. Tissue segmentation
+        4. Registration
+        
+        Diffusion MRI Pipeline:
+        1. Bias field correction ← You are here
+        2. Denoising
+        3. Motion correction
+        4. Distortion correction
+        
+        ────────────────────── EXIT CODES ───────────────────────
+        0 : Success - bias correction completed
+        1 : Error - invalid inputs, file not found, or processing failure
+        
+        ───────────── QUALITY CONTROL ───────────────────────────
+        Visual inspection:
+        1. Check that bias field is smooth and plausible
+        2. Verify improved intensity uniformity
+        3. Look for over-correction artifacts
+        4. Ensure tissue contrast is preserved
+        5. Compare before/after histograms
+        
+        Expected improvements:
+        • More uniform white matter intensities
+        • Sharper tissue boundaries
+        • Better tissue separability
+        
+        ───────────────── COMMON ISSUES ─────────────────────────
+        Issue: Over-correction or artifacts
+        Solution: Provide tighter brain mask, check input quality
+        
+        Issue: Very slow processing
+        Solution: Normal for high-res images (1-5 min typical)
+        
+        Issue: 4D mode fails
+        Solution: Ensure b=0 and mask are provided, check dimensions
+        
+        Issue: Mask geometry mismatch
+        Solution: Automatic resampling performed, no action needed
+        
+    

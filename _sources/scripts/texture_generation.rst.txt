@@ -1,0 +1,312 @@
+Texture Generation
+==================
+
+texture_generation - MRI Texture Feature Extraction for Radiomics
+
+Part of the micaflow processing pipeline for neuroimaging data.
+
+This module computes advanced texture features from MRI data that can be used for
+tissue characterization, lesion analysis, radiomics applications, and quantitative
+imaging biomarker development. It performs automatic tissue segmentation and extracts
+quantitative imaging features including gradient magnitude and relative intensity maps,
+which capture local intensity variations and tissue contrast properties respectively.
+
+What are Texture Features?
+--------------------------
+Texture features quantify spatial patterns and intensity variations in medical images:
+- Provide information beyond simple intensity statistics
+- Capture tissue heterogeneity and structural organization
+- Enable quantitative characterization of pathology
+- Support radiomics and machine learning applications
+- Complement traditional volumetric measurements
+
+Computed Features:
+-----------------
+1. Gradient Magnitude:
+   - Measures local intensity changes
+   - Highlights edges and boundaries
+   - Captures tissue transitions
+   - Sensitive to structural organization
+   - Range: 0 to maximum gradient
+
+2. Relative Intensity (RI):
+   - Normalized intensity relative to tissue peaks
+   - Accounts for scanner/protocol variations
+   - Centers around GM-WM boundary
+   - Range: Typically 0-200 (100 = background)
+   - Provides contrast-normalized values
+
+How It Works:
+------------
+1. Load input MRI and brain mask
+2. Calculate brain-masked mean intensity for background reference
+3. Compute gradient magnitude (edge detection)
+4. Calculate relative intensity (normalized contrast mapping)
+5. Apply smoothing to relative intensity map
+6. Save all feature maps as NIfTI files
+
+Relative Intensity Calculation:
+------------------------------
+1. Calculate mean intensity within the brain mask as background reference (BG)
+2. Normalization: RI = 100 * (I / BG) (Centers the mean intensity at 100)
+3. Smooth with Gaussian (σ=3mm FWHM)
+4. Re-mask to ensure background remains clean
+
+Command-Line Usage:
+------------------
+# Basic usage
+micaflow texture_generation \
+    --input <path/to/image.nii.gz> \
+    --mask <path/to/brain_mask.nii.gz> \
+    --output <path/to/output_prefix>
+
+# Example with T1w image
+micaflow texture_generation \
+    --input T1w_preprocessed.nii.gz \
+    --mask brain_mask.nii.gz \
+    --output subject01_textures
+
+# Example with short flags
+micaflow texture_generation \
+    -i T1w.nii.gz \
+    -m mask.nii.gz \
+    -o output/features
+
+Python API Usage:
+----------------
+>>> from micaflow.scripts.texture_generation import run_texture_pipeline
+>>> 
+>>> # Basic usage
+>>> run_texture_pipeline(
+...     input="preprocessed_t1w.nii.gz",
+...     mask="brain_mask.nii.gz",
+...     output_dir="output_texture_maps"
+... )
+>>> 
+>>> # With variables
+>>> input_file = "data/T1w.nii.gz"
+>>> mask_file = "data/mask.nii.gz"
+>>> output_prefix = "results/subject01"
+>>> run_texture_pipeline(input_file, mask_file, output_prefix)
+
+Pipeline Integration:
+--------------------
+Texture generation typically follows preprocessing:
+
+Structural MRI Pipeline:
+1. Preprocessing (N4 bias correction, denoising)
+2. Brain extraction (skull stripping)
+3. Tissue segmentation (optional: use synthseg instead)
+4. Texture feature extractiom
+5. Statistical analysis or machine learning
+
+Radiomics Pipeline:
+1. Image acquisition and quality control
+2. Preprocessing and standardization
+3. ROI/lesion segmentation
+4. Feature extraction (texture_generation)
+5. Feature selection
+6. Model training/prediction
+
+Exit Codes:
+----------
+0 : Success - texture features computed successfully
+1 : Error - invalid inputs, file not found, or processing failure
+
+See Also:
+--------
+- synthseg : Alternative segmentation method
+- n4_bias_correction : Recommended preprocessing
+- denoise : Noise reduction before feature extraction
+
+Command Line Usage
+-----------------
+
+.. code-block:: bash
+
+    micaflow texture_generation [options]
+
+Source Code
+-----------
+
+View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/texture_generation.py>`_
+
+Description
+-----------
+
+║                        (Radiomics)                             ║
+    
+    This script generates quantitative texture feature maps from MRI data
+    for radiomics, tissue characterization, and quantitative imaging biomarker
+    development. Features include gradient magnitude and relative intensity.
+
+Full Help
+---------
+
+.. code-block:: text
+
+    
+        ╔════════════════════════════════════════════════════════════════╗
+        ║                  TEXTURE FEATURE EXTRACTION                    ║
+        ║                        (Radiomics)                             ║
+        ╚════════════════════════════════════════════════════════════════╝
+        
+        This script generates quantitative texture feature maps from MRI data
+        for radiomics, tissue characterization, and quantitative imaging biomarker
+        development. Features include gradient magnitude and relative intensity.
+        
+        ────────────────────────── USAGE ──────────────────────────
+          micaflow texture_generation [options]
+        
+        ─────────────────── REQUIRED ARGUMENTS ───────────────────
+          --input, -i   : Path to the input MRI image (.nii.gz)
+          --mask, -m    : Path to the binary brain mask (.nii.gz)
+          --output, -o  : Output prefix for texture feature maps
+        
+        ──────────────────── EXAMPLE USAGE ──────────────────────
+        
+        # Example 1: Basic usage
+        micaflow texture_generation \
+          --input T1w_preprocessed.nii.gz \
+          --mask brain_mask.nii.gz \
+          --output subject01_textures
+        
+        # Example 2: With short flags
+        micaflow texture_generation \
+          -i T1w.nii.gz \
+          -m mask.nii.gz \
+          -o output/features
+        
+        # Example 3: From preprocessed data
+        micaflow texture_generation \
+          -i data/preprocessed/T1w_n4.nii.gz \
+          -m data/masks/brain_mask.nii.gz \
+          -o results/radiomics/sub-01
+        
+        ────────── WHAT ARE TEXTURE FEATURES? ──────────────────
+        
+        Texture features quantify spatial patterns in medical images:
+        • Go beyond simple intensity statistics
+        • Capture tissue heterogeneity and organization
+        • Provide quantitative imaging biomarkers
+        • Enable radiomics and machine learning
+        • Support precision medicine approaches
+        
+        Common applications:
+        • Tumor characterization and grading
+        • Neurodegenerative disease staging
+        • White matter lesion analysis
+        • Age-related changes
+        • Treatment response monitoring
+        
+        ─────────────── COMPUTED FEATURES ──────────────────────
+        
+        1. Gradient Magnitude:
+        • Measures local intensity changes
+        • Highlights edges and tissue boundaries
+        • Sensitive to structural organization
+        • Range: 0 to maximum gradient
+        • Higher values at GM/WM boundaries
+        
+        2. Relative Intensity (RI):
+        • Normalized intensity relative to tissue peaks
+        • Accounts for scanner/protocol variations
+        • Centers around GM-WM boundary (value = 100)
+        • Range: Typically 50-150
+        • Provides contrast-normalized values
+        
+        3. Tissue Segmentation (intermediate):
+        • Gray matter mask
+        • White matter mask
+        • CSF identification
+        • Used for feature computation
+        
+        ────────────────── HOW IT WORKS ────────────────────────
+        
+        Processing pipeline:
+        1. Load input MRI and brain mask
+        2. Calculate mean intensity within mask (background reference)
+        3. Compute gradient magnitude (edge detection)
+        4. Calculate relative intensity (normalized contrast globally scaled)
+        5. Apply smoothing (σ=3mm FWHM)
+        6. Save feature maps as NIfTI files
+        
+        Atropos segmentation:
+        • K-means clustering (3 tissue classes)
+        • MRF spatial prior (0.2 weight, 1x1x1 neighborhood)
+        • 3 iterations for convergence
+        • Masked to brain tissue only
+        • Output: 1=CSF, 2=GM, 3=WM
+        
+        ────────────────────── OUTPUT FILES ─────────────────────
+        
+        Given output prefix "subject01_textures", creates:
+        
+        subject01_textures_gradient-magnitude.nii.gz
+          - Edge and boundary detection map
+          - Higher values at tissue transitions
+          - Range: 0 to ~50 (depends on contrast)
+        
+        subject01_textures_relative-intensity.nii.gz
+          - Normalized contrast map
+          - Centered at GM-WM boundary (100)
+          - Range: Typically 50-150
+          - Smoothed with σ=3mm FWHM
+        
+        ────────────────────────── NOTES ─────────────────────────
+        • Preprocessing recommended: N4 bias correction, denoising
+        • Processing time: 2-5 minutes per subject
+        • Memory: ~2-4 GB RAM
+        • All operations masked to brain only
+        • No resampling (preserves input resolution)
+        • Values outside mask are zero
+        • Gradient uses first-order finite differences
+        • Peak finding uses 1st-99.5th percentile range
+        
+        ─────────────── PIPELINE POSITION ───────────────────────
+        Structural MRI Pipeline:
+        1. Preprocessing (N4, denoising)
+        2. Brain extraction (skull stripping)
+        3. Tissue segmentation (optional)
+        4. Texture feature extraction ← You are here
+        5. Statistical analysis or ML
+        
+        Radiomics Pipeline:
+        1. Image acquisition and QC
+        2. Preprocessing and standardization
+        3. ROI/lesion segmentation
+        4. Feature extraction ← You are here
+        5. Feature selection
+        6. Model training/prediction
+        
+        ────────────────────── EXIT CODES ───────────────────────
+        0 : Success - texture features computed
+        1 : Error - invalid inputs, file not found, or processing failure
+        
+        ───────────── QUALITY CONTROL ───────────────────────────
+        Visual inspection:
+        1. Check gradient magnitude highlights tissue boundaries
+        2. Verify relative intensity centered around 100
+        3. Ensure smooth transitions (no edge artifacts)
+        4. Confirm brain mask coverage is complete
+        5. Look for segmentation errors
+        
+        Expected ranges:
+        • Gradient magnitude: 0 to ~50
+        • Relative intensity: 50-150 (100 = background)
+        • Values outside mask: 0
+        
+        ───────────────── COMMON ISSUES ─────────────────────────
+        Issue: Poor segmentation quality
+        Solution: Use N4 bias correction first, verify mask quality
+        
+        Issue: Extreme gradient values
+        Solution: Check image quality, reduce noise with denoising
+        
+        Issue: Relative intensity not centered at 100
+        Solution: Verify tissue segmentation, check for artifacts
+        
+        Issue: Processing takes very long
+        Solution: Normal for high-resolution images (2-5 min typical)
+        
+    

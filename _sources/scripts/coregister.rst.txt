@@ -1,0 +1,295 @@
+Coregister
+==========
+
+coregister - Label-Augmented Image Registration for Aligning Neuroimaging Data
+
+Part of the micaflow processing pipeline for neuroimaging data.
+
+This module performs comprehensive image registration between two images using LAMAReg
+(Label-Augmented Modality-Agnostic Registration), which combines anatomical image information
+with segmentation labels to achieve more accurate registration across different imaging modalities. 
+The registration aligns a moving image with a fixed reference space, enabling spatial normalization
+of neuroimaging data for group analysis, multimodal integration, or atlas-based analyses.
+
+LAMAReg improves upon traditional intensity-based registration by incorporating structural 
+segmentation information, making it particularly robust for registering images with different 
+contrasts (e.g., T1w to T2w, structural to diffusion) or when anatomical correspondence is 
+challenging to establish from intensity alone.
+
+Features:
+--------
+- Label-augmented registration for improved accuracy across different modalities
+- Automatic segmentation generation using SynthSeg when not provided
+- Combined rigid, affine, and SyN nonlinear registration in one step
+- Linear-only registration option (rigid + affine) for faster processing
+- DWI processing support with shell/volume extraction capabilities
+- Bidirectional transformation capability (forward and inverse)
+- Option to save all transformation components for later application
+- Modality-agnostic approach for consistent registration across different contrasts
+- Support for multi-threaded processing for both ANTs and SynthSeg components
+- Secondary warp file support for complex multi-step registration pipelines
+
+Registration Modes:
+------------------
+Full Nonlinear (Default):
+  - Rigid alignment (6 DOF: 3 translations + 3 rotations)
+  - Affine transformation (12 DOF: adds scaling and shearing)
+  - SyN nonlinear deformation (captures local anatomical differences)
+  - Best for: Normalizing subjects to standard space, high accuracy needed
+  - Processing time: ~1-15 minutes (depending on image resolution and threads)
+
+Linear Only (--linear-only):
+  - Rigid alignment + Affine transformation only
+  - No nonlinear deformation
+  - Best for: Intra-subject registration, quick alignment, motion correction
+  - Processing time: ~2-4 minutes
+
+Command-Line Usage:
+------------------
+# Full nonlinear registration with automatic segmentation
+micaflow coregister \
+    --fixed-file <path/to/reference.nii.gz> \
+    --moving-file <path/to/source.nii.gz> \
+    --output <path/to/registered.nii.gz> \
+    [--warp-file <path/to/warp.nii.gz>] \
+    [--affine-file <path/to/affine.mat>] \
+    [--rev-warp-file <path/to/reverse_warp.nii.gz>] \
+    [--output-segmentation <path/to/output_seg.nii.gz>] \
+    [--threads <int>]
+
+# With pre-computed segmentations (faster)
+micaflow coregister \
+    --fixed-file <path/to/reference.nii.gz> \
+    --moving-file <path/to/source.nii.gz> \
+    --fixed-segmentation <path/to/fixed_seg.nii.gz> \
+    --moving-segmentation <path/to/moving_seg.nii.gz> \
+    --output <path/to/registered.nii.gz>
+
+# Linear-only registration
+micaflow coregister \
+    --fixed-file <path/to/reference.nii.gz> \
+    --moving-file <path/to/source.nii.gz> \
+    --output <path/to/registered.nii.gz> \
+    --linear-only
+
+Python API Usage:
+----------------
+>>> from micaflow.scripts.coregister import coregister
+>>> 
+>>> # Full nonlinear registration
+>>> output = coregister(
+...     fixed_file="mni152.nii.gz",
+...     moving_file="subject_t1w.nii.gz",
+...     output="registered_t1w.nii.gz",
+...     warp_file="warp.nii.gz",
+...     affine_file="affine.mat",
+...     rev_warp_file="reverse_warp.nii.gz",
+...     threads=4
+... )
+>>> 
+>>> # Linear-only registration
+>>> output = coregister(
+...     fixed_file="mni152.nii.gz",
+...     moving_file="subject_t1w.nii.gz",
+...     output="registered_t1w.nii.gz",
+...     linear_only=True,
+...     affine_file="affine.mat"
+... )
+
+Or use the LAMAReg function directly:
+>>> from lamareg.scripts.lamar import lamareg
+>>> lamareg(
+...     input_image="subject_t1w.nii.gz",
+...     reference_image="mni152.nii.gz",
+...     output_image="registered_t1w.nii.gz",
+...     input_parc="subject_seg.nii.gz",  # Optional
+...     reference_parc="mni152_seg.nii.gz",  # Optional
+...     output_parc="registered_seg.nii.gz",
+...     warp_file="warp.nii.gz",
+...     affine_file="affine.mat",
+...     inverse_warp_file="reverse_warp.nii.gz",
+...     skip_moving_parc=False,  # Generate if not provided
+...     skip_fixed_parc=False,   # Generate if not provided
+...     ants_threads=4,
+...     synthseg_threads=2
+... )
+
+Exit Codes:
+----------
+0 : Success - registration completed
+1 : Error - invalid inputs, file not found, or processing failure
+
+Technical Notes:
+---------------
+- LAMAReg uses ANTs SyN (Symmetric Normalization) for nonlinear registration
+- Segmentations are generated using SynthSeg (deep learning-based segmentation)
+- Forward transforms: moving → fixed space
+- Reverse transforms: fixed → moving space
+- Secondary warp files allow enable greater accuracy in due to less interpolation
+- When secondary warps are not provided, warp fields are composed into single transform
+- Multi-threading significantly reduces processing time on multi-core systems
+- SynthSeg can process nearly any MRI contrast without retraining
+
+See Also:
+--------
+- synthseg : For generating segmentation/parcellation volumes
+- apply_warp : For applying saved transformations to other images
+- calculate_dice : For validating registration quality
+
+References:
+----------
+
+2. Billot B, Greve DN, Puonti O, et al. SynthSeg: Segmentation of brain MRI scans of 
+   any contrast and resolution without retraining. Medical Image Analysis. 2023;86:102789.
+   doi:10.1016/j.media.2023.102789
+
+3. Tustison NJ, Cook PA, Klein A, et al. Large-scale evaluation of ANTs and FreeSurfer 
+   cortical thickness measurements. Neuroimage. 2014;99:166-179. 
+   doi:10.1016/j.neuroimage.2014.05.044
+
+Command Line Usage
+-----------------
+
+.. code-block:: bash
+
+    micaflow coregister [options]
+
+Source Code
+-----------
+
+View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/coregister.py>`_
+
+Description
+-----------
+
+This script performs label-augmented modality-agnostic registration (LAMAReg) 
+    between two images. The registration aligns the moving image to match the fixed 
+    reference image space, utilizing segmentation labels to improve accuracy across 
+    different modalities.
+
+Full Help
+---------
+
+.. code-block:: text
+
+    
+        ╔════════════════════════════════════════════════════════════════╗
+        ║                LABEL-AUGMENTED COREGISTRATION                  ║
+        ╚════════════════════════════════════════════════════════════════╝
+        
+        This script performs label-augmented modality-agnostic registration (LAMAReg) 
+        between two images. The registration aligns the moving image to match the fixed 
+        reference image space, utilizing segmentation labels to improve accuracy across 
+        different modalities.
+        
+        ────────────────────────── USAGE ──────────────────────────
+          micaflow coregister [options]
+        
+        ─────────────────── REQUIRED ARGUMENTS ───────────────────
+          --fixed-file   : Path to the fixed/reference image (.nii.gz)
+                         The target space for registration
+          --moving-file  : Path to the moving image to be registered (.nii.gz)
+                         Will be transformed to match fixed image
+          --output       : Output path for the registered image (.nii.gz)
+        
+        ─────────────────── OPTIONAL ARGUMENTS ───────────────────
+          --fixed-segmentation   : Path to fixed image segmentation (.nii.gz)
+                                Auto-generated if not provided
+          --moving-segmentation  : Path to moving image segmentation (.nii.gz)
+                                Auto-generated if not provided
+          --output-segmentation  : Path to save registered segmentation (.nii.gz)
+          --warp-file            : Path to save forward warp field (.nii.gz)
+                                Moving → Fixed transformation
+          --affine-file          : Path to save forward affine (.mat)
+          --rev-warp-file        : Path to save reverse warp field (.nii.gz)
+                                Fixed → Moving transformation
+          --secondary-warp-file  : Path for secondary warp (multi-step pipelines)
+                                More accurate but complex to apply
+          --secondary-rev-warp-file: Path for secondary reverse warp
+          --linear-only          : Only perform rigid + affine (no SyN)
+                                Faster but less accurate
+          --threads              : Number of threads for ANTs and SynthSeg (default: 1)
+        
+        ────────────────── EXAMPLE USAGE ────────────────────────
+        
+        # Example 1: Basic nonlinear registration (automatic segmentation)
+        micaflow coregister \
+          --fixed-file mni152.nii.gz \
+          --moving-file subject_t1w.nii.gz \
+          --output registered_t1w.nii.gz \
+          --warp-file warp.nii.gz \
+          --affine-file affine.mat
+        
+        # Example 2: With pre-computed segmentations (faster)
+        micaflow coregister \
+          --fixed-file mni152.nii.gz \
+          --moving-file subject_t1w.nii.gz \
+          --fixed-segmentation mni152_seg.nii.gz \
+          --moving-segmentation subject_seg.nii.gz \
+          --output registered_t1w.nii.gz \
+          --output-segmentation registered_seg.nii.gz
+        
+        # Example 3: Linear-only registration (fast)
+        micaflow coregister \
+          --fixed-file subject_t1w.nii.gz \
+          --moving-file subject_t2w.nii.gz \
+          --output t2w_in_t1w_space.nii.gz \
+          --linear-only \
+          --affine-file t2w_to_t1w.mat
+        
+        # Example 4: Multi-threaded registration
+        micaflow coregister \
+          --fixed-file mni152.nii.gz \
+          --moving-file subject_t1w.nii.gz \
+          --output registered_t1w.nii.gz \
+          --threads 4
+        
+        # Example 5: Multi-step registration with secondary warps
+        micaflow coregister \
+          --fixed-file mni152.nii.gz \
+          --moving-file subject_dwi.nii.gz \
+          --output dwi_in_mni.nii.gz \
+          --warp-file primary_warp.nii.gz \
+          --secondary-warp-file secondary_warp.nii.gz
+        
+        ────────────────── REGISTRATION MODES ───────────────────
+        
+        Full Nonlinear (Default):
+        • Rigid → Affine → SyN deformation
+        • Best accuracy for inter-subject registration
+        • Processing time: ~5-15 minutes
+        • Use for: Normalizing to standard space (e.g., MNI152)
+        
+        Linear Only (--linear-only):
+        • Rigid → Affine only (no nonlinear deformation)
+        • Faster but less accurate
+        • Processing time: ~1-3 minutes
+        • Use for: Intra-subject registration, motion correction
+        
+        ────────────────────────── NOTES ───────────────────────
+        • LAMAReg combines anatomical and label information for robust registration
+        • Segmentations are automatically generated using SynthSeg if not provided
+        • SynthSeg adds ~1-3 minutes per image to processing time
+        • Forward transforms: moving space → fixed space
+        • Reverse transforms: fixed space → moving space
+        • Save transforms to apply to other images later (use apply_warp)
+        • Multi-threading significantly reduces processing time
+        • Secondary warps enable greate accuracy due to skipping an interpolation step
+        • LAMAReg works across different MRI contrasts (T1w, T2w, FLAIR, etc.)
+        • Registration quality can be validated using calculate_dice
+        
+        ────────────────────── EXIT CODES ───────────────────────
+        0 : Success - registration completed
+        1 : Error - invalid inputs, file not found, or processing failure
+        
+        ───────────────── COMMON ISSUES ─────────────────────────
+        Issue: Registration takes very long
+        Solution: Increase --threads, provide pre-computed segmentations
+        
+        Issue: Poor registration quality
+        Solution: Ensure images have similar FOV, try providing segmentations
+        
+        Issue: "Out of memory" error
+        Solution: Reduce number of threads or image resolution
+        
+    

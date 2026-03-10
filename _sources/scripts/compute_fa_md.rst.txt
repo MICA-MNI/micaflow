@@ -1,0 +1,245 @@
+Compute Fa Md
+=============
+
+compute_fa_md - Diffusion Tensor Imaging Metrics Calculator
+
+Part of the micaflow processing pipeline for neuroimaging data.
+
+This module computes diffusion tensor imaging (DTI) scalar metrics, specifically 
+Fractional Anisotropy (FA) and Mean Diffusivity (MD), from preprocessed diffusion-weighted 
+images (DWI). FA quantifies the directional preference of water diffusion, serving as a 
+marker of white matter integrity, while MD represents the overall magnitude of diffusion. 
+These metrics are essential for investigating white matter microstructure and are widely 
+used in clinical and research neuroimaging.
+
+DTI Metrics:
+-----------
+Fractional Anisotropy (FA):
+  - Measures directionality of diffusion (0 = isotropic, 1 = highly directional)
+  - Sensitive to white matter integrity, myelination, and axonal density
+  - Typical values:
+    * White matter tracts: 0.4 - 0.8 (corpus callosum ~0.7, internal capsule ~0.6)
+    * Gray matter: 0.1 - 0.3
+    * CSF: ~0.0 - 0.1
+
+Mean Diffusivity (MD):
+  - Average diffusion magnitude across all directions (units: mm²/s × 10⁻³)
+  - Reflects overall water content and membrane density
+  - Typical values:
+    * White matter: 0.6 - 0.9 × 10⁻³ mm²/s
+    * Gray matter: 0.7 - 1.0 × 10⁻³ mm²/s
+    * CSF: 2.5 - 3.5 × 10⁻³ mm²/s
+
+Features:
+--------
+- Computes DTI model using robust tensor fitting from DIPY
+- Compatible with standard neuroimaging file formats (NIfTI)
+- Preserves image header and spatial information in output files
+
+Command-Line Usage:
+------------------
+# Without b0 volume (already included in input)
+micaflow compute_fa_md \
+    --input <path/to/dwi.nii.gz> \
+    --mask <path/to/brain_mask.nii.gz> \
+    --bval <path/to/dwi.bval> \
+    --bvec <path/to/dwi.bvec> \
+    --output-fa <path/to/fa_map.nii.gz> \
+    --output-md <path/to/md_map.nii.gz>
+
+# With separate b0 volume to merge
+micaflow compute_fa_md \
+    --input <path/to/dwi.nii.gz> \
+    --mask <path/to/brain_mask.nii.gz> \
+    --bval <path/to/dwi.bval> \
+    --bvec <path/to/dwi.bvec> \
+    --b0-volume <path/to/b0.nii.gz> \
+    --b0-bval <path/to/b0.bval> \
+    --b0-bvec <path/to/b0.bvec> \
+    --b0-index 0 \
+    --output-fa <path/to/fa_map.nii.gz> \
+    --output-md <path/to/md_map.nii.gz>
+
+Python API Usage:
+----------------
+>>> from micaflow.scripts.compute_fa_md import compute_fa_md
+>>> 
+>>> # Standard usage
+>>> fa_path, md_path = compute_fa_md(
+...     bias_corr_path="corrected_dwi.nii.gz",
+...     mask_path="brain_mask.nii.gz",
+...     moving_bval="dwi.bval",
+...     moving_bvec="dwi.bvec",
+...     fa_path="fa.nii.gz",
+...     md_path="md.nii.gz"
+... )
+>>> 
+>>> # With b0 merging
+>>> fa_path, md_path = compute_fa_md(
+...     bias_corr_path="corrected_dwi.nii.gz",
+...     mask_path="brain_mask.nii.gz",
+...     moving_bval="dwi.bval",
+...     moving_bvec="dwi.bvec",
+...     fa_path="fa.nii.gz",
+...     md_path="md.nii.gz",
+...     b0_volume="b0.nii.gz",
+...     b0_bval="b0.bval",
+...     b0_bvec="b0.bvec",
+...     b0_index=0
+... )
+
+Pipeline Integration:
+--------------------
+DTI metrics are typically computed after these preprocessing steps:
+1. Denoising (denoise)
+2. Motion correction (motion_correction)
+3. Susceptibility distortion correction (SDC, apply_SDC)
+4. Bias field correction (bias_correction)
+5. Brain extraction (bet)
+6. DTI metric calculation (compute_fa_md) ← You are here
+
+Exit Codes:
+----------
+0 : Success - FA and MD maps computed and saved
+1 : Error - invalid inputs, file not found, dimension mismatch, or processing failure
+
+See Also:
+--------
+- bias_correction : Recommended before DTI fitting
+- denoise : For DWI denoising
+- motion_correction : For motion/eddy current correction
+- apply_SDC : For distortion correction
+- bet : For brain mask generation
+
+Technical Notes:
+---------------
+- DTI model requires at least 6 unique gradient directions + 1 b0 volume
+- More directions improve estimation robustness (30+ recommended)
+- Tensor fitting uses weighted least squares (WLS) by default in DIPY
+- B-values should be in s/mm² units
+- FA values outside [0,1] are clamped (indicates fitting issues)
+- Processing time: ~30-60 seconds for typical resolution (depending on # volumes)
+
+References:
+----------
+
+4. Garyfallidis E, Brett M, Amirbekian B, et al. Dipy, a library for the analysis of
+   diffusion MRI data. Front Neuroinform. 2014;8:8. doi:10.3389/fninf.2014.00008
+
+Command Line Usage
+-----------------
+
+.. code-block:: bash
+
+    micaflow compute_fa_md [options]
+
+Source Code
+-----------
+
+View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/compute_fa_md.py>`_
+
+Description
+-----------
+
+This script computes Fractional Anisotropy (FA) and Mean Diffusivity (MD)
+    maps from diffusion-weighted images using the diffusion tensor model.
+
+Full Help
+---------
+
+.. code-block:: text
+
+    
+        ╔════════════════════════════════════════════════════════════════╗
+        ║                DIFFUSION TENSOR METRICS (FA/MD)                ║
+        ╚════════════════════════════════════════════════════════════════╝
+        
+        This script computes Fractional Anisotropy (FA) and Mean Diffusivity (MD)
+        maps from diffusion-weighted images using the diffusion tensor model.
+        
+        ────────────────────────── USAGE ──────────────────────────
+          micaflow compute_fa_md [options]
+        
+        ─────────────────── REQUIRED ARGUMENTS ───────────────────
+          --input      : Path to the input DWI image (.nii.gz)
+                       Should be preprocessed (denoised, corrected, registered)
+          --mask       : Path to the brain mask image (.nii.gz)
+          --bval       : Path to the b-values file (.bval)
+          --bvec       : Path to the b-vectors file (.bvec)
+          --output-fa  : Output path for the FA map (.nii.gz)
+          --output-md  : Output path for the MD map (.nii.gz)
+        
+        ──────────────── OPTIONAL B0 MERGING ARGUMENTS ────────────────
+          --b0-volume  : Path to separate b0 volume to merge (.nii.gz)
+          --b0-bval    : Path to b0 b-value file (.bval)
+          --b0-bvec    : Path to b0 b-vector file (.bvec)
+          --b0-index   : Index at which to insert b0 (default: 0)
+                       Note: All three b0 arguments required if any is provided
+        
+        ──────────────────── EXAMPLE USAGE ──────────────────────
+        
+        # Example 1: DWI already includes b0
+        micaflow compute_fa_md \
+          --input corrected_dwi.nii.gz \
+          --mask brain_mask.nii.gz \
+          --bval dwi.bval \
+          --bvec dwi.bvec \
+          --output-fa fa.nii.gz \
+          --output-md md.nii.gz
+        
+        # Example 2: Merge separate b0 volume
+        micaflow compute_fa_md \
+          --input dwi_no_b0.nii.gz \
+          --mask brain_mask.nii.gz \
+          --bval dwi_no_b0.bval \
+          --bvec dwi_no_b0.bvec \
+          --b0-volume b0.nii.gz \
+          --b0-bval b0.bval \
+          --b0-bvec b0.bvec \
+          --b0-index 0 \
+          --output-fa fa.nii.gz \
+          --output-md md.nii.gz
+        
+        ──────────────── FA/MD INTERPRETATION ─────────────────
+        
+        Fractional Anisotropy (FA) - Directionality of diffusion:
+          0.7 - 0.8: Major white matter tracts (corpus callosum)
+          0.5 - 0.7: Other white matter (internal capsule, corona radiata)
+          0.3 - 0.5: Peripheral white matter, crossing fibers
+          0.1 - 0.3: Gray matter
+          0.0 - 0.1: CSF, free water
+        
+        Mean Diffusivity (MD) - Overall diffusion magnitude (×10⁻³ mm²/s):
+          2.5 - 3.5: CSF (free water diffusion)
+          0.7 - 1.0: Gray matter
+          0.6 - 0.9: White matter
+          ↑ MD: Edema, necrosis, inflammation
+          ↓ MD: Increased cellularity, cytotoxic edema
+        
+        ────────────────────────── NOTES ─────────────────────────
+        • FA values range from 0 (isotropic) to 1 (perfectly anisotropic)
+        • MD is reported in mm²/s (typical brain values: 0.6-3.5 × 10⁻³)
+        • Processing requires a brain mask to exclude non-brain regions
+        • DTI fitting requires at least 6 gradient directions + 1 b0 volume
+        • More directions improve robustness (30+ recommended)
+        • If b0 volume is provided, it will be merged with DWI at specified index
+        • B0 gradients (bval/bvec) will be inserted at the same index
+        • Uses weighted least squares (WLS) tensor fitting from DIPY
+        • Typical processing time: 30-60 seconds (varies with # volumes)
+        • FA values are automatically clamped to [0, 1] range
+        
+        ────────────────────── EXIT CODES ───────────────────────
+        0 : Success - FA and MD maps computed and saved
+        1 : Error - invalid inputs, file not found, or processing failure
+        
+        ───────────────── COMMON ISSUES ─────────────────────────
+        Issue: "Shape mismatch" error
+        Solution: Ensure DWI, mask, and b0 (if provided) have matching dimensions
+        
+        Issue: Very low FA values throughout
+        Solution: Check b-vector normalization and coordinate system
+        
+        Issue: FA values > 1 or < 0
+        Solution: Indicates poor tensor fit - check gradient table and SNR
+        
+    

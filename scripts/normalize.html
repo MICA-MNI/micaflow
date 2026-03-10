@@ -1,0 +1,424 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Normalize &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Texture Generation" href="texture_generation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#batch-processing-bids">Batch Processing (BIDS)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">MicaFlow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#batch-processing-bids">Batch Processing (BIDS)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../scripts.html">Scripts</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../scripts.html">Scripts</a></li>
+      <li class="breadcrumb-item active">Normalize</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/scripts/normalize.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="normalize">
+<h1>Normalize<a class="headerlink" href="#normalize" title="Link to this heading"></a></h1>
+<p>normalize_intensity - Percentile-based Intensity Normalization for MRI Data</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module performs intensity normalization on MRI data using percentile-based clamping
+and rescaling. Intensity normalization is crucial for improving consistency across different
+scans, scanners, and acquisition protocols, making downstream analysis more robust and
+enabling valid comparisons between subjects and timepoints.</p>
+<section id="why-intensity-normalization">
+<h2>Why Intensity Normalization?<a class="headerlink" href="#why-intensity-normalization" title="Link to this heading"></a></h2>
+<p>MRI signal intensities are arbitrary and vary significantly due to:
+- Scanner hardware differences (field strength, coils, gradient systems)
+- Acquisition parameters (TR, TE, flip angle, bandwidth)
+- Reconstruction algorithms and vendor-specific processing
+- Subject-specific factors (head size, tissue properties)</p>
+<p>Without normalization:
+- Visual comparison across scans is difficult
+- Quantitative analyses become unreliable
+- Machine learning models perform poorly
+- Atlas-based methods may fail
+- Group statistics are confounded by intensity variations</p>
+</section>
+<section id="percentile-based-normalization">
+<h2>Percentile-based Normalization:<a class="headerlink" href="#percentile-based-normalization" title="Link to this heading"></a></h2>
+<p>This method normalizes intensities by:
+1. Computing percentiles on non-zero (brain) voxels only
+2. Clamping extreme values at specified percentiles (default: 1st and 99th)
+3. Rescaling clamped values to a standardized range (default: 0-100)</p>
+<p>Advantages:
+- Robust to outliers (extreme bright/dark spots)
+- Preserves relative intensity relationships within normal range
+- No assumptions about tissue distributions</p>
+<p>Limitations:
+- Does not account for spatial intensity variations (bias fields)
+- May not be appropriate for quantitative sequences (T1/T2 mapping)
+- Assumes background is zero (requires brain extraction for best results)
+- Cannot correct for different tissue contrasts across modalities</p>
+</section>
+<section id="features">
+<h2>Features:<a class="headerlink" href="#features" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Percentile-based clamping to reduce outlier effects</p></li>
+<li><p>Customizable percentile thresholds (default: 1st and 99th)</p></li>
+<li><p>Customizable output range (default: 0-100)</p></li>
+<li><p>Operates only on non-zero voxels (preserves background)</p></li>
+<li><p>Preserves original image geometry and header information</p></li>
+<li><p>Handles edge cases (no non-zero voxels, uniform intensity)</p></li>
+<li><p>Fast processing suitable for large datasets</p></li>
+</ul>
+</section>
+<section id="command-line-usage">
+<h2>Command-Line Usage:<a class="headerlink" href="#command-line-usage" title="Link to this heading"></a></h2>
+<p># Basic normalization with default parameters (1st-99th percentiles, 0-100 range)
+micaflow normalize_intensity </p>
+<blockquote>
+<div><p>–input &lt;path/to/image.nii.gz&gt; –output &lt;path/to/normalized.nii.gz&gt;</p>
+</div></blockquote>
+<p># Custom percentiles (more aggressive outlier removal)
+micaflow normalize_intensity </p>
+<blockquote>
+<div><p>–input &lt;path/to/image.nii.gz&gt; –output &lt;path/to/normalized.nii.gz&gt; –lower-percentile 2.0 –upper-percentile 98.0</p>
+</div></blockquote>
+<p># Normalize to [0, 1] range (useful for machine learning)
+micaflow normalize_intensity </p>
+<blockquote>
+<div><p>–input &lt;path/to/image.nii.gz&gt; –output &lt;path/to/normalized.nii.gz&gt; –min-value 0 –max-value 1</p>
+</div></blockquote>
+<p># Conservative normalization (less outlier removal)
+micaflow normalize_intensity </p>
+<blockquote>
+<div><p>–input &lt;path/to/image.nii.gz&gt; –output &lt;path/to/normalized.nii.gz&gt; –lower-percentile 0.5 –upper-percentile 99.5</p>
+</div></blockquote>
+</section>
+<section id="python-api-usage">
+<h2>Python API Usage:<a class="headerlink" href="#python-api-usage" title="Link to this heading"></a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.normalize_intensity</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalize_intensity</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Basic normalization</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalize_intensity</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">input_file</span><span class="o">=</span><span class="s2">&quot;t1w.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output_file</span><span class="o">=</span><span class="s2">&quot;t1w_normalized.nii.gz&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Custom percentiles and range</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalize_intensity</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">input_file</span><span class="o">=</span><span class="s2">&quot;t1w.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output_file</span><span class="o">=</span><span class="s2">&quot;t1w_normalized.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">lower_percentile</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">upper_percentile</span><span class="o">=</span><span class="mi">98</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">min_val</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">max_val</span><span class="o">=</span><span class="mi">1</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Silent mode (no progress messages)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normalize_intensity</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">input_file</span><span class="o">=</span><span class="s2">&quot;t1w.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output_file</span><span class="o">=</span><span class="s2">&quot;t1w_normalized.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="pipeline-integration">
+<h2>Pipeline Integration:<a class="headerlink" href="#pipeline-integration" title="Link to this heading"></a></h2>
+<p>Intensity normalization is typically applied AFTER bias field correction:</p>
+<p>Structural MRI Pipeline:
+1. Denoising (optional)
+2. Brain extraction (bet)
+3. Bias field correction (bias_correction)
+4. Intensity normalization (normalize_intensity) ← You are here
+5. Registration to standard space (coregister)
+6. Tissue segmentation</p>
+<p>Diffusion MRI Pipeline:
+Note: For DWI, normalization is less common. If needed, apply to b0 only:
+1. Denoising (denoise)
+2. Motion/eddy correction (motion_correction)
+3. Distortion correction (apply_SDC)
+4. Bias field correction (bias_correction)
+5. B0 intensity normalization (optional)</p>
+</section>
+<section id="exit-codes">
+<h2>Exit Codes:<a class="headerlink" href="#exit-codes" title="Link to this heading"></a></h2>
+<p>0 : Success - normalization completed
+1 : Error - invalid inputs, file not found, or processing failure</p>
+</section>
+<section id="technical-notes">
+<h2>Technical Notes:<a class="headerlink" href="#technical-notes" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Default percentiles: 1st and 99th (clips ~2% of voxels)</p></li>
+<li><p>Default output range: 0-100</p></li>
+<li><p>Percentile calculation: Only on non-zero voxels (excludes background)</p></li>
+<li><p>Zero voxels (background) remain zero after normalization</p></li>
+<li><p>Formula: norm = ((clipped - p_low) / (p_high - p_low)) × (max - min) + min</p></li>
+<li><p>Processing time: &lt; 1 minute for typical 3D volumes</p></li>
+<li><p>Memory efficient: Operates on masked data only</p></li>
+<li><p>Data type: Preserved from input (float32/float64)</p></li>
+<li><p>NIfTI header: Preserved including orientation and spacing</p></li>
+<li><p>Edge case handling: Returns copy if no non-zero voxels found</p></li>
+</ul>
+</section>
+<section id="see-also">
+<h2>See Also:<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>bias_correction : Remove intensity inhomogeneities before normalization</p></li>
+<li><p>bet : Brain extraction for better percentile estimation</p></li>
+<li><p>coregister : Register normalized images to standard space</p></li>
+</ul>
+</section>
+<section id="id1">
+<h2>Command Line Usage<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>normalize<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="source-code">
+<h2>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h2>
+<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/normalize.py">GitHub Repository</a></p>
+</section>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>This script normalizes MRI intensity values using percentile-based clamping</dt><dd><p>and rescaling to improve consistency across scans and scanners.</p>
+</dd>
+</dl>
+</section>
+<section id="full-help">
+<h2>Full Help<a class="headerlink" href="#full-help" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>╔════════════════════════════════════════════════════════════════╗
+║                  INTENSITY NORMALIZATION                       ║
+╚════════════════════════════════════════════════════════════════╝
+
+This script normalizes MRI intensity values using percentile-based clamping
+and rescaling to improve consistency across scans and scanners.
+
+────────────────────────── USAGE ──────────────────────────
+  micaflow normalize_intensity [options]
+
+─────────────────── REQUIRED ARGUMENTS ───────────────────
+  --input, -i   : Path to the input image file (.nii.gz)
+  --output, -o  : Path for the normalized output image (.nii.gz)
+
+─────────────────── OPTIONAL ARGUMENTS ───────────────────
+  --lower-percentile: Lower percentile for clamping (default: 1.0)
+                     Range: 0-100, must be &lt; upper percentile
+  --upper-percentile: Upper percentile for clamping (default: 99.0)
+                     Range: 0-100, must be &gt; lower percentile
+  --min-value       : Minimum value in output range (default: 0)
+  --max-value       : Maximum value in output range (default: 100)
+
+──────────────────── EXAMPLE USAGE ───────────────────────
+
+# Example 1: Basic normalization (1st-99th percentiles, 0-100)
+micaflow normalize_intensity \
+  --input t1w.nii.gz \
+  --output t1w_normalized.nii.gz
+
+# Example 2: Aggressive outlier removal (2nd-98th percentiles)
+micaflow normalize_intensity \
+  --input t1w.nii.gz \
+  --output t1w_normalized.nii.gz \
+  --lower-percentile 2.0 \
+  --upper-percentile 98.0
+
+# Example 3: Normalize to [0, 1] range (for ML)
+micaflow normalize_intensity \
+  --input t1w.nii.gz \
+  --output t1w_normalized.nii.gz \
+  --min-value 0 \
+  --max-value 1
+
+# Example 4: Conservative normalization (0.5th-99.5th percentiles)
+micaflow normalize_intensity \
+  --input t1w.nii.gz \
+  --output t1w_normalized.nii.gz \
+  --lower-percentile 0.5 \
+  --upper-percentile 99.5
+
+─────────── WHY INTENSITY NORMALIZATION? ────────────────
+
+Problem:
+MRI intensities are arbitrary and vary across:
+• Different scanners and vendors
+• Acquisition protocols and parameters
+• Subjects and scanning sessions
+
+Solution:
+Percentile-based normalization provides:
+• Consistent intensity ranges across scans
+• Robustness to outliers (bright/dark spots)
+
+Method:
+1. Compute percentiles on non-zero voxels only
+2. Clamp intensities at specified percentiles
+3. Rescale to standardized range (e.g., 0-100)
+4. Background (zero) voxels remain unchanged
+
+────────────────────── WHEN TO USE ──────────────────────
+
+Recommended:
+• Before registration across subjects/sessions
+• Before group-level statistical analysis
+• For machine learning applications
+• When combining data from multiple scanners
+• After bias field correction
+• For visualization and QC
+
+Not recommended:
+• Quantitative sequences (T1/T2 mapping, ASL)
+• Before bias field correction
+• When absolute intensities have meaning
+• For sequences with specific intensity scales
+
+────────────────────────── NOTES ─────────────────────────
+• Default: Clamp at 1st and 99th percentiles (clips ~2% of voxels)
+• Default output range: 0-100
+• Percentiles computed on NON-ZERO voxels only
+• Background (zero) voxels remain zero
+• Formula: ((clipped - p_low) / (p_high - p_low)) × (max - min) + min
+• Processing time: &lt; 1 minute for typical 3D volumes
+• Preserves image geometry and header information
+• Works with any MRI contrast (T1w, T2w, FLAIR, etc.)
+• Best applied to brain-extracted images
+
+─────────────── PIPELINE POSITION ───────────────────────
+1. Brain extraction (bet)
+2. Bias field correction (bias_correction)
+3. Intensity normalization (normalize_intensity) ← You are here
+4. Registration (coregister)
+5. Analysis/segmentation
+
+────────────────────── EXIT CODES ───────────────────────
+0 : Success - normalization completed
+1 : Error - invalid inputs, file not found, or processing failure
+
+───────────────── COMMON ISSUES ─────────────────────────
+Issue: Output looks over-bright or over-dark
+Solution: Adjust percentiles (more conservative: 0.5-99.5)
+
+Issue: Important features are clipped
+Solution: Use more conservative percentiles or check for artifacts
+
+Issue: Background not zero after normalization
+Solution: Apply brain extraction first, or check input for NaN values
+
+Issue: All voxels have same intensity after normalization
+Solution: Check input - may have uniform intensity or only zeros
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="texture_generation.html" class="btn btn-neutral float-left" title="Texture Generation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

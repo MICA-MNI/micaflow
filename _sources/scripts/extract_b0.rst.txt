@@ -1,0 +1,318 @@
+Extract B0
+==========
+
+extract_b0 - B0 Volume Extraction and Dataset Splitting Tool
+
+Part of the micaflow processing pipeline for neuroimaging data.
+
+This module extracts b=0 (non-diffusion-weighted) volumes from diffusion-weighted 
+images (DWI) and separates them from the diffusion-weighted volumes. B0 volumes are 
+acquired without diffusion weighting (b-value ≈ 0 s/mm²) and serve as reference images 
+for various DWI processing steps including motion correction, distortion correction, 
+and registration to structural images.
+
+What are B0 Volumes?
+-------------------
+B0 volumes (also called "b=0" or "non-diffusion-weighted") are MRI volumes acquired 
+without any diffusion-weighting gradients applied. They have:
+- B-value = 0 s/mm² (or very close to 0, typically < 50 s/mm²)
+- Higher SNR compared to diffusion-weighted volumes
+- T2-weighted contrast showing anatomy without diffusion information
+- Serve as anatomical reference for DWI processing
+
+Common Use Cases:
+----------------
+1. Separate Processing: Some tools require b0 and DWI volumes to be processed separately
+2. Registration Reference: Use b0 as reference for registering DWI to structural scans
+3. Distortion Correction: b0 volumes are used to estimate and correct distortions
+4. Motion Correction: b0 serves as reference for aligning diffusion volumes
+5. Quality Assessment: b0 provides anatomical reference for checking alignment
+6. Brain Extraction: Create masks from high-SNR b0 volumes
+
+Features:
+--------
+- Automatically identifies b0 volumes based on b-value threshold
+- Extracts b0 volume and saves it separately
+- Optionally saves remaining DWI volumes without b0
+- Updates b-value and b-vector files to match extracted volumes
+- Can save b0-specific gradient files (bval/bvec)
+- Supports manual volume index specification
+- Handles flexible dimension ordering
+- Preserves image geometry and header information
+
+Command-Line Usage:
+------------------
+# Basic extraction (b0 only)
+micaflow extract_b0 \
+    --input <path/to/dwi.nii.gz> \
+    --bvals <path/to/dwi.bval> \
+    --output <path/to/b0.nii.gz>
+
+# Full split (b0 + DWI + updated gradient files)
+micaflow extract_b0 \
+    --input <path/to/dwi.nii.gz> \
+    --bvals <path/to/dwi.bval> \
+    --bvecs <path/to/dwi.bvec> \
+    --output <path/to/b0.nii.gz> \
+    --output-dwi <path/to/dwi_no_b0.nii.gz> \
+    --output-bvals <path/to/dwi_no_b0.bval> \
+    --output-bvecs <path/to/dwi_no_b0.bvec>
+
+# With b0 gradient files
+micaflow extract_b0 \
+    --input <path/to/dwi.nii.gz> \
+    --bvals <path/to/dwi.bval> \
+    --bvecs <path/to/dwi.bvec> \
+    --output <path/to/b0.nii.gz> \
+    --b0-bval <path/to/b0.bval> \
+    --b0-bvec <path/to/b0.bvec>
+
+# Custom threshold
+micaflow extract_b0 \
+    --input <path/to/dwi.nii.gz> \
+    --bvals <path/to/dwi.bval> \
+    --output <path/to/b0.nii.gz> \
+    --threshold 100
+
+# Manual index specification
+micaflow extract_b0 \
+    --input <path/to/dwi.nii.gz> \
+    --output <path/to/specific_volume.nii.gz> \
+    --index 0
+
+Python API Usage:
+----------------
+>>> from micaflow.scripts.extract_b0 import extract_b0
+>>> 
+>>> # Basic extraction
+>>> b0_img = extract_b0(
+...     dwi_path="dwi.nii.gz",
+...     bvals_path="dwi.bval",
+...     output_path="b0.nii.gz"
+... )
+>>> 
+>>> # Full split with gradient updates
+>>> b0_img = extract_b0(
+...     dwi_path="dwi.nii.gz",
+...     bvals_path="dwi.bval",
+...     bvecs_path="dwi.bvec",
+...     output_path="b0.nii.gz",
+...     output_dwi="dwi_no_b0.nii.gz",
+...     output_bvals="dwi_no_b0.bval",
+...     output_bvecs="dwi_no_b0.bvec"
+... )
+>>> 
+>>> # With b0-specific gradient files
+>>> b0_img = extract_b0(
+...     dwi_path="dwi.nii.gz",
+...     bvals_path="dwi.bval",
+...     bvecs_path="dwi.bvec",
+...     output_path="b0.nii.gz",
+...     b0_bval="b0.bval",
+...     b0_bvec="b0.bvec"
+... )
+
+Pipeline Integration:
+--------------------
+B0 extraction is typically performed when:
+1. Tools require separate b0 and DWI processing
+2. Registration to structural images (use b0 as moving image)
+3. Creating brain masks from high-SNR b0
+4. Multi-step registration pipelines (DWI→b0→T1w→MNI)
+5. Quality control and visual inspection
+
+Workflow example:
+1. Extract b0 (extract_b0) 
+2. Register b0 to T1w (coregister)
+3. Apply transform to DWI (apply_warp)
+4. Continue DWI processing...
+
+Exit Codes:
+----------
+0 : Success - b0 extraction completed
+1 : Error - invalid inputs, file not found, or processing failure
+
+Technical Notes:
+---------------
+- Default b0 threshold: 50 s/mm² (volumes with b-value ≤ 50 considered b0)
+- Extracts the FIRST b0 volume found (lowest index)
+- Multiple b0 volumes: only first is extracted (can specify --index for others)
+- Gradient files updated to match extracted volumes
+- B0-specific gradient files contain single value/vector
+- Non-b0 gradient files exclude the extracted b0 entry
+- Shell dimension default is 3 (last dimension, standard 4D format)
+- Manual index specification overrides b-value threshold
+- Negative indices supported (e.g., -1 for last volume)
+- Preserves NIfTI header and spatial information
+
+File Format Notes:
+-----------------
+B-values (.bval):
+  - Space-separated values, one per volume
+  - Units: s/mm²
+  - Example: "0 1000 1000 2000 2000"
+
+B-vectors (.bvec):
+  - 3 rows (x, y, z) × N columns (one per volume)
+  - Normalized direction vectors
+  - Example:
+    0.0 0.707 -0.707 0.577 -0.577
+    0.0 0.707  0.707 0.577 -0.577
+    0.0 0.0    0.0   0.577  0.577
+
+See Also:
+--------
+- coregister : Register b0 to structural images
+- apply_warp : Apply transformations to DWI volumes
+- bet : Extract brain from b0 volumes
+- denoise : Denoise DWI (typically before splitting)
+
+Command Line Usage
+-----------------
+
+.. code-block:: bash
+
+    micaflow extract_b0 [options]
+
+Source Code
+-----------
+
+View the source code: `GitHub Repository <https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/extract_b0.py>`_
+
+Description
+-----------
+
+This script extracts b=0 (non-diffusion-weighted) volumes from a diffusion-
+    weighted image (DWI), saves the remaining DWI volumes separately, and updates 
+    gradient files to match the extracted data.
+
+Full Help
+---------
+
+.. code-block:: text
+
+    
+        ╔════════════════════════════════════════════════════════════════╗
+        ║                       B0 VOLUME EXTRACTION                     ║
+        ╚════════════════════════════════════════════════════════════════╝
+        
+        This script extracts b=0 (non-diffusion-weighted) volumes from a diffusion-
+        weighted image (DWI), saves the remaining DWI volumes separately, and updates 
+        gradient files to match the extracted data.
+        
+        ────────────────────────── USAGE ──────────────────────────
+          micaflow extract_b0 [options]
+        
+        ─────────────────── REQUIRED ARGUMENTS ───────────────────
+          --input       : Path to input DWI image (.nii.gz)
+          --output      : Path for output b0 volume (.nii.gz)
+        
+        ────────────── IDENTIFICATION ARGUMENTS ──────────────────
+        One of these must be provided to identify b0:
+          --bvals       : Path to b-values file (.bval)
+                         Auto-detects b0 using threshold
+          --index       : Directly specify volume index to extract
+                         Overrides bvals-based detection
+        
+        ─────────────────── OPTIONAL ARGUMENTS ───────────────────
+          --bvecs       : Path to input b-vectors file (.bvec)
+          --output-dwi  : Path for output non-b0 volumes (.nii.gz)
+          --output-bvals: Path for output b-values (non-b0 only)
+          --output-bvecs: Path for output b-vectors (non-b0 only)
+          --b0-bval     : Path for b0-only b-value file
+          --b0-bvec     : Path for b0-only b-vector file
+          --threshold   : Max b-value to consider as b0 (default: 50 s/mm²)
+          --shell-dimension: Dimension of volume axis (default: 3)
+        
+        ──────────────────── EXAMPLE USAGE ───────────────────────
+        
+        # Example 1: Basic b0 extraction
+        micaflow extract_b0 \
+          --input dwi.nii.gz \
+          --bvals dwi.bval \
+          --output b0.nii.gz
+        
+        # Example 2: Full dataset split
+        micaflow extract_b0 \
+          --input dwi.nii.gz \
+          --bvals dwi.bval \
+          --bvecs dwi.bvec \
+          --output b0.nii.gz \
+          --output-dwi dwi_no_b0.nii.gz \
+          --output-bvals dwi_no_b0.bval \
+          --output-bvecs dwi_no_b0.bvec
+        
+        # Example 3: With b0 gradient files
+        micaflow extract_b0 \
+          --input dwi.nii.gz \
+          --bvals dwi.bval \
+          --bvecs dwi.bvec \
+          --output b0.nii.gz \
+          --b0-bval b0.bval \
+          --b0-bvec b0.bvec
+        
+        # Example 4: Custom threshold
+        micaflow extract_b0 \
+          --input dwi.nii.gz \
+          --bvals dwi.bval \
+          --output b0.nii.gz \
+          --threshold 100
+        
+        # Example 5: Manual index specification
+        micaflow extract_b0 \
+          --input dwi.nii.gz \
+          --output volume_0.nii.gz \
+          --index 0
+        
+        ──────────────────── WHAT ARE B0 VOLUMES? ────────────────
+        
+        Definition:
+        B0 volumes (b=0) are MRI volumes acquired WITHOUT diffusion weighting.
+        
+        Characteristics:
+        • B-value ≈ 0 s/mm² (no diffusion gradients applied)
+        • Higher SNR than diffusion-weighted volumes
+        • T2-weighted contrast showing anatomy
+        • No directional diffusion information
+        
+        Common Uses:
+        • Reference for motion/distortion correction
+        • Registration to structural images
+        • Brain mask creation (high SNR)
+        • Quality control and visualization
+        • Multi-step registration pipelines
+        
+        ────────────────────────── NOTES ─────────────────────────
+        • Default b0 threshold: 50 s/mm² (volumes with b ≤ 50 are b0)
+        • Extracts the FIRST b0 volume found (lowest index)
+        • Multiple b0s: use --index to extract specific volume
+        • Negative indices supported (e.g., -1 for last volume)
+        • Manual --index overrides automatic b-value detection
+        • Output preserves input image geometry and header
+        • Gradient files (.bval/.bvec) automatically updated
+        • B0 gradient files contain single entry for extracted volume
+        • Non-b0 gradient files exclude the extracted b0 entry
+        
+        ─────────────── OUTPUT FILE DESCRIPTIONS ────────────────
+        --output         : Extracted b0 volume (3D NIfTI)
+        --output-dwi     : Remaining DWI volumes without b0 (4D NIfTI)
+        --output-bvals   : B-values for non-b0 volumes only
+        --output-bvecs   : B-vectors for non-b0 volumes only
+        --b0-bval        : B-value for extracted b0 (single value)
+        --b0-bvec        : B-vector for extracted b0 (3 values)
+        
+        ────────────────────── EXIT CODES ───────────────────────
+        0 : Success - b0 extraction completed
+        1 : Error - invalid inputs, file not found, or processing failure
+        
+        ───────────────── COMMON ISSUES ─────────────────────────
+        Issue: "No b-value below threshold found"
+        Solution: Increase --threshold or use --index to specify manually
+        
+        Issue: "Number of bvals doesn't match volumes"
+        Solution: Check bvals file format or use --index instead
+        
+        Issue: Need to extract a specific b0 (not first one)
+        Solution: Use --index to specify the exact volume index
+        
+    

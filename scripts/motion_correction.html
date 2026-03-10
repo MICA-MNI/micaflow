@@ -1,0 +1,446 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Motion Correction &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Sdc" href="SDC.html" />
+    <link rel="prev" title="Denoise" href="denoise.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#batch-processing-bids">Batch Processing (BIDS)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">MicaFlow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#batch-processing-bids">Batch Processing (BIDS)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../scripts.html">Scripts</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../scripts.html">Scripts</a></li>
+      <li class="breadcrumb-item active">Motion Correction</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/scripts/motion_correction.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="motion-correction">
+<h1>Motion Correction<a class="headerlink" href="#motion-correction" title="Link to this heading"></a></h1>
+<p>motion_correction - Diffusion MRI Motion and Eddy Current Artifact Correction</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module corrects for subject motion and eddy current distortions in diffusion-weighted
+images (DWI) by registering each volume to a reference B0 image. Subject movement during
+acquisition is one of the primary sources of artifacts in diffusion MRI, causing misalignment
+between volumes that can severely impact tractography, metric calculation, and analysis.</p>
+<section id="motion-artifacts-in-diffusion-mri">
+<h2>Motion Artifacts in Diffusion MRI:<a class="headerlink" href="#motion-artifacts-in-diffusion-mri" title="Link to this heading"></a></h2>
+<p>Subject motion during DWI acquisition causes several problems:
+- Volume misalignment: Different diffusion directions acquired at different head positions
+- Signal dropout: Severe motion can cause complete signal loss in some slices
+- Bias in metrics: FA, MD, and other metrics become inaccurate
+- Registration errors: Multi-modal registration becomes unreliable</p>
+</section>
+<section id="eddy-current-distortions">
+<h2>Eddy Current Distortions:<a class="headerlink" href="#eddy-current-distortions" title="Link to this heading"></a></h2>
+<p>Rapidly switching diffusion gradients induce eddy currents that cause:
+- Image stretching/compression
+- Translations and shearing of volumes
+- Different distortions for each gradient direction
+- Systematic bias that varies with b-value and gradient direction</p>
+</section>
+<section id="this-implementation">
+<h2>This Implementation:<a class="headerlink" href="#this-implementation" title="Link to this heading"></a></h2>
+<p>Uses ANTs’ SyN (Symmetric Normalization) algorithm which combines:
+- Rigid transformation (6 DOF: 3 translations + 3 rotations)
+- Affine transformation (12 DOF: adds scaling and shearing)
+- Deformable transformation (captures eddy current distortions)</p>
+</section>
+<section id="features">
+<h2>Features:<a class="headerlink" href="#features" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Volume-by-volume registration to a reference B0 image</p></li>
+<li><p>Option to use an external B0 image or the first volume as reference</p></li>
+<li><p>Combines rigid, affine, and deformable transformations using ANTs SyN</p></li>
+<li><p>Automatic b-vector rotation to account for head motion</p></li>
+<li><p>Preserves original image header information and coordinates</p></li>
+<li><p>Progress visualization with volume-wise completion tracking</p></li>
+<li><p>Compatible with standard diffusion acquisition protocols</p></li>
+<li><p>Handles multi-shell and high b-value acquisitions</p></li>
+</ul>
+</section>
+<section id="why-b-vector-rotation-is-critical">
+<h2>Why B-vector Rotation is Critical:<a class="headerlink" href="#why-b-vector-rotation-is-critical" title="Link to this heading"></a></h2>
+<p>When the head moves, the gradient directions relative to the head coordinate
+system change. If we don’t rotate the b-vectors accordingly:
+- Gradient directions are incorrect relative to brain anatomy
+- Tensor fitting produces incorrect fiber orientations
+- Tractography generates spurious or missing fiber tracts
+- Metrics like FA can be artificially inflated or reduced</p>
+</section>
+<section id="command-line-usage">
+<h2>Command-Line Usage:<a class="headerlink" href="#command-line-usage" title="Link to this heading"></a></h2>
+<p># Using first volume as reference (standard)
+micaflow motion_correction </p>
+<blockquote>
+<div><p>–denoised &lt;path/to/dwi.nii.gz&gt; –input-bvecs &lt;path/to/dwi.bvec&gt; –output-bvecs &lt;path/to/corrected.bvec&gt; –output &lt;path/to/motion_corrected_dwi.nii.gz&gt;</p>
+</div></blockquote>
+<p># Using external B0 as reference (recommended for better alignment)
+micaflow motion_correction </p>
+<blockquote>
+<div><p>–denoised &lt;path/to/dwi.nii.gz&gt; –input-bvecs &lt;path/to/dwi.bvec&gt; –output-bvecs &lt;path/to/corrected.bvec&gt; –output &lt;path/to/motion_corrected_dwi.nii.gz&gt; –b0 &lt;path/to/reference_b0.nii.gz&gt;</p>
+</div></blockquote>
+<p># Custom shell dimension and threading
+micaflow motion_correction </p>
+<blockquote>
+<div><p>–denoised &lt;path/to/dwi.nii.gz&gt; –input-bvecs &lt;path/to/dwi.bvec&gt; –output-bvecs &lt;path/to/corrected.bvec&gt; –output &lt;path/to/motion_corrected_dwi.nii.gz&gt; –shell-dimension 3 –threads 8</p>
+</div></blockquote>
+</section>
+<section id="python-api-usage">
+<h2>Python API Usage:<a class="headerlink" href="#python-api-usage" title="Link to this heading"></a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.motion_correction</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_motion_correction</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Using first volume as reference</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output</span> <span class="o">=</span> <span class="n">run_motion_correction</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">dwi_path</span><span class="o">=</span><span class="s2">&quot;denoised_dwi.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">input_bvec_path</span><span class="o">=</span><span class="s2">&quot;dwi.bvec&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output_bvec_path</span><span class="o">=</span><span class="s2">&quot;corrected.bvec&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output</span><span class="o">=</span><span class="s2">&quot;motion_corrected_dwi.nii.gz&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Using external B0 reference (recommended)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output</span> <span class="o">=</span> <span class="n">run_motion_correction</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">dwi_path</span><span class="o">=</span><span class="s2">&quot;denoised_dwi.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">input_bvec_path</span><span class="o">=</span><span class="s2">&quot;dwi.bvec&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output_bvec_path</span><span class="o">=</span><span class="s2">&quot;corrected.bvec&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output</span><span class="o">=</span><span class="s2">&quot;motion_corrected_dwi.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">b0_path</span><span class="o">=</span><span class="s2">&quot;extracted_b0.nii.gz&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="pipeline-integration">
+<h2>Pipeline Integration:<a class="headerlink" href="#pipeline-integration" title="Link to this heading"></a></h2>
+<p>Motion correction is typically the SECOND step in diffusion preprocessing:
+1. Denoising (denoise)
+2. Motion/eddy correction (motion_correction) ← You are here
+3. Susceptibility distortion correction (apply_SDC)
+4. Bias field correction (bias_correction)
+5. Brain extraction (bet)
+6. DTI metric calculation (compute_fa_md)</p>
+</section>
+<section id="exit-codes">
+<h2>Exit Codes:<a class="headerlink" href="#exit-codes" title="Link to this heading"></a></h2>
+<p>0 : Success - motion correction completed
+1 : Error - invalid inputs, file not found, or processing failure</p>
+</section>
+<section id="technical-notes">
+<h2>Technical Notes:<a class="headerlink" href="#technical-notes" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Registration type: ANTs SyN (Symmetric Normalization)</p></li>
+<li><p>Affine metric: Mattes mutual information</p></li>
+<li><p>Affine sampling: 32 samples with 20% random sampling</p></li>
+<li><p>Affine iterations: 100, 50, 25 (coarse to fine)</p></li>
+<li><p>SyN iterations: 20, 10, 0 (deformable registration)</p></li>
+<li><p>B-vector rotation: Applies inverse of registration rotation matrix</p></li>
+<li><p>Processing time: ~30-90 minutes for typical datasets (varies with # volumes)</p></li>
+<li><p>First volume used as reference if no external B0 provided</p></li>
+<li><p>External B0 recommended for better initial alignment</p></li>
+<li><p>B-vectors automatically normalized after rotation</p></li>
+<li><p>Preserves NIfTI header and spatial information</p></li>
+<li><p>Winsorization applied to reduce outlier effects</p></li>
+</ul>
+</section>
+<section id="registration-parameters">
+<h2>Registration Parameters:<a class="headerlink" href="#registration-parameters" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>grad_step: 0.01 (gradient descent step size)</p></li>
+<li><p>aff_metric: ‘mattes’ (Mattes mutual information)</p></li>
+<li><p>aff_sampling: 32 (number of samples for metric computation)</p></li>
+<li><p>aff_random_sampling_rate: 0.2 (20% random sampling)</p></li>
+<li><p>aff_iterations: (100, 50, 25) (multi-resolution iterations)</p></li>
+<li><p>aff_shrink_factors: (2, 1, 1) (downsampling at each level)</p></li>
+<li><p>aff_smoothing_sigmas: (2.0, 0.0, 0.0) (Gaussian smoothing)</p></li>
+<li><p>reg_iterations: (20, 10, 0) (deformable registration iterations)</p></li>
+<li><p>winsorize_lower_quantile: 0.0001</p></li>
+<li><p>winsorize_upper_quantile: 0.9998</p></li>
+</ul>
+</section>
+<section id="b-vector-rotation-details">
+<h2>B-vector Rotation Details:<a class="headerlink" href="#b-vector-rotation-details" title="Link to this heading"></a></h2>
+<p>For each volume:
+1. Extract affine transformation matrix from ANTs output
+2. Extract 3×3 rotation component from affine matrix
+3. Apply rotation to corresponding b-vector
+4. Normalize rotated b-vector to unit length
+5. Save updated b-vectors to output file</p>
+<p>Why rotation (not inverse)?
+- Registration moves image FROM original TO aligned position
+- B-vectors must follow the same transformation
+- This maintains correct gradient directions relative to anatomy</p>
+</section>
+<section id="see-also">
+<h2>See Also:<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>denoise : Denoise DWI before motion correction</p></li>
+<li><p>extract_b0 : Extract B0 for external reference</p></li>
+<li><p>apply_SDC : Apply susceptibility distortion correction</p></li>
+<li><p>bias_correction : Correct bias fields after motion correction</p></li>
+</ul>
+</section>
+<section id="id1">
+<h2>Command Line Usage<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>motion_correction<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="source-code">
+<h2>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h2>
+<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/motion_correction.py">GitHub Repository</a></p>
+</section>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>This script corrects for subject motion and eddy current distortions in</dt><dd><p>diffusion-weighted images (DWI) by registering each volume to a reference
+B0 image. It uses ANTs SyN registration which combines rigid, affine, and
+deformable transformations, and automatically rotates b-vectors to account
+for head motion.</p>
+</dd>
+</dl>
+</section>
+<section id="full-help">
+<h2>Full Help<a class="headerlink" href="#full-help" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>╔════════════════════════════════════════════════════════════════╗
+║              MOTION &amp; EDDY CURRENT CORRECTION                  ║
+╚════════════════════════════════════════════════════════════════╝
+
+This script corrects for subject motion and eddy current distortions in
+diffusion-weighted images (DWI) by registering each volume to a reference
+B0 image. It uses ANTs SyN registration which combines rigid, affine, and
+deformable transformations, and automatically rotates b-vectors to account
+for head motion.
+
+────────────────────────── USAGE ──────────────────────────
+  micaflow motion_correction [options]
+
+─────────────────── REQUIRED ARGUMENTS ───────────────────
+  --denoised       : Path to the input denoised DWI image (.nii.gz)
+  --input-bvecs    : Path to the input b-vectors file (.bvec)
+  --output-bvecs   : Path for the rotated b-vectors file (.bvec)
+  --output         : Output path for motion-corrected image (.nii.gz)
+
+─────────────────── OPTIONAL ARGUMENTS ───────────────────
+  --b0             : Path to external B0 image as reference
+                     If not provided, first volume is used
+  --shell-dimension: Dimension of volume axis (default: 3)
+  --threads        : Number of threads for ANTs registration (default: 1)
+
+──────────────────── EXAMPLE USAGE ───────────────────────
+
+# Standard: Using first volume as reference
+micaflow motion_correction \
+  --denoised denoised_dwi.nii.gz \
+  --input-bvecs dwi.bvec \
+  --output-bvecs corrected.bvec \
+  --output motion_corrected_dwi.nii.gz
+
+# Recommended: Using external B0 as reference
+micaflow motion_correction \
+  --denoised denoised_dwi.nii.gz \
+  --input-bvecs dwi.bvec \
+  --output-bvecs corrected.bvec \
+  --output motion_corrected_dwi.nii.gz \
+  --b0 extracted_b0.nii.gz
+
+# Custom shell dimension and threading
+micaflow motion_correction \
+  --denoised denoised_dwi.nii.gz \
+  --input-bvecs dwi.bvec \
+  --output-bvecs corrected.bvec \
+  --output motion_corrected_dwi.nii.gz \
+  --shell-dimension 3 \
+  --threads 8
+
+───────────── WHY MOTION CORRECTION? ────────────────────
+
+Motion Artifacts:
+• Volume misalignment from head movement
+• Signal dropout in severe motion
+• Biased diffusion metrics (FA, MD)
+• Failed tractography
+
+Eddy Current Distortions:
+• Image stretching/compression
+• Translations and shearing
+• Different for each gradient direction
+• Systematic bias varying with b-value
+
+Why B-vector Rotation:
+• Head motion changes gradient directions relative to brain
+• Must rotate b-vectors to maintain correct orientations
+• Without rotation: incorrect fiber orientations
+• Critical for accurate tractography and tensor fitting
+
+────────────────── REGISTRATION METHOD ──────────────────
+
+ANTs SyN (Symmetric Normalization):
+1. Rigid registration (6 DOF): translations + rotations
+2. Affine registration (12 DOF): adds scaling + shearing
+3. Deformable registration: captures eddy distortions
+
+Parameters:
+• Metric: Mattes mutual information
+• Multi-resolution: 3 levels (coarse to fine)
+• Affine iterations: 100, 50, 25
+• SyN iterations: 20, 10, 0
+• Sampling: 32 samples, 20% random
+
+────────────────────────── NOTES ─────────────────────────
+• Denoising should be performed BEFORE motion correction
+• If no external B0: first volume used as reference
+• External B0 recommended for better alignment
+• Each volume registered independently to minimize cumulative drift
+• B-vectors automatically rotated based on transformation
+• Rotated b-vectors saved to --output-bvecs
+• Processing time: ~30-90 seconds (depends on # volumes)
+• Progress bar shows volume-by-volume registration
+• Output preserves input image geometry and header
+• Winsorization reduces outlier effects during registration
+
+─────────────── PIPELINE POSITION ───────────────────────
+1. Denoising (denoise)
+2. Motion correction (motion_correction) ← You are here
+3. Distortion correction (apply_SDC)
+4. Bias field correction (bias_correction)
+5. Brain extraction (bet)
+6. DTI metrics (compute_fa_md)
+
+────────────────────── EXIT CODES ───────────────────────
+0 : Success - motion correction completed
+1 : Error - invalid inputs, file not found, or processing failure
+
+───────────────── COMMON ISSUES ─────────────────────────
+Issue: Registration takes very long
+Solution: Normal processing is 30-90 min; reduce volumes if needed
+
+Issue: Poor alignment after correction
+Solution: Use external B0 reference, check for severe motion
+
+Issue: &quot;Out of memory&quot; error
+Solution: Reduce image resolution or process on machine with more RAM
+
+Issue: B-vector dimensions mismatch
+Solution: Ensure bvec file has 3 rows × N volumes format
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="denoise.html" class="btn btn-neutral float-left" title="Denoise" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="SDC.html" class="btn btn-neutral float-right" title="Sdc" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

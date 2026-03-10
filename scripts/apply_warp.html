@@ -1,0 +1,294 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apply Warp &mdash; Micaflow  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/custom.css?v=dff4f964" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Bet" href="bet.html" />
+    <link rel="prev" title="Apply Sdc" href="apply_SDC.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Micaflow
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentation:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#batch-processing-bids">Batch Processing (BIDS)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">MicaFlow Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pipeline.html#quality-control">Quality Control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#example-workflows">Example Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#structural-mri-processing">Structural MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#diffusion-mri-processing">Diffusion MRI Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#batch-processing-bids">Batch Processing (BIDS)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../examples.html#registration-example">Registration Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../scripts.html">Scripts</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../scripts.html#quick-reference">Quick Reference</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Micaflow</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../scripts.html">Scripts</a></li>
+      <li class="breadcrumb-item active">Apply Warp</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/scripts/apply_warp.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="apply-warp">
+<h1>Apply Warp<a class="headerlink" href="#apply-warp" title="Link to this heading"></a></h1>
+<p>apply_warp - Image registration transformation application</p>
+<p>Part of the micaflow processing pipeline for neuroimaging data.</p>
+<p>This module applies spatial transformations to register images from one space to another
+using affine and/or non-linear (warp field) transformations. It’s commonly used to:
+- Transform subject images to a standard space (e.g., MNI152)
+- Apply previously calculated transformations to derived images (e.g., segmentations)
+- Chain multiple transformations together (e.g., subject→intermediate→template space)</p>
+<p>The module leverages ANTsPy to apply the transformations in the correct order, supporting
+both full nonlinear registration (warp + affine) and linear-only registration (affine only).
+Multiple warp fields can be chained using the –secondary-warp option.</p>
+<section id="api-usage">
+<h2>API Usage:<a class="headerlink" href="#api-usage" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>micaflow apply_warp</dt><dd><p>–moving &lt;path/to/source_image.nii.gz&gt;
+–reference &lt;path/to/target_space.nii.gz&gt;
+[–affine &lt;path/to/transform.mat&gt;]
+[–warp &lt;path/to/warpfield.nii.gz&gt;]
+[–secondary-warp &lt;path/to/second_warpfield.nii.gz&gt;]
+[–transforms &lt;path/to/t2&gt; &lt;path/to/t1&gt; …]
+[–output &lt;path/to/registered_image.nii.gz&gt;]
+[–interpolation &lt;method&gt;]</p>
+</dd>
+</dl>
+<p>Note: At least one transform (–affine, –warp, –secondary-warp, or –transforms) must be provided.</p>
+</section>
+<section id="transform-application-order">
+<h2>Transform Application Order:<a class="headerlink" href="#transform-application-order" title="Link to this heading"></a></h2>
+<p>ANTs applies transforms in REVERSE order from the transform list:
+1. Affine (applied first to moving image)
+2. Primary warp field (applied second)
+3. Secondary warp field (applied last, if provided)</p>
+<p>This allows proper composition: subject space → intermediate space → template space</p>
+</section>
+<section id="python-usage">
+<h2>Python Usage:<a class="headerlink" href="#python-usage" title="Link to this heading"></a></h2>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">ants</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">micaflow.scripts.apply_warp</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_warp</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">moving_img</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">image_read</span><span class="p">(</span><span class="s2">&quot;subject_t1w.nii.gz&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reference_img</span> <span class="o">=</span> <span class="n">ants</span><span class="o">.</span><span class="n">image_read</span><span class="p">(</span><span class="s2">&quot;mni152.nii.gz&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># With both affine and warp field (nonlinear)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">transformed</span> <span class="o">=</span> <span class="n">apply_warp</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">moving</span><span class="o">=</span><span class="n">moving_img</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">reference</span><span class="o">=</span><span class="n">reference_img</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">affine</span><span class="o">=</span><span class="s2">&quot;transform.mat&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">warp</span><span class="o">=</span><span class="s2">&quot;warpfield.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output</span><span class="o">=</span><span class="s2">&quot;registered_t1w.nii.gz&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># With affine only (linear)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">transformed</span> <span class="o">=</span> <span class="n">apply_warp</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">moving</span><span class="o">=</span><span class="s2">&quot;subject_t1w.nii.gz&quot;</span><span class="p">,</span>  <span class="c1"># Can also pass file paths</span>
+<span class="gp">... </span>    <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;mni152.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">affine</span><span class="o">=</span><span class="s2">&quot;transform.mat&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output</span><span class="o">=</span><span class="s2">&quot;linear_registered_t1w.nii.gz&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># With chained warp fields</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">transformed</span> <span class="o">=</span> <span class="n">apply_warp</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">moving</span><span class="o">=</span><span class="n">moving_img</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">reference</span><span class="o">=</span><span class="n">reference_img</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">affine</span><span class="o">=</span><span class="s2">&quot;affine_to_intermediate.mat&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">warp</span><span class="o">=</span><span class="s2">&quot;warp_to_intermediate.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">secondary_warp</span><span class="o">=</span><span class="s2">&quot;warp_intermediate_to_template.nii.gz&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output</span><span class="o">=</span><span class="s2">&quot;template_space_t1w.nii.gz&quot;</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="command-line-usage">
+<h2>Command Line Usage<a class="headerlink" href="#command-line-usage" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>micaflow<span class="w"> </span>apply_warp<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="source-code">
+<h2>Source Code<a class="headerlink" href="#source-code" title="Link to this heading"></a></h2>
+<p>View the source code: <a class="reference external" href="https://github.com/MICA-LAB/micaflow/blob/main/micaflow/scripts/apply_warp.py">GitHub Repository</a></p>
+</section>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>This script applies spatial transformations (affine and/or warp field) to</dt><dd><p>register a moving image to a reference space. Multiple transformations can
+be chained together for multi-step registration pipelines.</p>
+</dd>
+</dl>
+</section>
+<section id="full-help">
+<h2>Full Help<a class="headerlink" href="#full-help" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>╔════════════════════════════════════════════════════════════════╗
+║                        APPLY WARP                              ║
+╚════════════════════════════════════════════════════════════════╝
+
+This script applies spatial transformations (affine and/or warp field) to
+register a moving image to a reference space. Multiple transformations can
+be chained together for multi-step registration pipelines.
+
+────────────────────────── REQUIRED ARGUMENTS ──────────────────────────
+  --moving     : Path to the input image to be warped (.nii.gz)
+  --reference  : Path to the target/reference image (.nii.gz)
+
+
+────────────────────────── OPTIONAL ARGUMENTS ──────────────────────────
+  --affine          : Path to the affine transformation file (.mat)
+  --warp            : Path to the primary warp field (.nii.gz)
+  --secondary-warp  : Path to a secondary warp field (.nii.gz)
+                    Used for chaining transformations through intermediate spaces
+                    Note: At least one transform must be provided
+  --transforms      : List of transforms to apply in order (First -&gt; Last)
+                    Can be used instead of named transform arguments.
+  --output          : Output path for the warped image (default: warped_image.nii.gz)
+  --interpolation   : Interpolation method (default: linear)
+                    Options: linear, nearestNeighbor, multiLabel, gaussian,
+                             bSpline, cosineWindowedSinc, welchWindowedSinc,
+                             hammingWindowedSinc, lanczosWindowedSinc, genericLabel
+
+────────────────────────── EXAMPLE USAGE ──────────────────────────
+
+# Apply both affine and warp transformation (nonlinear registration)
+micaflow apply_warp --moving subject_t1w.nii.gz --reference mni152.nii.gz \
+  --affine transform.mat --warp warpfield.nii.gz --output registered_t1w.nii.gz
+
+# Apply only affine transformation (linear registration)
+micaflow apply_warp --moving subject_t1w.nii.gz --reference mni152.nii.gz \
+  --affine transform.mat --output linear_registered_t1w.nii.gz
+
+# Chain multiple transformations (subject → intermediate → template)
+micaflow apply_warp --moving subject_dwi.nii.gz --reference mni152.nii.gz \
+  --affine dwi_to_t1w.mat --warp dwi_to_t1w_warp.nii.gz \
+  --secondary-warp t1w_to_mni_warp.nii.gz --output dwi_in_mni.nii.gz
+
+# Use nearest neighbor interpolation for segmentation masks
+micaflow apply_warp --moving segmentation.nii.gz --reference mni152.nii.gz \
+  --affine transform.mat --warp warp.nii.gz \
+  --interpolation nearestNeighbor --output registered_seg.nii.gz
+
+────────────────────────── TRANSFORM ORDER ──────────────────────────
+ANTs applies transforms in REVERSE order:
+  1. Affine is applied FIRST (linear alignment)
+  2. Primary warp is applied SECOND (nonlinear deformation)
+  3. Secondary warp is applied LAST (additional nonlinear deformation)
+
+This ordering allows proper composition through intermediate spaces:
+  Subject space → [affine] → Intermediate space → [warp] → Template space
+
+────────────────────────── NOTES ──────────────────────────
+• At least one transform (affine, warp, or secondary-warp) must be provided
+• Both moving and reference can be file paths or ANTs image objects in Python API
+• The function returns the transformed ANTs image object
+• Use &#39;genericLabel&#39; interpolation for discrete labels/masks
+• Use &#39;linear&#39; or &#39;bSpline&#39; for continuous intensity images
+• Transform files must be in ANTs format (.mat for affine, .nii.gz for warps)
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="apply_SDC.html" class="btn btn-neutral float-left" title="Apply Sdc" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="bet.html" class="btn btn-neutral float-right" title="Bet" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, MICA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
