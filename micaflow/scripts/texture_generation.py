@@ -138,7 +138,7 @@ BOLD = Style.BRIGHT
 RESET = Style.RESET_ALL
 
 
-def print_help_message():
+def print_extended_help():
     """
     Print comprehensive help message with examples and usage instructions.
     
@@ -156,7 +156,7 @@ def print_help_message():
     Examples
     --------
     >>> # Display help message
-    >>> print_help_message()
+    >>> print_extended_help()
     
     >>> # Help is shown automatically with --help, -h, or no arguments
     >>> # micaflow texture_generation --help
@@ -423,6 +423,9 @@ def run_texture_pipeline(input_path, mask_path, output_prefix):
     print(f"  Saved: {ri_out}")
 
 if __name__ == "__main__":
+    if len(sys.argv) == 1 or "-h" in sys.argv or "--help" in sys.argv:
+        print_extended_help()
+        sys.exit(0)
     parser = argparse.ArgumentParser(description="Simple Texture Feature Extraction")
     parser.add_argument("--input", "-i", required=True, help="Input MRI image")
     parser.add_argument("--mask", "-m", required=True, help="Brain mask")

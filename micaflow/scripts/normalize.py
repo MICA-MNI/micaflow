@@ -174,7 +174,7 @@ BOLD = Style.BRIGHT
 RESET = Style.RESET_ALL
 
 
-def print_help_message():
+def print_extended_help():
     """Print comprehensive help message with examples and technical details."""
     
     help_text = f"""
@@ -498,8 +498,9 @@ def normalize_intensity(input_file, output_file, lower_percentile=1.0, upper_per
 
 if __name__ == "__main__":
     # Check if no arguments were provided or help was requested
+    print(len(sys.argv))
     if len(sys.argv) == 1 or "-h" in sys.argv or "--help" in sys.argv:
-        print_help_message()
+        print_extended_help()
         sys.exit(0)
     
     parser = argparse.ArgumentParser(

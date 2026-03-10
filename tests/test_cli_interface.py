@@ -2,7 +2,7 @@ import os
 import sys
 import pytest
 from unittest.mock import patch, MagicMock
-
+import subprocess
 # Import the CLI main function
 from micaflow.cli import main as cli_main
 
@@ -21,7 +21,7 @@ COMMANDS = [
     "apply_SDC",
     "synthseg",
     "texture_generation",
-    "normalize_intensity" # Fixed command name
+    "normalize" # Fixed command name to match cli.py subparser
 ]
 
 @pytest.mark.parametrize("command", COMMANDS)
@@ -45,19 +45,19 @@ def mock_subprocess_run():
         yield mock_run
 
 @pytest.mark.parametrize("command,required_args", [
-    ("bet", ["--input", "test.nii.gz", "--output", "out.nii.gz", "--input-mask", "mask.nii.gz"]), # Fixed inputs
+    ("bet", ["--input", "test.nii.gz", "--output", "out.nii.gz"]), # Removed optional args
     ("bias_correction", ["--input", "test.nii.gz", "--output", "out.nii.gz"]),
     ("synthseg", ["--i", "test.nii.gz", "--o", "out.nii.gz"]),
-    ("apply_warp", ["--moving", "img.nii.gz", "--reference", "ref.nii.gz", "--output", "out.nii.gz", "--affine", "trans.mat"]),
-    ("coregister", ["--fixed-file", "fixed.nii.gz", "--moving-file", "moving.nii.gz", "--output", "out.nii.gz"]), # Fixed output
-    ("denoise", ["--input", "dwi.nii.gz", "--output", "denoised.nii.gz", "--bval", "d.bval", "--bvec", "d.bvec"]), # Added requirements
-    ("motion_correction", ["--denoised", "dwi.nii.gz", "--input-bvals", "dwi.bval", "--input-bvecs", "dwi.bvec", "--output", "o.nii.gz"]), # Fixed bval/bvec
+    ("apply_warp", ["--moving", "img.nii.gz", "--reference", "ref.nii.gz", "--output", "out.nii.gz"]),
+    ("coregister", ["--fixed-file", "fixed.nii.gz", "--moving-file", "moving.nii.gz", "--output", "out.nii.gz"]),
+    ("denoise", ["--input", "dwi.nii.gz", "--output", "denoised.nii.gz", "--bval", "d.bval", "--bvec", "d.bvec"]),
+    ("motion_correction", ["--denoised", "dwi.nii.gz", "--input-bvals", "dwi.bval", "--input-bvecs", "dwi.bvec", "--output-bvecs", "d.bvec", "--output", "o.nii.gz"]),
     ("SDC", ["--input", "dwi.nii.gz", "--reverse-image", "rev.nii.gz", "--output", "out.nii.gz", "--output-warp", "warp.nii.gz"]),
     ("apply_SDC", ["--input", "dwi.nii.gz", "--warp", "warp.nii.gz", "--output", "out.nii.gz", "--affine", "aff.nii.gz"]),
     ("calculate_dice", ["--input", "seg1.nii.gz", "--reference", "seg2.nii.gz", "--output", "metrics.csv"]),
     ("compute_fa_md", ["--input", "dwi.nii.gz", "--bval", "dwi.bval", "--bvec", "dwi.bvec", "--output-fa", "fa.nii.gz", "--output-md", "md.nii.gz"]),
     ("texture_generation", ["--input", "img.nii.gz", "--mask", "mask.nii.gz", "--output", "textures/"]),
-    ("normalize_intensity", ["--input", "img.nii.gz", "--output", "norm.nii.gz"]),
+    ("normalize", ["--input", "img.nii.gz", "--output", "norm.nii.gz"]), # Changed to normalize
 ])
 def test_command_with_required_args(command, required_args, mock_subprocess_run):
     """Test that commands execute correctly with the required arguments."""
@@ -68,9 +68,9 @@ def test_command_with_required_args(command, required_args, mock_subprocess_run)
     assert mock_subprocess_run.call_count == 1
 
 @pytest.mark.parametrize("command,missing_args,expected_args", [
-    ("bet", ["--input", "test.nii.gz"], ["--output", "--output-mask"]),
+    ("bet", ["--input", "test.nii.gz"], ["--output"]),
     ("synthseg", ["--i", "test.nii.gz"], ["--o"]),
-    ("coregister", ["--fixed-file", "fixed.nii.gz"], ["--moving-file", "--out-file"]),
+    ("coregister", ["--fixed-file", "fixed.nii.gz"], ["--moving-file", "--output"]),
 ])
 def test_command_missing_required_args(command, missing_args, expected_args, mock_subprocess_run):
     """Test that commands properly report missing required arguments."""
@@ -89,7 +89,7 @@ def test_command_missing_required_args(command, missing_args, expected_args, moc
 @pytest.mark.parametrize("command,args,optional_flag", [
     ("synthseg", ["--i", "test.nii.gz", "--o", "out.nii.gz"], "--parc"),
     ("bet", ["--input", "test.nii.gz", "--output", "out.nii.gz", "--output-mask", "mask.nii.gz"], "--cpu"),
-    ("coregister", ["--fixed-file", "fixed.nii.gz", "--moving-file", "moving.nii.gz", "--out-file", "out.nii.gz"], "--rigid"),
+    ("coregister", ["--fixed-file", "fixed.nii.gz", "--moving-file", "moving.nii.gz", "--output", "out.nii.gz"], "--linear-only"),
 ])
 def test_command_with_optional_flags(command, args, optional_flag, mock_subprocess_run):
     """Test that commands accept optional flags."""
@@ -145,7 +145,6 @@ def test_pipeline_with_dwi(mock_subprocess_run):
         "--subject", "sub-01",
         "--output", "/output",
         "--t1w-file", "t1w.nii.gz",
-        "--run-dwi",
         "--dwi-file", "dwi.nii.gz",
         "--bval-file", "dwi.bval",
         "--bvec-file", "dwi.bvec",
@@ -157,7 +156,6 @@ def test_pipeline_with_dwi(mock_subprocess_run):
     
     # Verify the command was executed with DWI arguments
     assert mock_subprocess_run.call_count == 1
-    assert "--run-dwi" in mock_subprocess_run.call_args[0][0]
     assert "--dwi-file" in mock_subprocess_run.call_args[0][0]
     assert "--bval-file" in mock_subprocess_run.call_args[0][0]
     assert "--bvec-file" in mock_subprocess_run.call_args[0][0]

@@ -467,6 +467,7 @@ def main():
             "apply_SDC": "micaflow.scripts.apply_SDC",
             "synthseg": "micaflow.scripts.synthseg",
             "texture_generation": "micaflow.scripts.texture_generation",
+            "normalize": "micaflow.scripts.normalize",
         }
 
         if command in script_map:

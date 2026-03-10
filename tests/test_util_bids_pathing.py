@@ -135,7 +135,7 @@ class TestCheckPaths:
     
     def test_empty_session_warning(self, mock_file_exists, capsys):
         """Test warning is shown when session is empty."""
-        check_paths('', '', 'sub-01', '', '', '', '/dummy/t1w.nii.gz', '', '', '', '', '')
+        check_paths('', '', 'sub-01', '', '', '', '/dummy/t1w.nii.gz', '', '', '', '', '', '', '')
         
         captured = capsys.readouterr()
         assert "Session not provided" in captured.out
@@ -153,8 +153,8 @@ class TestCheckPaths:
         result = check_paths('', '', 'sub-01', '', '', '', '/dummy/t1w.nii.gz', '', '', '', '', '', '', '')
         
         captured = capsys.readouterr()
-        assert "CPU not provided" in captured.out
-        assert result[5] is True  # CPU should be True
+        assert "GPU not provided" in captured.out
+        assert result[5] is False  # GPU should be False
     
     def test_empty_threads_default(self, mock_file_exists, capsys):
         """Test that THREADS defaults to 1 when not provided."""
@@ -162,12 +162,12 @@ class TestCheckPaths:
         
         captured = capsys.readouterr()
         assert "THREADS not provided" in captured.out
-        assert result[12] == 1  # THREADS should be 1
+        assert result[14] == 1  # THREADS should be 1
     
     def test_missing_t1w(self, mock_sys_exit, capsys):
         """Test that an error is raised when T1w is not provided."""
         with pytest.raises(Exception, match="sys.exit called"):
-            check_paths('', '', 'sub-01', '', '', '', '', '', '', '', '', '')
+            check_paths('', '', 'sub-01', '', '', '', '', '', '', '', '', '', '', '')
         
         captured = capsys.readouterr()
         assert "T1w file not provided" in captured.out
@@ -175,7 +175,7 @@ class TestCheckPaths:
     def test_dwi_missing_bval(self, mock_sys_exit, capsys):
         """Test that an error is raised when DWI is provided but BVAL is not."""
         with pytest.raises(Exception, match="sys.exit called"):
-            check_paths('', '', 'sub-01', '', '', '', '/dummy/t1w.nii.gz', '/dummy/dwi.nii.gz', '', '', '', '')
+            check_paths('', '', 'sub-01', '', '', '', '/dummy/t1w.nii.gz', '/dummy/dwi.nii.gz', '', '', '', '', '', '')
         
         captured = capsys.readouterr()
         assert "BVAL file not provided" in captured.out
@@ -183,23 +183,23 @@ class TestCheckPaths:
     def test_dwi_missing_bvec(self, mock_sys_exit, capsys):
         """Test that an error is raised when DWI and BVAL are provided but BVEC is not."""
         with pytest.raises(Exception, match="sys.exit called"):
-            check_paths('', '', 'sub-00', '', '', '', '/dummy/t1w.nii.gz', '/dummy/dwi.nii.gz', '/dummy/dwi.bval', '', '', '')
+            check_paths('', '', 'sub-00', '', '', '', '/dummy/t1w.nii.gz', '/dummy/dwi.nii.gz', '/dummy/dwi.bval', '', '', '', '', '')
         
         captured = capsys.readouterr()
         assert "BVEC file not provided" in captured.out
     
     def test_dwi_missing_inverse(self, mock_sys_exit, capsys):
-        """Test that an error is raised when DWI, BVAL, BVEC are provided but inverse DWI is not."""
+        """Test that an error is raised when DWI, BVAL, BVEC are provided but inverse BVAL is not."""
         with pytest.raises(Exception, match="sys.exit called"):
-            check_paths('', '', 'sub-01', '', '', '', '/dummy/t1w.nii.gz', '/dummy/dwi.nii.gz', '/dummy/dwi.bval', '/dummy/dwi.bvec', '', '')
+            check_paths('', '', 'sub-01', '', '', '', '/dummy/t1w.nii.gz', '/dummy/dwi.nii.gz', '/dummy/dwi.bval', '/dummy/dwi.bvec', '/dummy/dwi_inv.nii.gz', '', '', '')
         
         captured = capsys.readouterr()
-        assert "Inverse DWI file not provided" in captured.out
+        assert "Inverse BVAL file not provided" in captured.out
     
     def test_nonexistent_data_directory(self, mock_sys_exit, capsys):
         """Test that an error is raised when the data directory does not exist."""
         with pytest.raises(Exception, match="sys.exit called"):
-            check_paths('/nonexistent/path', '', 'sub-01', '', '', '', '/dummy/t1w.nii.gz', '', '', '', '', '')
+            check_paths('/nonexistent/path', '', 'sub-01', '', '', '', '/dummy/t1w.nii.gz', '', '', '', '', '', '', '')
         
         captured = capsys.readouterr()
         assert "The data directory does not exist" in captured.out
@@ -207,7 +207,7 @@ class TestCheckPaths:
     def test_data_directory_with_nonexistent_subject(self, temp_dir_structure, mock_sys_exit, capsys):
         """Test that an error is raised when the subject does not exist in the data directory."""
         with pytest.raises(Exception, match="sys.exit called"):
-            check_paths(temp_dir_structure, '', 'nonexistent-subject', '', '', '', 'T1w.nii.gz', '', '', '', '', '')
+            check_paths(temp_dir_structure, '', 'nonexistent-subject', '', '', '', 'T1w.nii.gz', '', '', '', '', '', '', '')
         
         captured = capsys.readouterr()
         assert "Subject nonexistent-subject does not exist" in captured.out
@@ -215,7 +215,7 @@ class TestCheckPaths:
     def test_data_directory_with_nonexistent_session(self, temp_dir_structure, mock_sys_exit, capsys):
         """Test that an error is raised when the session does not exist for the subject."""
         with pytest.raises(Exception, match="sys.exit called"):
-            check_paths(temp_dir_structure, '', 'sub-01', 'nonexistent-session', '', '', 'T1w.nii.gz', '', '', '', '', '')
+            check_paths(temp_dir_structure, '', 'sub-01', 'nonexistent-session', '', '', 'T1w.nii.gz', '', '', '', '', '', '', '')
         
         captured = capsys.readouterr()
         assert "Session nonexistent-session does not exist" in captured.out
@@ -223,7 +223,7 @@ class TestCheckPaths:
     def test_data_directory_with_nonexistent_t1w(self, temp_dir_structure, mock_sys_exit, capsys):
         """Test that an error is raised when the T1w file does not exist in the data directory."""
         with pytest.raises(Exception, match="sys.exit called"):
-            check_paths(temp_dir_structure, '', 'sub-01', 'ses-01', '', '', 'nonexistent-T1w.nii.gz', '', '', '', '', '')
+            check_paths(temp_dir_structure, '', 'sub-01', 'ses-01', '', '', 'nonexistent-T1w.nii.gz', '', '', '', '', '', '', '')
         
         captured = capsys.readouterr()
         assert "T1w file does not exist" in captured.out
@@ -231,14 +231,14 @@ class TestCheckPaths:
     def test_data_directory_with_nonexistent_flair(self, temp_dir_structure, mock_sys_exit, capsys):
         """Test that an error is raised when the FLAIR file does not exist in the data directory."""
         with pytest.raises(Exception, match="sys.exit called"):
-            check_paths(temp_dir_structure, '', 'sub-01', 'ses-01', '', 'nonexistent-FLAIR.nii.gz', 'T1w.nii.gz', '', '', '', '', '')
+            check_paths(temp_dir_structure, '', 'sub-01', 'ses-01', '', 'nonexistent-FLAIR.nii.gz', 'T1w.nii.gz', '', '', '', '', '', '', '')
         
         captured = capsys.readouterr()
         assert "FLAIR file does not exist" in captured.out
     
     def test_data_directory_with_valid_t1w(self, temp_dir_structure, mock_create_dir, capsys):
         """Test that valid T1w path is constructed correctly using data directory."""
-        result = check_paths(temp_dir_structure, '/output', 'sub-01', 'ses-01', '', '', 'T1w.nii.gz', '', '', '', '', '')
+        result = check_paths(temp_dir_structure, '/output', 'sub-01', 'ses-01', '', '', 'T1w.nii.gz', '', '', '', '', '', '', '')
         
         captured = capsys.readouterr()
         assert "T1w file exists" in captured.out
@@ -246,7 +246,7 @@ class TestCheckPaths:
     
     def test_data_directory_with_valid_t1w_no_session(self, temp_dir_structure, mock_create_dir, capsys):
         """Test that valid T1w path is constructed correctly with None session."""
-        result = check_paths(temp_dir_structure, '/output', 'sub-01', 'None', '', '', 'T1w.nii.gz', '', '', '', '', '')
+        result = check_paths(temp_dir_structure, '/output', 'sub-01', 'None', '', '', 'T1w.nii.gz', '', '', '', '', '', '', '')
         
         captured = capsys.readouterr()
         assert "T1w file exists" in captured.out
@@ -255,11 +255,10 @@ class TestCheckPaths:
     
     def test_gpu_check_with_cpu_true(self, mock_torch_cuda, mock_tf_gpu, mock_file_exists, capsys):
         """Test GPU check is skipped when CPU is True."""
-        result = check_paths('', '', 'sub-01', '', '', '', '/dummy/t1w.nii.gz', '', '', '', '', '')
+        result = check_paths('', '', 'sub-01', '', '', '', '/dummy/t1w.nii.gz', '', '', '', '', '', '', '')
         
         captured = capsys.readouterr()
-        assert "CPU computation enabled" in captured.out
-        assert result[5] is True
+        assert result[5] is False
         
         # Ensure the GPU checks weren't called
         assert not mock_torch_cuda.called
@@ -270,40 +269,44 @@ class TestCheckPaths:
         mock_torch_cuda.return_value = True
         mock_tf_gpu.return_value = True
         
-        result = check_paths('', '', 'sub-01', '', 'False', '', '/dummy/t1w.nii.gz', '', '', '', '', '')
+        result = check_paths('', '', 'sub-01', '', 'True', '', '/dummy/t1w.nii.gz', '', '', '', '', '', '', '')
         
         captured = capsys.readouterr()
         assert "GPU computation enabled from PyTorch" in captured.out
         assert "GPU computation enabled from Tensorflow" in captured.out
-        assert result[5] is False  # CPU should still be False
+        assert result[5] is True  # GPU should still be True
     
     def test_gpu_check_with_cpu_false_no_pytorch_gpu(self, mock_torch_cuda, mock_tf_gpu, mock_file_exists, capsys):
         """Test CPU is set to True when PyTorch doesn't detect a GPU."""
         mock_torch_cuda.return_value = False
         mock_tf_gpu.return_value = True
         
-        result = check_paths('', '', 'sub-01', '', 'False', '', '/dummy/t1w.nii.gz', '', '', '', '', '')
+        result = check_paths('', '', 'sub-01', '', 'True', '', '/dummy/t1w.nii.gz', '', '', '', '', '', '', '')
         
         captured = capsys.readouterr()
         assert "GPU computation not enabled on PyTorch" in captured.out
-        assert result[5] is True  # CPU should be set to True
+        assert result[5] is False  # GPU should drop back down to False
     
     def test_gpu_check_with_cpu_false_no_tensorflow_gpu(self, mock_torch_cuda, mock_tf_gpu, mock_file_exists, capsys):
         """Test CPU is set to True when TensorFlow doesn't detect a GPU."""
         mock_torch_cuda.return_value = True
         mock_tf_gpu.return_value = False
         
-        result = check_paths('', '', 'sub-01', '', 'False', '', '/dummy/t1w.nii.gz', '', '', '', '', '')
+        result = check_paths('', '', 'sub-01', '', 'True', '', '/dummy/t1w.nii.gz', '', '', '', '', '', '', '')
         
         captured = capsys.readouterr()
         assert "GPU computation not enabled on Tensorflow" in captured.out
-        assert result[5] is True  # CPU should be set to True
+        assert result[5] is False  # GPU should drop back down to False
     
     def test_complete_diffusion_data_with_session(self, temp_dir_structure, mock_create_dir, capsys):
         """Test fully specified diffusion data with session."""
+        # Create inverse bval and bvec files
+        open(os.path.join(temp_dir_structure, "sub-01", "ses-01", "dwi", "dwi_inv.bval"), 'w').close()
+        open(os.path.join(temp_dir_structure, "sub-01", "ses-01", "dwi", "dwi_inv.bvec"), 'w').close()
+        
         result = check_paths(
             temp_dir_structure, '/output', 'sub-01', 'ses-01', '',
-            '', 'T1w.nii.gz', 'dwi.nii.gz', 'dwi.bval', 'dwi.bvec', 'dwi_inv.nii.gz', '', '', '4'
+            '', 'T1w.nii.gz', 'dwi.nii.gz', 'dwi.bval', 'dwi.bvec', 'dwi_inv.nii.gz', 'dwi_inv.bval', 'dwi_inv.bvec', '4'
         )
         
         captured = capsys.readouterr()
@@ -313,13 +316,17 @@ class TestCheckPaths:
         
         assert result[4] is True  # RUN_DWI should be True
         assert result[8].endswith("dwi.nii.gz")  # DWI_FILE should be updated
-        assert result[12] == 4  # THREADS should be 4
+        assert result[14] == 4  # THREADS should be 4
     
     def test_complete_diffusion_data_without_session(self, temp_dir_structure, mock_create_dir, capsys):
         """Test fully specified diffusion data without session."""
+        # Create inverse bval and bvec files
+        open(os.path.join(temp_dir_structure, "sub-01", "dwi", "dwi_inv.bval"), 'w').close()
+        open(os.path.join(temp_dir_structure, "sub-01", "dwi", "dwi_inv.bvec"), 'w').close()
+
         result = check_paths(
             temp_dir_structure, '/output', 'sub-01', 'None', '',
-            '', 'T1w.nii.gz', 'dwi.nii.gz', 'dwi.bval', 'dwi.bvec', 'dwi_inv.nii.gz', '4'
+            '', 'T1w.nii.gz', 'dwi.nii.gz', 'dwi.bval', 'dwi.bvec', 'dwi_inv.nii.gz', 'dwi_inv.bval', 'dwi_inv.bvec', '4'
         )
         
         captured = capsys.readouterr()
@@ -340,15 +347,17 @@ class TestCheckPaths:
             bval_path = os.path.join(temp_dir, "dwi.bval")
             bvec_path = os.path.join(temp_dir, "dwi.bvec")
             inv_path = os.path.join(temp_dir, "dwi_inv.nii.gz")
+            inv_bval_path = os.path.join(temp_dir, "dwi_inv.bval")
+            inv_bvec_path = os.path.join(temp_dir, "dwi_inv.bvec")
             
             # Create the files
-            for path in [t1w_path, dwi_path, bval_path, bvec_path, inv_path]:
+            for path in [t1w_path, dwi_path, bval_path, bvec_path, inv_path, inv_bval_path, inv_bvec_path]:
                 with open(path, 'w') as f:
                     f.write('')
             
             result = check_paths(
                 '', '/output', 'sub-01', '', '',
-                '', t1w_path, dwi_path, bval_path, bvec_path, inv_path, '4'
+                '', t1w_path, dwi_path, bval_path, bvec_path, inv_path, inv_bval_path, inv_bvec_path, '4'
             )
             
             captured = capsys.readouterr()
