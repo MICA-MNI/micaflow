@@ -3,9 +3,9 @@ requires = ["setuptools>=61,<81", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "micaflow"
-version = "1.0.2"
-description = "MicaFlow MRI processing pipeline"
+name = "MICAFlow"
+version = "1.0.3"
+description = "MICAFlow MRI processing pipeline"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "Ian Goodall-Halliwell", email = "goodallhalliwell@gmail.com" }]
