@@ -1,5 +1,5 @@
-![MicaFlow logo](https://raw.githubusercontent.com/MICA-MNI/micaflow/main/docs/source/_static/images/logo.png)
-# MicaFlow: Accessible, fast, and pythonic MRI processing pipeline
+![MICAFlow logo](https://raw.githubusercontent.com/MICA-MNI/micaflow/main/docs/source/_static/images/logo.png)
+# MICAFlow: Accessible, fast, and pythonic MRI processing pipeline
 
 <div align="left">
 
@@ -11,11 +11,11 @@
 
 </div>
 
-MicaFlow is a comprehensive neuroimaging pipeline designed for processing structural and diffusion MRI data. It offers modular components that can be used as part of a cohesive workflow or as standalone tools.
+MICAFlow is a comprehensive neuroimaging pipeline designed for processing structural and diffusion MRI data. It offers modular components that can be used as part of a cohesive workflow or as standalone tools.
 
 ## Overview
 
-MicaFlow provides a robust and flexible framework for neuroimaging processing. By chaining together deep learning-based segmentation and advanced numerical solutions, it generates precise outputs even for modalities with low signal-to-noise ratio or strong geometric distortions.
+MICAFlow provides a robust and flexible framework for neuroimaging processing. By chaining together deep learning-based segmentation and advanced numerical solutions, it generates precise outputs even for modalities with low signal-to-noise ratio or strong geometric distortions.
 
 ## Features
 
@@ -35,14 +35,14 @@ MicaFlow provides a robust and flexible framework for neuroimaging processing. B
 ## Installation
 
 ```bash
-pip install micaflow
+pip install 
 # Verify installation
 micaflow
 ```
 
 ## Usage
 
-MicaFlow can be used as a complete pipeline or as individual modules:
+MICAFlow can be used as a complete pipeline or as individual modules:
 
 ### Running the Full Pipeline
 
@@ -184,7 +184,7 @@ output/
 
 ## Configuration
 
-MicaFlow can be configured via:
+MICAFlow can be configured via:
 
 1. **Command Line Arguments**: For quick setup and individual module usage
 2. **Configuration File**: YAML file for complex setups (specify with `--config-file`)
@@ -203,5 +203,6 @@ MicaFlow can be configured via:
 - BIDS-compatible directory structures
 
 ## Support and Contact
+
 
 For issues, questions or feature requests, please open an issue on the GitHub repository.
