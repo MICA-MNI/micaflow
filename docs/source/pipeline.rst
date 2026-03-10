@@ -1,12 +1,12 @@
 .. _pipeline:
 
-MICAflow Pipeline
+MicaFlow Pipeline
 ================
 
 Overview
 --------
 
-The MICAflow pipeline provides a comprehensive framework for processing structural and diffusion MRI data through a series of coordinated steps implemented as a Snakemake workflow.
+The MicaFlow pipeline provides a comprehensive framework for processing structural and diffusion MRI data through a series of coordinated steps implemented as a Snakemake workflow.
 
 .. tabs::
 
@@ -15,7 +15,7 @@ The MICAflow pipeline provides a comprehensive framework for processing structur
       The pipeline is organized into several processing stages that are executed in a specific order, with dependencies managed automatically by Snakemake:
 
       1. **Structural Processing:**
-         - Skull stripping of T1w and FLAIR images
+         - SynthSeg-based brain extraction (with optional cerebellum removal)
          - Bias field correction
          - SynthSeg segmentation
 
@@ -29,7 +29,7 @@ The MICAflow pipeline provides a comprehensive framework for processing structur
          - Relative intensity maps
 
       4. **Diffusion Processing (Optional):**
-         - Denoising
+         - Denoising (Patch2Self)
          - Motion correction
          - Susceptibility distortion correction
          - Computation of FA and MD maps
@@ -131,11 +131,23 @@ The MICAflow pipeline provides a comprehensive framework for processing structur
       
    .. tab:: Data Input Methods
 
-      MICAflow supports two approaches for providing input data to the pipeline:
+      MicaFlow supports multiple approaches for providing input data to the pipeline:
 
-      **1. BIDS Directory Approach:**
+      **1. Automated Batch Processing (BIDS):**
 
-      When using a BIDS-compliant dataset, you can specify the root directory and the pipeline will
+      To automatically process an entire BIDS dataset sequentially, use the ``bids`` command. This acts as a wrapper that automatically identifies T1w, FLAIR, and DWI files across all subjects and generates a run summary:
+
+      .. code-block:: bash
+
+         micaflow bids \
+           --bids-dir /path/to/bids/dataset \
+           --output-dir /path/to/output \
+           --participant-label 01 02 \
+           --cores 4
+
+      **2. Single Subject BIDS Directory:**
+
+      When using a BIDS-compliant dataset for a single run, you can specify the root directory and the pipeline will
       automatically locate files based on subject and session IDs:
 
       .. code-block:: bash
@@ -161,7 +173,7 @@ The MICAflow pipeline provides a comprehensive framework for processing structur
                      ├── sub-01_ses-01_dwi.bval
                      └── sub-01_ses-01_dwi.bvec
 
-      **2. Direct File Path Approach:**
+      **3. Direct File Path Approach:**
 
       For datasets that are not BIDS-compliant or when working with specific files,
       you can directly specify the path to each input file:
@@ -178,14 +190,18 @@ The MICAflow pipeline provides a comprehensive framework for processing structur
 
       **Advantages of Each Approach:**
 
-      - **BIDS Directory:** 
-        - Simpler command line with fewer parameters
-        - Automatic file discovery based on BIDS naming conventions
-        - Better for batch processing multiple subjects with consistent naming
+      - **Automated Batch Processing (bids):**
+        - Scans and processes entire datasets sequentially.
+        - Easily filter processing by participant/session labels.
+        - Generates a JSON summary tracking the status of all runs.
+
+      - **Single Subject BIDS (pipeline):** 
+        - Simpler command line with fewer parameters for a single specific run.
+        - Automatic file discovery based on BIDS naming conventions.
         
       - **Direct File Paths:**
-        - Works with any directory structure
-        - Flexible for non-standard file naming
+        - Works with any directory structure.
+        - Flexible for non-standard file naming.
         - Allows processing specific files from different locations
 
       Both approaches can be used in the YAML configuration file as well:
@@ -249,4 +265,4 @@ The pipeline includes quality assessment metrics to evaluate the performance of 
 2. **Transformation Files**: All transformation matrices and warp fields are saved for inspection
 3. **Intermediate Results**: Preprocessed images at each stage for quality checks
 
-For complete implementation details, refer to the `Snakefile <https://github.com/yourusername/micaflow/blob/main/micaflow/resources/Snakefile>`_ in the repository.
+For complete implementation details, refer to the `Snakefile <https://github.com/MICA-MNI/micaflow/blob/main/micaflow/resources/Snakefile>`_ in the repository.

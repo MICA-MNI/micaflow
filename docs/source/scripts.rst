@@ -19,9 +19,11 @@ Quick Reference
    * - :doc:`scripts/apply_warp`
      - Apply transformations to images
    * - :doc:`scripts/bet`
-     - Brain extraction using HD-BET
+     - Brain extraction using SynthSeg
    * - :doc:`scripts/bias_correction`
      - N4 bias field correction
+   * - :doc:`scripts/bids`
+     - Automated BIDS directory scanning and processing
    * - :doc:`scripts/calculate_jaccard`
      - Calculate similarity between segmentations
    * - :doc:`scripts/compute_fa_md`
@@ -49,6 +51,7 @@ Quick Reference
    scripts/apply_warp
    scripts/bet
    scripts/bias_correction
+   scripts/bids
    scripts/calculate_jaccard
    scripts/compute_fa_md
    scripts/coregister
