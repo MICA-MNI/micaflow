@@ -18,7 +18,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Add this step to ensure the image name is lowercase
       - name: Set lower case owner name
@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Add this step to ensure the image name is lowercase here as well
       - name: Set lower case owner name
@@ -80,7 +80,7 @@ jobs:
           apptainer exec micaflow.sif pytest tests/test_cli_interface.py
           
       - name: Upload Singularity Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: micaflow-singularity
           path: micaflow.sif
