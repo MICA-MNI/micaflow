@@ -321,7 +321,7 @@ def print_help_message():
       {YELLOW}--threads{RESET}                  : Number of CPU threads (default: all)
       {YELLOW}--temp-dir{RESET}                 : Directory for temporary files
       {YELLOW}--corrected-b0{RESET}             : Path to save corrected B0 (for QC)
-      {YELLOW}--shell-dimension{RESET}          : Volume dimension in 4D (default: 3)
+      {YELLOW}--direction-dimension{RESET}          : Volume dimension in 4D (default: 3)
       {YELLOW}--b0-to-T1-warp-secondary{RESET}  : Secondary warp field (optional)
     
     {CYAN}{BOLD}──────────────────── EXAMPLE USAGE ───────────────────────{RESET}
@@ -545,7 +545,7 @@ def main():
         --threads : Number of CPU threads
         --temp-dir : Temporary file directory
         --corrected-b0 : Path to save corrected B0
-        --shell-dimension : Volume dimension (default: 3)
+        --direction-dimension : Volume dimension (default: 3)
         --b0-to-T1-warp-secondary : Secondary warp field
     
     Returns
@@ -597,8 +597,8 @@ def main():
     parser.add_argument('--temp-dir', help='Directory for temporary files (default: current directory)')
     parser.add_argument('--corrected-b0', help='Path to save the corrected B0 image (optional)')
     parser.add_argument('--threads', type=int, help='Number of threads for ANTs (default: all)')
-    parser.add_argument('--shell-dimension', type=int, default=3,
-                        help='Shell dimension for DWI, default=3')
+    parser.add_argument('--direction-dimension', type=int, default=3,
+                        help='Direction dimension for DWI, default=3')
     parser.add_argument('--b0-to-T1-affine', required=True, help='Path to the B0 to T1 affine matrix')
     parser.add_argument('--b0-to-T1-warp', required=True, help='Path to the B0 to T1 warp field')
     parser.add_argument('--b0-to-T1-warp-secondary', help='Path to secondary warp field for B0 to T1')
@@ -614,7 +614,7 @@ def main():
             if not os.path.exists(filepath):
                 raise FileNotFoundError(f"{name} file not found: {filepath}")
         
-        shell_dim = args.shell_dimension
+        direction_dim = args.direction_dimension
         
         # Define all file paths
         t1_path = args.t1
@@ -632,7 +632,7 @@ def main():
         dwi_data = dwi_image.numpy()
         print(f"  Shape: {dwi_data.shape}")
         
-        first_vol_idx = tuple(slice(None) if i != shell_dim else 0 for i in range(len(dwi_data.shape)))
+        first_vol_idx = tuple(slice(None) if i != direction_dim else 0 for i in range(len(dwi_data.shape)))
         first_vol_data = dwi_data[first_vol_idx]
         first_dwi_image = ants.from_numpy(
             first_vol_data,
@@ -780,7 +780,7 @@ def main():
         # Apply correction to DWI
         print(f"\n{CYAN}Applying correction to DWI volumes...{RESET}")
         dwi_reference = nib.load(dwi_path)
-        num_volumes = dwi_reference.shape[shell_dim]
+        num_volumes = dwi_reference.shape[direction_dim]
         print(f"  Processing {num_volumes} volumes")
         
         # Create volume processing directory
@@ -794,7 +794,7 @@ def main():
         for vol_idx in range(num_volumes):
             print(f"  Volume {vol_idx+1}/{num_volumes}...", end=' ')
             
-            vol_idx_tuple = tuple(slice(None) if i != shell_dim else vol_idx 
+            vol_idx_tuple = tuple(slice(None) if i != direction_dim else vol_idx 
                                 for i in range(len(dwi_data.shape)))
             vol_data = dwi_data[vol_idx_tuple]
             vol_path = os.path.join(volume_temp_dir, f"vol_{vol_idx}.nii.gz")
@@ -827,7 +827,7 @@ def main():
         
         # Save corrected DWI
         print(f"\n{CYAN}Saving corrected DWI...{RESET}")
-        corrected_4d = np.stack(corrected_volumes, axis=shell_dim)
+        corrected_4d = np.stack(corrected_volumes, axis=direction_dim)
         output_nii = nib.Nifti1Image(corrected_4d, dwi_reference.affine, dwi_reference.header)
         nib.save(output_nii, output)
         print(f"  {GREEN}Saved to: {output}{RESET}")
