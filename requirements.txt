@@ -88,6 +88,7 @@ puremagic
 py-cpuinfo
 pydicom
 pydot
+pytest
 Pygments
 PyHySCO
 pyparsing

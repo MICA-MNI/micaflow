@@ -139,7 +139,7 @@ Technical Notes:
 - Gradient files updated to match extracted volumes
 - B0-specific gradient files contain single value/vector
 - Non-b0 gradient files exclude the extracted b0 entry
-- Shell dimension default is 3 (last dimension, standard 4D format)
+- Direction dimension default is 3 (last dimension, standard 4D format)
 - Manual index specification overrides b-value threshold
 - Negative indices supported (e.g., -1 for last volume)
 - Preserves NIfTI header and spatial information
@@ -224,7 +224,7 @@ def print_help_message():
       {YELLOW}--b0-bval{RESET}     : Path for b0-only b-value file
       {YELLOW}--b0-bvec{RESET}     : Path for b0-only b-vector file
       {YELLOW}--threshold{RESET}   : Max b-value to consider as b0 (default: 50 s/mm²)
-      {YELLOW}--shell-dimension{RESET}: Dimension of volume axis (default: 3)
+      {YELLOW}--direction-dimension{RESET}: Dimension of volume axis (default: 3)
     
     {CYAN}{BOLD}──────────────────── EXAMPLE USAGE ───────────────────────{RESET}
     
@@ -322,7 +322,7 @@ def print_help_message():
 
 def extract_b0(dwi_path, bvals_path=None, bvecs_path=None, output_path=None, 
                output_dwi=None, output_bvals=None, output_bvecs=None, 
-               threshold=50, shell_index=None, shell_dimension=3, b0_bval=None, b0_bvec=None):
+               threshold=50, direction_index=None, direction_dimension=3, b0_bval=None, b0_bvec=None):
     """
     Extract b=0 volume(s) from a DWI image, save non-b0 volumes, and update gradient files.
     
@@ -338,7 +338,7 @@ def extract_b0(dwi_path, bvals_path=None, bvecs_path=None, output_path=None,
         Must be a 4D volume.
     bvals_path : str, optional
         Path to the b-values file (.bval).
-        Required if shell_index is not specified.
+        Required if direction_index is not specified.
     bvecs_path : str, optional
         Path to the b-vectors file (.bvec).
         Required if updating b-vectors.
@@ -357,11 +357,11 @@ def extract_b0(dwi_path, bvals_path=None, bvecs_path=None, output_path=None,
     threshold : int or float, optional
         Maximum b-value to consider as b0. Default: 50 s/mm².
         Volumes with b-value ≤ threshold are considered b0.
-    shell_index : int, optional
+    direction_index : int, optional
         Directly specify the volume index to extract.
         Overrides automatic b-value-based detection.
         Supports negative indexing (e.g., -1 for last volume).
-    shell_dimension : int, optional
+    direction_dimension : int, optional
         Dimension along which volumes are stacked. Default: 3 (last dimension).
         For standard 4D NIfTI (X, Y, Z, volumes), this should be 3.
     b0_bval : str, optional
@@ -385,7 +385,7 @@ def extract_b0(dwi_path, bvals_path=None, bvecs_path=None, output_path=None,
         
     Notes
     -----
-    - Extracts the FIRST b0 volume found (unless shell_index specified)
+    - Extracts the FIRST b0 volume found (unless direction_index specified)
     - B0 threshold default is 50 s/mm² (standard for DWI)
     - Gradient files must have entries matching number of volumes
     - B-vectors file format: 3 rows × N columns
@@ -426,7 +426,7 @@ def extract_b0(dwi_path, bvals_path=None, bvecs_path=None, output_path=None,
     >>> extract_b0(
     ...     dwi_path="dwi.nii.gz",
     ...     output_path="volume_5.nii.gz",
-    ...     shell_index=5
+    ...     direction_index=5
     ... )
     """
     # Load the DWI image
@@ -473,9 +473,9 @@ def extract_b0(dwi_path, bvals_path=None, bvecs_path=None, output_path=None,
                 # In the 'single 3D file' context, we assume the single volume corresponds to the first bval or 'a' bval is risky
                 # without more info, but commonly 3D means "this is the volume".
                 # Let's fallback to checking if the *first* value is b0 if no index.
-                elif shell_index is not None and shell_index < len(vals):
-                     if vals[shell_index] > threshold:
-                        print(f"{RED}Error: Selected index {shell_index} has b-value {vals[shell_index]} > threshold {threshold}.{RESET}")
+                elif direction_index is not None and direction_index < len(vals):
+                     if vals[direction_index] > threshold:
+                        print(f"{RED}Error: Selected index {direction_index} has b-value {vals[direction_index]} > threshold {threshold}.{RESET}")
                         return None
                 else:
                     # Ambiguous case: 3D image but multiple bvals and no index. 
@@ -500,7 +500,7 @@ def extract_b0(dwi_path, bvals_path=None, bvecs_path=None, output_path=None,
         if bvals and b0_bval:
              with open(b0_bval, 'w') as f:
                  # Use the detected b-value or 0 if unknown
-                 val = bvals[shell_index if shell_index is not None else 0] if bvals else 0
+                 val = bvals[direction_index if direction_index is not None else 0] if bvals else 0
                  f.write(str(int(val)))
         
         # Handle bvecs
@@ -515,7 +515,7 @@ def extract_b0(dwi_path, bvals_path=None, bvecs_path=None, output_path=None,
                 if len(lines) == 3:
                      # Parse bvecs (3 rows)
                      vecs = [[float(v) for v in l.strip().split()] for l in lines]
-                     idx = shell_index if shell_index is not None else 0
+                     idx = direction_index if direction_index is not None else 0
                      
                      # Extract vector at index
                      current_vec = []
@@ -558,7 +558,7 @@ def extract_b0(dwi_path, bvals_path=None, bvecs_path=None, output_path=None,
         print(f"{RED}Input image dimensions {img_shape} are invalid.{RESET}")
         return None
         
-    num_volumes = img_shape[shell_dimension]
+    num_volumes = img_shape[direction_dimension]
     print(f"  Number of volumes: {num_volumes}")
     bvals = None
     bvecs = None
@@ -576,13 +576,13 @@ def extract_b0(dwi_path, bvals_path=None, bvecs_path=None, output_path=None,
             if len(bvals) != num_volumes:
                 print(f"{YELLOW}Warning: Number of bvals ({len(bvals)}) doesn't match "
                       f"the number of volumes ({num_volumes}).{RESET}")
-                if shell_index is None:
+                if direction_index is None:
                     print(f"{RED}Cannot determine b0 index without consistent bvals. "
                           f"Please specify --index.{RESET}")
                     return None
         except Exception as e:
             print(f"{RED}Error loading bvals file: {e}{RESET}")
-            if shell_index is None:
+            if direction_index is None:
                 print(f"{RED}Cannot determine b0 index without bvals. Please specify --index.{RESET}")
                 return None
     
@@ -614,20 +614,20 @@ def extract_b0(dwi_path, bvals_path=None, bvecs_path=None, output_path=None,
     
     # Determine b0 index
     print(f"\n{CYAN}Determining b0 volume index...{RESET}")
-    if shell_index is not None:
-        # Validate shell_index
-        if shell_index < 0:
+    if direction_index is not None:
+        # Validate direction_index
+        if direction_index < 0:
             # Handle negative indexing
-            shell_index = num_volumes + shell_index
+            direction_index = num_volumes + direction_index
         
-        if shell_index < 0 or shell_index >= num_volumes:
-            print(f"{YELLOW}Warning: Index {shell_index} out of range (0-{num_volumes-1}). "
+        if direction_index < 0 or direction_index >= num_volumes:
+            print(f"{YELLOW}Warning: Index {direction_index} out of range (0-{num_volumes-1}). "
                   f"Using volume 0.{RESET}")
-            shell_index = 0
+            direction_index = 0
             
-        print(f"  Using specified index: {shell_index}")
+        print(f"  Using specified index: {direction_index}")
         if bvals:
-            print(f"  B-value at index {shell_index}: {bvals[shell_index]:.1f} s/mm²")
+            print(f"  B-value at index {direction_index}: {bvals[direction_index]:.1f} s/mm²")
     elif bvals:
         # Find the first b0 volume based on threshold
         b0_indices = [i for i, val in enumerate(bvals) if val <= threshold]
@@ -637,21 +637,21 @@ def extract_b0(dwi_path, bvals_path=None, bvecs_path=None, output_path=None,
             print(f"{YELLOW}Try increasing --threshold or use --index to specify manually.{RESET}")
             return None
         
-        shell_index = b0_indices[0]
-        print(f"  Found first b0 volume (b={bvals[shell_index]:.1f} s/mm²) at index {shell_index}")
+        direction_index = b0_indices[0]
+        print(f"  Found first b0 volume (b={bvals[direction_index]:.1f} s/mm²) at index {direction_index}")
         if len(b0_indices) > 1:
             print(f"  {MAGENTA}Note: {len(b0_indices)} b0 volumes found. "
-                  f"Extracting first one (index {shell_index}).{RESET}")
+                  f"Extracting first one (index {direction_index}).{RESET}")
             print(f"  {MAGENTA}Use --index to extract a different b0 volume.{RESET}")
     else:
         print(f"{RED}No index or bvals provided. Cannot determine which volume is b0.{RESET}")
         return None
     
     # Extract the b0 volume
-    print(f"\n{CYAN}Extracting b0 volume at index {shell_index}...{RESET}")
+    print(f"\n{CYAN}Extracting b0 volume at index {direction_index}...{RESET}")
     
     # Create a dynamic indexing tuple to select along the specified dimension
-    idx = tuple(slice(None) if i != shell_dimension else shell_index 
+    idx = tuple(slice(None) if i != direction_dimension else direction_index 
                for i in range(len(img_data.shape)))
     
     # Extract the b0 volume along the specified dimension
@@ -669,7 +669,7 @@ def extract_b0(dwi_path, bvals_path=None, bvecs_path=None, output_path=None,
         print(f"\n{CYAN}Extracting non-b0 volumes...{RESET}")
         # Create list of indices without the b0 volume
         non_b0_indices = list(range(num_volumes))
-        non_b0_indices.pop(shell_index)
+        non_b0_indices.pop(direction_index)
         
         if not non_b0_indices:
             print(f"{YELLOW}Warning: No non-b0 volumes to extract (single volume input?){RESET}")
@@ -687,7 +687,7 @@ def extract_b0(dwi_path, bvals_path=None, bvecs_path=None, output_path=None,
     if bvals and b0_bval:
         print(f"\n{CYAN}Saving b0-only b-value file...{RESET}")
         # Extract only the b0 bval
-        b0_bval_value = bvals[shell_index]
+        b0_bval_value = bvals[direction_index]
         
         # Write b0-only bval to file
         with open(b0_bval, 'w') as f:
@@ -700,7 +700,7 @@ def extract_b0(dwi_path, bvals_path=None, bvecs_path=None, output_path=None,
     if bvecs and b0_bvec:
         print(f"\n{CYAN}Saving b0-only b-vector file...{RESET}")
         # Extract only the b0 bvec (one column from each of the 3 rows)
-        b0_bvec_values = [direction[shell_index] for direction in bvecs]
+        b0_bvec_values = [direction[direction_index] for direction in bvecs]
 
         # Write b0-only bvec to file (3 rows, 1 column)
         with open(b0_bvec, 'w') as f:
@@ -714,7 +714,7 @@ def extract_b0(dwi_path, bvals_path=None, bvecs_path=None, output_path=None,
     if bvals and output_bvals:
         print(f"\n{CYAN}Saving updated b-values file (non-b0 only)...{RESET}")
         # Remove b0 entry
-        updated_bvals = [val for i, val in enumerate(bvals) if i != shell_index]
+        updated_bvals = [val for i, val in enumerate(bvals) if i != direction_index]
         
         # Write updated bvals to file
         with open(output_bvals, 'w') as f:
@@ -729,7 +729,7 @@ def extract_b0(dwi_path, bvals_path=None, bvecs_path=None, output_path=None,
         # Remove b0 entry from each direction
         updated_bvecs = []
         for direction in bvecs:
-            updated_bvecs.append([val for i, val in enumerate(direction) if i != shell_index])
+            updated_bvecs.append([val for i, val in enumerate(direction) if i != direction_index])
         
         # Write updated bvecs to file
         with open(output_bvecs, 'w') as f:
@@ -763,7 +763,7 @@ if __name__ == "__main__":
                         help="Maximum b-value to consider as b0 (default: 50 s/mm²)")
     parser.add_argument("--index", type=int, 
                         help="Directly specify volume index to extract (overrides bvals)")
-    parser.add_argument("--shell-dimension", type=int, default=3, 
+    parser.add_argument("--direction-dimension", type=int, default=3, 
                         help="Dimension of volume axis (default: 3, last dimension)")
     parser.add_argument("--b0-bval", help="Path for b0-only bval file")
     parser.add_argument("--b0-bvec", help="Path for b0-only bvec file")
@@ -807,7 +807,7 @@ if __name__ == "__main__":
             args.output_bvecs,
             args.threshold,
             args.index,
-            args.shell_dimension,
+            args.direction_dimension,
             args.b0_bval,
             args.b0_bvec
         )

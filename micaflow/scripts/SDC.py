@@ -497,7 +497,7 @@ def apply_warpfield(image, warpfield, pe_dim=1):
     return warped_image
 
 
-def run(data_image, reverse_image, output_name, output_warp, phase_encoding='ap', shell_channel=0):
+def run(data_image, reverse_image, output_name, output_warp, phase_encoding='ap', direction_channel=0):
     """
     Perform EPI distortion correction using phase-encoding reversed images.
     
@@ -527,7 +527,7 @@ def run(data_image, reverse_image, output_name, output_warp, phase_encoding='ap'
         - 'ap' or 'pa': Anterior-Posterior (y-axis) [default]
         - 'lr' or 'rl': Left-Right (x-axis)
         - 'si' or 'is': Superior-Inferior (z-axis)
-    shell_channel : int, optional
+    direction_channel : int, optional
         For 4D data, index of volume to use for field estimation.
         Default: 0 (first volume, typically b=0 for DWI).
         
@@ -588,7 +588,7 @@ def run(data_image, reverse_image, output_name, output_warp, phase_encoding='ap'
     ...     reverse_image="b0_pa.nii.gz",
     ...     output_name="dwi_corrected.nii.gz",
     ...     output_warp="fieldmap.nii.gz",
-    ...     shell_channel=0
+    ...     direction_channel=0
     ... )
     """
 
@@ -740,7 +740,7 @@ def run(data_image, reverse_image, output_name, output_warp, phase_encoding='ap'
             
             corrected_volumes = []
             for vol_idx in range(num_volumes):
-                if vol_idx == shell_channel:
+                if vol_idx == direction_channel:
                     # Use the already corrected volume
                     corrected_volumes.append(warped_im)
                 else:

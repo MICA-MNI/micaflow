@@ -106,6 +106,7 @@ dependencies = [
     "pyparsing",
     "python-gdcm",
     "pytz",
+    "pytest",
     "PyYAML",
     "rdflib",
     "referencing",

@@ -20,7 +20,7 @@ Features:
 - Automatic segmentation generation using SynthSeg when not provided
 - Combined rigid, affine, and SyN nonlinear registration in one step
 - Linear-only registration option (rigid + affine) for faster processing
-- DWI processing support with shell/volume extraction capabilities
+- DWI processing support with direction/volume extraction capabilities
 - Bidirectional transformation capability (forward and inverse)
 - Option to save all transformation components for later application
 - Modality-agnostic approach for consistent registration across different contrasts

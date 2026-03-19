@@ -68,13 +68,13 @@ micaflow motion_correction \\
     --output <path/to/motion_corrected_dwi.nii.gz> \\
     --b0 <path/to/reference_b0.nii.gz>
 
-# Custom shell dimension and threading
+# Custom direction dimension and threading
 micaflow motion_correction \\
     --denoised <path/to/dwi.nii.gz> \\
     --input-bvecs <path/to/dwi.bvec> \\
     --output-bvecs <path/to/corrected.bvec> \\
     --output <path/to/motion_corrected_dwi.nii.gz> \\
-    --shell-dimension 3 \\
+    --direction-dimension 3 \\
     --threads 8
 
 Python API Usage:
@@ -230,7 +230,7 @@ def print_help_message():
     {CYAN}{BOLD}─────────────────── OPTIONAL ARGUMENTS ───────────────────{RESET}
       {YELLOW}--b0{RESET}             : Path to external B0 image as reference
                          {MAGENTA}If not provided, first volume is used{RESET}
-      {YELLOW}--shell-dimension{RESET}: Dimension of volume axis (default: 3)
+      {YELLOW}--direction-dimension{RESET}: Dimension of volume axis (default: 3)
       {YELLOW}--threads{RESET}        : Number of threads for ANTs registration (default: 1)
     
     {CYAN}{BOLD}──────────────────── EXAMPLE USAGE ───────────────────────{RESET}
@@ -250,13 +250,13 @@ def print_help_message():
       {YELLOW}--output{RESET} motion_corrected_dwi.nii.gz \\
       {YELLOW}--b0{RESET} extracted_b0.nii.gz
     
-    {BLUE}# Custom shell dimension and threading{RESET}
+    {BLUE}# Custom direction dimension and threading{RESET}
     micaflow motion_correction \\
       {YELLOW}--denoised{RESET} denoised_dwi.nii.gz \\
       {YELLOW}--input-bvecs{RESET} dwi.bvec \\
       {YELLOW}--output-bvecs{RESET} corrected.bvec \\
       {YELLOW}--output{RESET} motion_corrected_dwi.nii.gz \\
-      {YELLOW}--shell-dimension{RESET} 3 \\
+      {YELLOW}--direction-dimension{RESET} 3 \\
       {YELLOW}--threads{RESET} 8
     
     {CYAN}{BOLD}───────────── WHY MOTION CORRECTION? ────────────────────{RESET}
@@ -334,7 +334,7 @@ def print_help_message():
 
 
 def run_motion_correction(dwi_path, input_bval_path, input_bvec_path, output_bvec_path, output, 
-                          b0_path=None, shell_dimension=3, threads=1, tmp_dir='tmp'):
+                          b0_path=None, direction_dimension=3, threads=1, tmp_dir='tmp'):
     """
     Perform motion and eddy current correction on diffusion-weighted images (DWI).
     
@@ -359,7 +359,7 @@ def run_motion_correction(dwi_path, input_bval_path, input_bvec_path, output_bve
         Path to an external B0 image to use as registration reference.
         If not provided, the first volume of the DWI is used as reference.
         External B0 recommended for better initial alignment.
-    shell_dimension : int, optional
+    direction_dimension : int, optional
         Dimension along which diffusion volumes are organized. Default: 3.
         For standard 4D NIfTI (X, Y, Z, volumes), this should be 3.
     threads : int, optional
@@ -440,7 +440,7 @@ def run_motion_correction(dwi_path, input_bval_path, input_bvec_path, output_bve
     if bvecs.shape[0] != 3:
         raise ValueError(f"B-vectors must have 3 rows (x, y, z), got {bvecs.shape[0]}")
     
-    num_volumes = dwi_data.shape[shell_dimension]
+    num_volumes = dwi_data.shape[direction_dimension]
     if bvecs.shape[1] != num_volumes:
         raise ValueError(f"Number of b-vectors ({bvecs.shape[1]}) doesn't match "
                         f"number of volumes ({num_volumes})")
@@ -456,7 +456,7 @@ def run_motion_correction(dwi_path, input_bval_path, input_bvec_path, output_bve
     else:
         print(f"  Using first volume as reference (internal B0)")
         # Extract the first volume as reference if no external B0 provided
-        vol_idx = tuple(slice(None) if i != shell_dimension else 0 
+        vol_idx = tuple(slice(None) if i != direction_dimension else 0 
                         for i in range(len(dwi_data.shape)))
         first_vol_data = dwi_data[vol_idx]
         b0_ants = ants.from_numpy(
@@ -501,7 +501,7 @@ def run_motion_correction(dwi_path, input_bval_path, input_bvec_path, output_bve
     
     # If using the first volume as reference, copy it directly
     if not b0_path:
-        vol_idx = tuple(slice(None) if i != shell_dimension else 0 
+        vol_idx = tuple(slice(None) if i != direction_dimension else 0 
                         for i in range(len(dwi_data.shape)))
         registered_data[vol_idx] = dwi_data[vol_idx]  # Copy first volume unchanged
         print(f"  First volume copied unchanged (used as reference)")
@@ -881,7 +881,7 @@ if __name__ == "__main__":
         help="Path to an external B0 image to use as reference. If not provided, the first volume is used.",
     )
     parser.add_argument(
-        "--shell-dimension",
+        "--direction-dimension",
         type=int,
         default=3,
         help="Dimension along which diffusion volumes are organized (default: 3).",
@@ -914,7 +914,7 @@ if __name__ == "__main__":
             args.output_bvecs, 
             args.output, 
             args.b0, 
-            args.shell_dimension,
+            args.direction_dimension,
             args.threads,
             tmp_dir=args.temp_dir
         )

@@ -61,7 +61,7 @@ The CLI transforms Python-style argument names (with underscores) to
 command-line style (with hyphens) automatically:
 
   Python:     output_mask -> CLI: --output-mask
-  Python:     shell_dimension -> CLI: --shell-dimension
+  Python:     direction_dimension -> CLI: --direction-dimension
 
 This ensures consistency between the CLI parser and individual scripts.
 
@@ -281,7 +281,7 @@ def print_extended_help():
       {YELLOW}--keep-temp{RESET}                    Keep temporary processing files (useful for debugging)
       {YELLOW}--rm-cerebellum{RESET}                Remove cerebellum from brain extraction outputs
       {YELLOW}--PED{RESET}                          Phase encoding direction of DWI, options are: 'ap', 'pa', 'lr', 'rl', 'si', 'is' (default: 'pa')
-      {YELLOW}--shell-dimension{RESET}              Dimension of the DWI image referring to shells (default: 3)
+      {YELLOW}--direction-dimension{RESET}          Dimension of the DWI image referring to directions (default: 3)
       {YELLOW}--linear{RESET}                       Use linear-only registration to MNI space (if specified alone)
       {YELLOW}--nonlinear{RESET}                    Use nonlinear registration to MNI space (default if neither specified)
 
@@ -400,7 +400,7 @@ def main():
     -----------------------
     For module commands, arguments are transformed:
     - Python: output_mask -> CLI: --output-mask
-    - Python: shell_dimension -> CLI: --shell-dimension
+    - Python: direction_dimension -> CLI: --direction-dimension
     - Boolean flags: Included only if True
     - Lists: Expanded into multiple values
     
@@ -554,7 +554,7 @@ def main():
         "--PED", default="pa", help="Phase encoding direction of DWI, options are: 'ap', 'pa', 'lr', 'rl', 'si', 'is'"
     )
     pipeline_parser.add_argument(
-        "--shell-dimension", type=int, default=3, help="Dimension of the DWI image referring to shells"
+        "--direction-dimension", type=int, default=3, help="Dimension of the DWI image referring to directions"
     )
     pipeline_parser.add_argument(
         "--linear", action="store_true", help="Use linear-only registration to MNI space (if specified alone)"
@@ -572,6 +572,9 @@ def main():
     bids_parser.add_argument("--participant-label", nargs="+", help="Specific list of subjects to process (without 'sub-' prefix)")
     bids_parser.add_argument("--session-label", nargs="+", help="Specific list of sessions to process (without 'ses-' prefix)")
     
+    # ADD THIS LINE:
+    bids_parser.add_argument("--analysis-level", choices=["participant", "group"], default="participant", help="Processing level (participant or group)")
+    
     # Suffix configuration
     bids_parser.add_argument("--t1w-suffix", default="T1w.nii.gz", help="Suffix for T1w images (default: T1w.nii.gz)")
     bids_parser.add_argument("--flair-suffix", help="Suffix for FLAIR images (e.g. FLAIR.nii.gz). If not provided, FLAIR is skipped.")
@@ -588,7 +591,7 @@ def main():
     bids_parser.add_argument("--linear", action="store_true", help="Use linear-only registration")
     bids_parser.add_argument("--nonlinear", action="store_true", help="Use nonlinear registration")
     bids_parser.add_argument("--PED", default="pa", help="Phase encoding direction (default: pa)")
-    bids_parser.add_argument("--shell-dimension", type=int, default=3, help="Shell dimension")
+    bids_parser.add_argument("--direction-dimension", type=int, default=3, help="Direction dimension")
     bids_parser.add_argument("--config-file", help="YAML config file")
 
     # SynthSeg command
@@ -768,10 +771,10 @@ def main():
         "--b0-output", help="Path for the output corrected b0 image (only for 4D DWI)."
     )
     bias_corr_parser.add_argument(
-        "--shell-dimension",
+        "--direction-dimension",
         type=int,
         default=3,
-        help="Dimension of the DWI image referring to shells (default: 3)",
+        help="Dimension of the DWI image referring to directions (default: 3)",
     )
     bias_corr_parser.add_argument(
         "--threads",
@@ -948,10 +951,10 @@ def main():
         help="Path to an external B0 image to use as reference. If not provided, the first volume is used.",
     )
     motion_corr_parser.add_argument(
-        "--shell-dimension",
+        "--direction-dimension",
         type=int,
         default=3,
-        help="Dimension of the DWI image referring to shells (default: 3)",
+        help="Dimension of the DWI image referring to directions (default: 3)",
     )
     motion_corr_parser.add_argument(
         "--threads",
@@ -1062,7 +1065,7 @@ def main():
     synth_b0_parser.add_argument(
         '--dwi', help='Path to the full DWI image')
     synth_b0_parser.add_argument(
-        '--shell-dimension', type=int, default=3, help='Dimension of the DWI image referring to shells (default: 3)')
+        '--direction-dimension', type=int, default=3, help='Dimension of the DWI image referring to directions (default: 3)')
     synth_b0_parser.add_argument(
         '--threads', type=int, help='Number of threads to use (default: all)')
     synth_b0_parser.add_argument(
@@ -1097,7 +1100,7 @@ def main():
     extract_b0_parser.add_argument(
         "--index", type=int, help="Directly specify volume index to extract")
     extract_b0_parser.add_argument(
-        "--shell-dimension", type=int, default=3, help="Dimension of the DWI image referring to shells (default: 3)")
+        "--direction-dimension", type=int, default=3, help="Dimension of the DWI image referring to directions (default: 3)")
     extract_b0_parser.add_argument("--b0-bval", help="Path for b0-only bval file")
     extract_b0_parser.add_argument("--b0-bvec", help="Path for b0-only bvec file")
     args, unknown = parser.parse_known_args()
@@ -1106,7 +1109,38 @@ def main():
     if not args.command:
         args.command = "pipeline"
 
+    # ---> ADD THIS FUNCTION <---
+    def create_bids_dataset_description(out_dir):
+        """Creates a BIDS dataset_description.json in the derivative root directory."""
+        if not out_dir:
+            return
+        os.makedirs(out_dir, exist_ok=True)
+        desc_path = os.path.join(out_dir, "dataset_description.json")
+        if not os.path.exists(desc_path):
+            desc_data = {
+                "Name": "MICAFlow Derivatives",
+                "BIDSVersion": "1.8.0",
+                "DatasetType": "derivative",
+                "PipelineDescription": {
+                    "Name": "MICAFlow"
+                }
+            }
+            try:
+                import json
+                with open(desc_path, "w") as f:
+                    json.dump(desc_data, f, indent=4)
+            except Exception as e:
+                print(f"Warning: Could not create dataset_description.json: {e}")
+
     if args.command == "bids":
+        # ADD THESE LINES TO HANDLE ANALYSIS LEVEL
+        if args.analysis_level == "group":
+            print("No group level analyses")
+            sys.exit(0)
+
+        # ---> ADD THIS CALL <---
+        create_bids_dataset_description(args.output_dir)
+
         # 1. Identify Subjects
         if args.participant_label:
             subjects = [f"sub-{label}" if not label.startswith("sub-") else label for label in args.participant_label]
@@ -1276,7 +1310,7 @@ def main():
                 
                 cmd.extend(["--cores", str(args.cores)])
                 cmd.extend(["--PED", args.PED])
-                cmd.extend(["--shell-dimension", str(args.shell_dimension)])
+                cmd.extend(["--direction-dimension", str(args.direction_dimension)])
 
                 # FIX: Pass unknown arguments (like --unlock, --rerun-incomplete) to the pipeline
                 if unknown:
@@ -1330,7 +1364,7 @@ def main():
                                 "linear": args.linear,
                                 "nonlinear": args.nonlinear,
                                 "ped": args.PED,
-                                "shell_dimension": args.shell_dimension,
+                                "direction_dimension": args.direction_dimension,
                                 "extract_brain": args.extract_brain,
                                 "rm_cerebellum": args.rm_cerebellum,
                                 "gpu": args.gpu
@@ -1368,6 +1402,9 @@ def main():
                         print(f"{Fore.RED}Error saving run metadata: {e}{Style.RESET_ALL}")
 
     elif args.command == "pipeline":
+        # ---> ADD THIS CALL <---
+        create_bids_dataset_description(args.output)
+        
         # Get the path to the Snakefile
         snakefile = get_snakefile_path()
 
@@ -1394,7 +1431,7 @@ def main():
             "gpu",
             "keep_temp",
             "extract_brain",
-            "shell_dimension",
+            "direction_dimension",
             "PED",
             "linear",
             "nonlinear"

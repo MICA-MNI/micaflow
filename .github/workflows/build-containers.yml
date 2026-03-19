@@ -1,0 +1,75 @@
+name: Build Docker and Singularity Images
+
+on:
+  push:
+    branches: [ "main" ]
+  release:
+    types: [published]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          
+      - name: Test Docker Image
+        run: |
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main pytest tests/test_cli_interface.py
+
+  build-singularity:
+    needs: build-docker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Setup Apptainer/Singularity
+        uses: eWaterCycle/setup-apptainer@v2
+        with:
+          apptainer-version: 1.2.2
+
+      - name: Build Singularity Image
+        # Note: We pull the exact tag generated in the Docker build step
+        run: |
+          IMAGE_URL="docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main"
+          apptainer build micaflow.sif $IMAGE_URL
+          
+      - name: Test Singularity Image
+        run: |
+          apptainer exec micaflow.sif pytest tests/test_cli_interface.py
+          
+      - name: Upload Singularity Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: micaflow-singularity
+          path: micaflow.sif

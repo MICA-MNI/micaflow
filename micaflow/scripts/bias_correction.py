@@ -115,13 +115,13 @@ micaflow bias_correction \\
     --mask brain_mask.nii.gz \\
     --mode 3d
 
-# Custom shell dimension (if volumes not in dimension 3)
+# Custom direction dimension (if volumes not in dimension 3)
 micaflow bias_correction \\
     --input DWI.nii.gz \\
     --output DWI_corrected.nii.gz \\
     --b0 b0.nii.gz \\
     --b0-output b0_corrected.nii.gz \\
-    --shell-dimension 4
+    --direction-dimension 2
 
 # With Gibbs ringing removal (requires DIPY)
 micaflow bias_correction \\
@@ -158,7 +158,7 @@ Python API Usage:
 ...     b0_path="b0.nii.gz",
 ...     b0_corrected_path="b0_corrected.nii.gz",
 ...     mode="4d",
-...     shell_dimension=3
+...     direction_dimension=3
 ... )
 
 Pipeline Integration:
@@ -404,7 +404,7 @@ def print_help_message():
       {YELLOW}--mode{RESET}         : Processing mode: 3d, 4d, or auto (default: auto)
       {YELLOW}--b0{RESET}           : b=0 image path (required for 4D mode)
       {YELLOW}--b0-output{RESET}    : Path for corrected b=0 output (4D mode)
-      {YELLOW}--shell-dimension{RESET}: Dimension for diffusion volumes (default: 3)
+      {YELLOW}--direction-dimension{RESET}: Dimension for diffusion volumes (default: 3)
       {YELLOW}--gibbs{RESET}        : Apply Gibbs ringing removal (requires DIPY)
     
     {CYAN}{BOLD}──────────────────── EXAMPLE USAGE ──────────────────────{RESET}
@@ -435,13 +435,13 @@ def print_help_message():
       {YELLOW}--output{RESET} FLAIR_corrected.nii.gz \\
       {YELLOW}--mode{RESET} 3d
     
-    {BLUE}# Example 5: Custom shell dimension{RESET}
+    {BLUE}# Example 5: Custom direction dimension{RESET}
     micaflow bias_correction \\
       {YELLOW}--input{RESET} DWI.nii.gz \\
       {YELLOW}--output{RESET} DWI_corrected.nii.gz \\
       {YELLOW}--b0{RESET} b0.nii.gz \\
       {YELLOW}--b0-output{RESET} b0_corrected.nii.gz \\
-      {YELLOW}--shell-dimension{RESET} 4
+      {YELLOW}--direction-dimension{RESET} 4
     
     {BLUE}# Example 6: With Gibbs ringing removal{RESET}
     micaflow bias_correction \\
@@ -646,7 +646,7 @@ def bias_field_correction_3d(image_path, output_path, mask_path=None, gibbs=Fals
 
 
 def bias_field_correction_4d(image_path, mask_path=None, output_path=None, 
-                             b0_path=None, b0_corrected_path=None, shell_dimension=3):
+                             b0_path=None, b0_corrected_path=None, direction_dimension=3):
     """
     Apply N4 bias field correction to a 4D diffusion image.
     
@@ -669,7 +669,7 @@ def bias_field_correction_4d(image_path, mask_path=None, output_path=None,
         the first volume of the 4D image is used.
     b0_corrected_path : str, optional
         Path to save the corrected b=0 image separately.
-    shell_dimension : int, default=3
+    direction_dimension : int, default=3
         Dimension along which diffusion volumes are organized (0-indexed).
         For standard NIfTI: dimension 3 (4th dimension).
     
@@ -684,7 +684,7 @@ def bias_field_correction_4d(image_path, mask_path=None, output_path=None,
     FileNotFoundError
         If input image, mask, or b0 file does not exist.
     ValueError
-        If shell_dimension is invalid for the image shape.
+        If direction_dimension is invalid for the image shape.
     RuntimeError
         If N4 correction or volume processing fails.
     
@@ -706,7 +706,7 @@ def bias_field_correction_4d(image_path, mask_path=None, output_path=None,
     ...     output_path="DWI_corrected.nii.gz",
     ...     b0_path="b0.nii.gz",
     ...     b0_corrected_path="b0_corrected.nii.gz",
-    ...     shell_dimension=3
+    ...     direction_dimension=3
     ... )
     ('DWI_corrected.nii.gz', 'b0_corrected.nii.gz')
     
@@ -739,7 +739,7 @@ def bias_field_correction_4d(image_path, mask_path=None, output_path=None,
 
     img_data = img.numpy()
     print(f"  Image shape: {img_data.shape}")
-    print(f"  Shell dimension: {shell_dimension}")
+    print(f"  Direction dimension: {direction_dimension}")
     
     if b0_path:
         print(f"{CYAN}Loading b=0 image...{RESET}")
@@ -748,7 +748,7 @@ def bias_field_correction_4d(image_path, mask_path=None, output_path=None,
         b0_img = None
     
     # Create dynamic indexing tuple to access the first volume along specified dimension
-    vol0_idx = tuple(slice(None) if i != shell_dimension else 0
+    vol0_idx = tuple(slice(None) if i != direction_dimension else 0
                     for i in range(len(img_data.shape)))
     
     # Extract the first volume using dynamic indexing
@@ -811,18 +811,18 @@ def bias_field_correction_4d(image_path, mask_path=None, output_path=None,
     bias_field = n4_result['bias']
     print(f"{GREEN}Bias field estimated{RESET}")
 
-    print(f"{CYAN}Applying bias field to all {img_data.shape[shell_dimension]} DWI volumes...{RESET}")
+    print(f"{CYAN}Applying bias field to all {img_data.shape[direction_dimension]} DWI volumes...{RESET}")
     
     # Apply the same bias field to each volume of the 4D image
     corrected_vols = []
-    num_volumes = img_data.shape[shell_dimension]
+    num_volumes = img_data.shape[direction_dimension]
     
     for i in range(num_volumes):
         if (i + 1) % 10 == 0 or i == 0 or i == num_volumes - 1:
             print(f"  Processing volume {i+1}/{num_volumes}...")
         
         # Create dynamic indexing tuple to access volumes along the specified dimension
-        vol_idx = tuple(slice(None) if j != shell_dimension else i 
+        vol_idx = tuple(slice(None) if j != direction_dimension else i 
                         for j in range(len(img_data.shape)))
         
         # Extract the current volume using dynamic indexing
@@ -842,9 +842,9 @@ def bias_field_correction_4d(image_path, mask_path=None, output_path=None,
         # Add to results
         corrected_vols.append(corrected_vol.numpy())
     
-    # Stack corrected volumes into 4D array along the specified shell dimension
+    # Stack corrected volumes into 4D array along the specified direction dimension
     print(f"{CYAN}Reconstructing 4D image...{RESET}")
-    corrected_array = np.stack(corrected_vols, axis=shell_dimension)
+    corrected_array = np.stack(corrected_vols, axis=direction_dimension)
     
     # Create ANTs image from corrected array
     corrected_img = ants.from_numpy(
@@ -910,7 +910,7 @@ def needs_resampling(img1, img2):
 
 
 def run_bias_field_correction(image_path, output_path, mask_path=None, mode="auto", 
-                              b0_path=None, b0_corrected_path=None, shell_dimension=3, gibbs=False, threads=1):
+                              b0_path=None, b0_corrected_path=None, direction_dimension=3, gibbs=False, threads=1):
     """
     Run bias field correction with automatic dimensionality detection.
     
@@ -937,7 +937,7 @@ def run_bias_field_correction(image_path, output_path, mask_path=None, mode="aut
         Required for 4D mode.
     b0_corrected_path : str, optional
         Path to save corrected b=0 image (4D mode only).
-    shell_dimension : int, default=3
+    direction_dimension : int, default=3
         Dimension for diffusion volumes (4D mode only).
     gibbs : bool, default=False
         If True, apply Gibbs ringing removal.
@@ -1059,7 +1059,7 @@ def run_bias_field_correction(image_path, output_path, mask_path=None, mode="aut
         if mode == "4d":
             return bias_field_correction_4d(
                 image_path, mask_path, output_path, 
-                b0_path, b0_corrected_path, shell_dimension
+                b0_path, b0_corrected_path, direction_dimension
             )
         else:  # 3d
             return bias_field_correction_3d(image_path, output_path, mask_path, gibbs, threads)
@@ -1105,7 +1105,7 @@ if __name__ == "__main__":
         "--b0-output", help="Path for the output corrected b=0 image (only for 4D DWI)."
     )
     parser.add_argument(
-        "--shell-dimension", type=int, default=3,
+        "--direction-dimension", type=int, default=3,
         help="Dimension along which diffusion volumes are organized (default: 3)."
     )
     parser.add_argument(
@@ -1149,7 +1149,7 @@ if __name__ == "__main__":
             args.mode,
             args.b0,
             args.b0_output,
-            args.shell_dimension,
+            args.direction_dimension,
             args.gibbs,
             args.threads
         )
