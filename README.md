@@ -35,9 +35,40 @@ MICAFlow provides a robust and flexible framework for neuroimaging processing. B
 ## Installation
 
 ```bash
-pip install 
+pip install micaflow
 # Verify installation
 micaflow
+```
+
+## Containers (Docker & Singularity)
+
+MICAFlow is also distributed as pre-built container images via the GitHub Container Registry (GHCR), which guarantees that all system dependencies are correctly installed.
+
+### Docker
+
+You can pull the latest Docker image directly from GHCR:
+
+```bash
+# Pull the latest Docker image from the main branch
+docker pull ghcr.io/mica-mni/micaflow:main
+
+# Run MICAFlow via Docker (make sure to mount your data directories)
+docker run --rm -v /path/to/local/data:/data ghcr.io/mica-mni/micaflow:main \
+  micaflow pipeline --subject sub-001 --session ses-01 --data-directory /data --output /data/output ...
+```
+
+### Apptainer / Singularity
+
+For HPC environments, you can easily convert the Docker image into a Singularity/Apptainer Image Format (SIF) file:
+
+```bash
+# Build the Singularity image from the Docker registry
+apptainer build micaflow.sif docker://ghcr.io/mica-mni/micaflow:main
+# Note: if using Singularity instead of Apptainer, replace 'apptainer' with 'singularity'
+
+# Run MICAFlow via Apptainer (automatically mounts the current directory)
+apptainer exec micaflow.sif micaflow pipeline --subject sub-001 --session ses-01 \
+  --data-directory /path/to/data --output /path/to/output ...
 ```
 
 ## Usage
