@@ -70,7 +70,7 @@ jobs:
   
       - name: Login to GHCR for Apptainer
         run: |
-          apptainer remote login docker://ghcr.io \
+          apptainer registry remote login docker://ghcr.io \
             --username "${{ github.actor }}" \
             --password "${{ secrets.GITHUB_TOKEN }}"
   
