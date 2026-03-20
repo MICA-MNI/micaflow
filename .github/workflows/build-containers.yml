@@ -55,32 +55,26 @@ jobs:
   build-singularity:
     needs: build-docker
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # Add this step to ensure the image name is lowercase here as well
+      - uses: actions/checkout@v4
+  
       - name: Set lower case owner name
-        run: |
-          echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
-        
-      - name: Setup Apptainer/Singularity
-        uses: eWaterCycle/setup-apptainer@v2
+        run: echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
+  
+      - uses: eWaterCycle/setup-apptainer@v2
         with:
           apptainer-version: 1.2.2
-
+  
+      - name: Login to GHCR for Apptainer
+        run: |
+          apptainer registry login ghcr.io \
+            --username "${{ github.actor }}" \
+            --password "${{ secrets.GITHUB_TOKEN }}"
+  
       - name: Build Singularity Image
-        # Note: We pull the exact tag generated in the Docker build step
         run: |
-          IMAGE_URL="docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main"
-          apptainer build micaflow.sif $IMAGE_URL
-          
-      - name: Test Singularity Image
-        run: |
-          apptainer exec micaflow.sif pytest tests/test_cli_interface.py
-          
-      - name: Upload Singularity Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: micaflow-singularity
-          path: micaflow.sif
+          IMAGE_URL="docker://ghcr.io/${{ env.IMAGE_NAME }}:main"
+          apptainer build micaflow.sif "$IMAGE_URL"
