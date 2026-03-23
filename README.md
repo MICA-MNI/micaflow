@@ -35,7 +35,7 @@ MICAFlow provides a robust and flexible framework for neuroimaging processing. B
 ## Installation
 
 ```bash
-pip install 
+pip install micaflow
 # Verify installation
 micaflow
 ```
@@ -44,32 +44,28 @@ micaflow
 
 MICAFlow can be used as a complete pipeline or as individual modules:
 
-### Running the Full Pipeline
+### Running the Full Pipeline (Any Directory Structure)
+
+The `pipeline` mode is flexible and designed to work with **any custom directory structure**. You are required to pass exact pathways to each structural MRI file you wish to process.
 
 ```bash
 # Basic usage with T1w only
 micaflow pipeline --subject sub-001 --session ses-01 \
-  --data-directory /path/to/data --t1w-file sub-001_ses-01_T1w.nii.gz \
-  --output /output/path --cores 4
+  --data-dir /path/to/data --t1w-file /path/to/data/sub-001_ses-01_T1w.nii.gz \
+  --output-dir /output/path --cores 4
 
-# With FLAIR image
+# With diffusion data passed manually
 micaflow pipeline --subject sub-001 --session ses-01 \
-  --data-directory /path/to/data --t1w-file sub-001_ses-01_T1w.nii.gz \
-  --flair-file sub-001_ses-01_FLAIR.nii.gz --output /output/path \
-  --cores 4
-
-# With diffusion data
-micaflow pipeline --subject sub-001 --session ses-01 \
-  --data-directory /path/to/data --t1w-file sub-001_ses-01_T1w.nii.gz \
-  --dwi-file sub-001_ses-01_dwi.nii.gz \
-  --bval-file sub-001_ses-01_dwi.bval --bvec-file sub-001_ses-01_dwi.bvec \
-  --inverse-dwi-file sub-001_ses-01_acq-PA_dwi.nii.gz \
-  --output /output/path --cores 4
+  --data-dir /path/to/data --t1w-file /path/to/data/sub-001_ses-01_T1w.nii.gz \
+  --dwi-file /path/to/data/sub-001_ses-01_dwi.nii.gz \
+  --bval-file /path/to/data/sub-001_ses-01_dwi.bval --bvec-file /path/to/data/sub-001_ses-01_dwi.bvec \
+  --inverse-dwi-file /path/to/data/sub-001_ses-01_acq-PA_dwi.nii.gz \
+  --output-dir /output/path --cores 4
 ```
 
-### Batch Processing (BIDS)
+### Batch Processing (Strictly BIDS Datasets)
 
-To process an entire BIDS dataset automatically using the batch command:
+The `bids` mode is valid **exclusively for correctly structured BIDS datasets**. Instead of full file paths, this mode uses the root layout and suffix flags to search and recursively extract target dataset subjects/files automatically. 
 
 ```bash
 micaflow bids --bids-dir /path/to/bids_root --output-dir /path/to/derivatives \
@@ -78,16 +74,16 @@ micaflow bids --bids-dir /path/to/bids_root --output-dir /path/to/derivatives \
 
 This command will:
 1. Scan the BIDS directory for valid subjects and sessions.
-2. Automatically identify T1w, FLAIR (optional), and DWI (optional) files based on suffixes.
-3. Run the pipeline sequentially for each session found.
+2. Automatically identify T1w, FLAIR (optional), and DWI (optional) files based on suffixes native to BIDS conventions.
+3. Run the underlying pipeline sequentially for each session found.
 4. Generate a `micaflow_runs_summary.json` in the output directory tracking execution status.
 
-**key arguments:**
+**Key Arguments for BIDS Mode:**
 - `--bids-dir`: Root path to the BIDS dataset.
 - `--output-dir`: Path where derivatives will be saved.
 - `--participant-label`: (Optional) Space-separated list of subject IDs to process (e.g., `001 002`).
 - `--session-label`: (Optional) Space-separated list of session IDs to process.
-- `--t1w-suffix`, `--dwi-suffix`, etc.: Customize matching patterns for input files.
+- `--t1w-suffix`, `--dwi-suffix`, etc.: Customize matching string suffixes for file detection (e.g., `run-1_T1w.nii.gz`).
 
 ### Using Individual Modules
 

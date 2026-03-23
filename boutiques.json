@@ -1,0 +1,85 @@
+{
+  "name": "MicaFlow",
+  "tool-version": "1.0.0",
+  "description": "MICA MRI Processing Pipeline BIDS App",
+  "command-line": "micaflow bids --bids-dir [BIDS_DIR] --output-dir [OUTPUT_DIR] --analysis-level [ANALYSIS_LEVEL] [PARTICIPANT_LABEL] [SESSION_LABEL] [CORES] [GPU] [RM_CEREBELLUM] [EXTRACT_BRAIN] [KEEP_TEMP]",
+  "schema-version": "0.5",
+  "inputs": [
+    {
+      "id": "bids_dir",
+      "name": "BIDS Directory",
+      "description": "The directory with the input dataset formatted according to the BIDS standard.",
+      "type": "File",
+      "value-key": "[BIDS_DIR]",
+      "optional": false
+    },
+    {
+      "id": "output_dir",
+      "name": "Output Directory",
+      "description": "The directory where the output files should be stored.",
+      "type": "File",
+      "value-key": "[OUTPUT_DIR]",
+      "optional": false
+    },
+    {
+      "id": "analysis_level",
+      "name": "Analysis Level",
+      "description": "Level of the analysis that will be performed.",
+      "type": "String",
+      "value-key": "[ANALYSIS_LEVEL]",
+      "value-choices": ["participant", "group"],
+      "optional": false
+    },
+    {
+      "id": "participant_label",
+      "name": "Participant Label",
+      "description": "The label(s) of the participant(s) that should be analyzed.",
+      "type": "String",
+      "value-key": "[PARTICIPANT_LABEL]",
+      "command-line-flag": "--participant-label",
+      "list": true,
+      "optional": true
+    },
+    {
+      "id": "session_label",
+      "name": "Session Label",
+      "description": "Specific list of sessions to process.",
+      "type": "String",
+      "value-key": "[SESSION_LABEL]",
+      "command-line-flag": "--session-label",
+      "list": true,
+      "optional": true
+    },
+    {
+      "id": "cores",
+      "name": "Number of Cores",
+      "description": "Number of CPU cores to use per subject.",
+      "type": "Number",
+      "value-key": "[CORES]",
+      "command-line-flag": "--cores",
+      "optional": true
+    },
+    {
+      "id": "gpu",
+      "name": "Use GPU",
+      "description": "Use GPU for computation.",
+      "type": "Flag",
+      "value-key": "[GPU]",
+      "command-line-flag": "--gpu",
+      "optional": true
+    }
+  ],
+  "output-files": [
+    {
+      "id": "derivatives",
+      "name": "BIDS Derivatives",
+      "description": "Derivatives folders outputted by the pipeline.",
+      "path-template": "[OUTPUT_DIR]/micaflow",
+      "optional": true
+    }
+  ],
+  "container-image": {
+    "type": "docker",
+    "image": "ghcr.io/mica-mni/micaflow:main"
+  }
+}

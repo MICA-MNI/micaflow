@@ -516,9 +516,11 @@ def main():
     # Add pipeline arguments
     pipeline_parser.add_argument("--subject", required=True, help="Subject ID (e.g., sub-01)")
     pipeline_parser.add_argument("--session", help="Session ID (e.g., ses-01)")
-    pipeline_parser.add_argument("--output", required=True, help="Output directory")
+    # CHANGE: --output to --output-dir
+    pipeline_parser.add_argument("--output-dir", required=True, help="Output directory")
+    # CHANGE: --data-directory to --data-dir to match --bids-dir naming convention
     pipeline_parser.add_argument(
-        "--data-directory", default="", help="Data directory path"
+        "--data-dir", default="", help="Data directory path"
     )
     pipeline_parser.add_argument("--flair-file", help="Path to FLAIR image")
     pipeline_parser.add_argument("--t1w-file", required=True, help="Path to T1w image")
@@ -580,7 +582,11 @@ def main():
     bids_parser.add_argument("--flair-suffix", help="Suffix for FLAIR images (e.g. FLAIR.nii.gz). If not provided, FLAIR is skipped.")
     bids_parser.add_argument("--dwi-suffix", help="Suffix for DWI images (e.g. dwi.nii.gz). If not provided, DWI is skipped.")
     bids_parser.add_argument("--inverse-dwi-suffix", help="Suffix for Inverse DWI images (e.g. acq-rpe_dwi.nii.gz). If not provided, ignored.")
-
+    bids_parser.add_argument("--bval-suffix", help="Suffix for bval files (e.g. dwi.bval). If not provided, bval is skipped.")
+    bids_parser.add_argument("--bvec-suffix", help="Suffix for bvec files (e.g. dwi.bvec). If not provided, bvec is skipped.")
+    bids_parser.add_argument("--inverse-bval-suffix", help="Suffix for inverse bval files (e.g. acq-rpe_dwi.bval). If not provided, ignored.")
+    bids_parser.add_argument("--inverse-bvec-suffix", help="Suffix for inverse bvec files (e.g. acq-rpe_dwi.bvec). If not provided, ignored.")
+    
     # Passthrough arguments
     bids_parser.add_argument("--gpu", action="store_true", help="Use GPU computation")
     bids_parser.add_argument("--dry-run", "-n", action="store_true", help="Print commands without executing")
@@ -599,7 +605,7 @@ def main():
         "synthseg", help="Run SynthSeg brain segmentation"
     )
     synthseg_parser.add_argument(
-        "--i", help="Image(s) to segment. Can be a path to an image or to a folder."
+        "--input", help="Image(s) to segment. Can be a path to an image or to a folder."
     )
     synthseg_parser.add_argument(
         "--o",
@@ -748,15 +754,10 @@ def main():
         "--input", "-i", required=True, help="Path to the input image (.nii.gz)"
     )
     bias_corr_parser.add_argument(
-        "--output",
-        "-o",
-        required=True,
-        help="Path to the output bias-corrected image (.nii.gz)",
+        "--output", "-o", required=True, help="Path to the output bias-corrected image (.nii.gz)"
     )
     bias_corr_parser.add_argument(
-        "--mask",
-        "-m",
-        help="Path to a mask image (required for 4D images, optional for 3D)",
+        "--mask", help="Path to a mask image (required for 4D images, optional for 3D)"
     )
     bias_corr_parser.add_argument(
         "--mode",
@@ -1147,7 +1148,16 @@ def main():
         else:
             subjects = [d for d in os.listdir(args.bids_dir) if d.startswith("sub-") and os.path.isdir(os.path.join(args.bids_dir, d))]
         
-        subjects.sort()
+        # Determine if 1-to-1 participant/session matching should be triggered 
+        one_to_one = False
+        target_sessions = []
+        if args.participant_label and args.session_label and (len(args.participant_label) == len(args.session_label)):
+            one_to_one = True
+            target_sessions = [f"ses-{l}" if not l.startswith("ses-") else l for l in args.session_label]
+        elif args.session_label:
+            # Standard grouping if 1-to-1 isn't met (fallback for broadcasting sessions uniformly)
+            target_sessions = [f"ses-{l}" if not l.startswith("ses-") else l for l in args.session_label]
+
         if not subjects:
             print(f"{Fore.RED}No subjects found in {args.bids_dir}{Style.RESET_ALL}")
             sys.exit(1)
@@ -1168,20 +1178,22 @@ def main():
             return matches[0], False # Found, Error=False
 
         # 2. Iterate Subjects
-        for sub in subjects:
+        for idx, sub in enumerate(subjects):
             sub_dir = os.path.join(args.bids_dir, sub)
-            
-            # Detect sessions
-            sessions = [d for d in os.listdir(sub_dir) if d.startswith("ses-") and os.path.isdir(os.path.join(sub_dir, d))]
-            
-            if not sessions:
-                sessions = [None] # No session structure
+
+            # Detect sessions based on matching structure
+            if one_to_one:
+                # Single session explicitly paired up with the subject
+                sessions = [target_sessions[idx]]
             else:
-                sessions.sort()
-                # Filter sessions if requested
-                if args.session_label:
-                    target_ses = [f"ses-{l}" if not l.startswith("ses-") else l for l in args.session_label]
-                    sessions = [s for s in sessions if s in target_ses]
+                sessions = [d for d in os.listdir(sub_dir) if d.startswith("ses-") and os.path.isdir(os.path.join(sub_dir, d))]
+                if not sessions:
+                    sessions = [None] # No session structure
+                else:
+                    sessions.sort()
+                    # Filter sessions if requested generically
+                    if target_sessions:
+                        sessions = [s for s in sessions if s in target_sessions]
 
             # 3. Iterate Sessions
             for ses in sessions:
@@ -1271,7 +1283,8 @@ def main():
                 if ses_id:
                     cmd.extend(["--session", ses_id])
                 
-                cmd.extend(["--output", args.output_dir])
+                # CHANGE: Use --output-dir here instead of --output
+                cmd.extend(["--output-dir", args.output_dir])
                 
                 # FIX: Do NOT pass data directory to avoid path duplication logic in pipeline.
                 # Instead, pass explicit absolute paths for all files.
@@ -1403,7 +1416,8 @@ def main():
 
     elif args.command == "pipeline":
         # ---> ADD THIS CALL <---
-        create_bids_dataset_description(args.output)
+        # CHANGE: Use args.output_dir instead of args.output
+        create_bids_dataset_description(args.output_dir)
         
         # Get the path to the Snakefile
         snakefile = get_snakefile_path()
@@ -1416,8 +1430,8 @@ def main():
         for param in [
             "subject",
             "session",
-            "output",
-            "data_directory",
+            "output_dir", # CHANGE THIS
+            "data_dir", # CHANGE THIS
             "flair_file",
             "t1w_file",
             "dwi_file",

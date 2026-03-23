@@ -130,16 +130,13 @@ def check_paths(
             if SUBJECT != "":
                 if os.path.exists(DATA_DIRECTORY + "/" + SUBJECT):
                     print_note(f"Subject {SUBJECT} exists.")
-                    if SESSION != "":
-                        if SESSION == None:
-                            print_note("Session is set to None.")
-                        elif os.path.exists(
-                            DATA_DIRECTORY + "/" + SUBJECT + "/" + SESSION
-                        ):
-                            print_note(f"Session {SESSION} exists.")
+                    if SESSION != "" and SESSION is not None and SESSION != "None":
+                        # Validate Session exists
+                        if os.path.exists(DATA_DIRECTORY + "/" + SUBJECT + "/" + SESSION):
+                             print_note(f"Session {SESSION} exists.")
                         else:
-                            print_error(f"Session {SESSION} does not exist.")
-                            sys.exit(1)
+                             print_error(f"Session {SESSION} does not exist for subject {SUBJECT}.")
+                             sys.exit(1)
                 else:
                     print_error(f"Subject {SUBJECT} does not exist.")
                     sys.exit(1)
@@ -147,19 +144,7 @@ def check_paths(
                 print_error("Subject not provided.")
                 sys.exit(1)
             if RUN_FLAIR:
-                flair_path = (
-                    (DATA_DIRECTORY + "/" + SUBJECT + "/anat/" + FLAIR_FILE)
-                    if SESSION is None
-                    else (
-                        DATA_DIRECTORY
-                        + "/"
-                        + SUBJECT
-                        + "/"
-                        + SESSION
-                        + "/anat/"
-                        + FLAIR_FILE
-                    )
-                )
+                flair_path = (DATA_DIRECTORY + "/" + SUBJECT + "/anat/" + FLAIR_FILE) if not SESSION else (DATA_DIRECTORY + "/" + SUBJECT + "/" + SESSION + "/anat/" + FLAIR_FILE)
                 if os.path.exists(flair_path):
                     print_note(f"FLAIR file exists at path {flair_path}.")
                     FLAIR_FILE = flair_path
@@ -171,19 +156,7 @@ def check_paths(
 
             if T1W_FILE != "":
                 # Construct path based on SESSION value
-                t1w_path = (
-                    (DATA_DIRECTORY + "/" + SUBJECT + "/anat/" + T1W_FILE)
-                    if SESSION is None
-                    else (
-                        DATA_DIRECTORY
-                        + "/"
-                        + SUBJECT
-                        + "/"
-                        + SESSION
-                        + "/anat/"
-                        + T1W_FILE
-                    )
-                )
+                t1w_path = (DATA_DIRECTORY + "/" + SUBJECT + "/anat/" + T1W_FILE) if not SESSION else (DATA_DIRECTORY + "/" + SUBJECT + "/" + SESSION + "/anat/" + T1W_FILE)
                 if os.path.exists(t1w_path):
                     print_note(f"T1w file exists at path {t1w_path}.")
                     T1W_FILE = t1w_path
@@ -200,19 +173,7 @@ def check_paths(
 
                 if DWI_FILE != "":
                     # Construct path based on SESSION value
-                    dwi_path = (
-                        (DATA_DIRECTORY + "/" + SUBJECT + "/dwi/" + DWI_FILE)
-                        if SESSION is None
-                        else (
-                            DATA_DIRECTORY
-                            + "/"
-                            + SUBJECT
-                            + "/"
-                            + SESSION
-                            + "/dwi/"
-                            + DWI_FILE
-                        )
-                    )
+                    dwi_path = (DATA_DIRECTORY + "/" + SUBJECT + "/dwi/" + DWI_FILE) if not SESSION else (DATA_DIRECTORY + "/" + SUBJECT + "/" + SESSION + "/dwi/" + DWI_FILE)
                     if os.path.exists(dwi_path):
                         print_note(f"DWI file exists at path {dwi_path}.")
                         DWI_FILE = dwi_path
@@ -225,19 +186,7 @@ def check_paths(
 
                 if BVAL_FILE != "":
                     # Construct path based on SESSION value
-                    bval_path = (
-                        (DATA_DIRECTORY + "/" + SUBJECT + "/dwi/" + BVAL_FILE)
-                        if SESSION is None
-                        else (
-                            DATA_DIRECTORY
-                            + "/"
-                            + SUBJECT
-                            + "/"
-                            + SESSION
-                            + "/dwi/"
-                            + BVAL_FILE
-                        )
-                    )
+                    bval_path = (DATA_DIRECTORY + "/" + SUBJECT + "/dwi/" + BVAL_FILE) if not SESSION else (DATA_DIRECTORY + "/" + SUBJECT + "/" + SESSION + "/dwi/" + BVAL_FILE)
                     if os.path.exists(bval_path):
                         print_note(f"BVAL file exists at path {bval_path}.")
                         BVAL_FILE = bval_path
@@ -250,19 +199,7 @@ def check_paths(
 
                 if BVEC_FILE != "":
                     # Construct path based on SESSION value
-                    bvec_path = (
-                        (DATA_DIRECTORY + "/" + SUBJECT + "/dwi/" + BVEC_FILE)
-                        if SESSION is None
-                        else (
-                            DATA_DIRECTORY
-                            + "/"
-                            + SUBJECT
-                            + "/"
-                            + SESSION
-                            + "/dwi/"
-                            + BVEC_FILE
-                        )
-                    )
+                    bvec_path = (DATA_DIRECTORY + "/" + SUBJECT + "/dwi/" + BVEC_FILE) if not SESSION else (DATA_DIRECTORY + "/" + SUBJECT + "/" + SESSION + "/dwi/" + BVEC_FILE)
                     if os.path.exists(bvec_path):
                         print_note(f"BVEC file exists at path {bvec_path}.")
                         BVEC_FILE = bvec_path
@@ -275,19 +212,7 @@ def check_paths(
 
                 if INVERSE_DWI_FILE != "":
                     # Construct path based on SESSION value
-                    inverse_dwi_path = (
-                        (DATA_DIRECTORY + "/" + SUBJECT + "/dwi/" + INVERSE_DWI_FILE)
-                        if SESSION is None
-                        else (
-                            DATA_DIRECTORY
-                            + "/"
-                            + SUBJECT
-                            + "/"
-                            + SESSION
-                            + "/dwi/"
-                            + INVERSE_DWI_FILE
-                        )
-                    )
+                    inverse_dwi_path = (DATA_DIRECTORY + "/" + SUBJECT + "/dwi/" + INVERSE_DWI_FILE) if not SESSION else (DATA_DIRECTORY + "/" + SUBJECT + "/" + SESSION + "/dwi/" + INVERSE_DWI_FILE)
                     if os.path.exists(inverse_dwi_path):
                         print_note(
                             f"Inverse DWI file exists at path {inverse_dwi_path}."
@@ -301,19 +226,7 @@ def check_paths(
                     
                     # Check for inverse bval file
                     if INVERSE_BVAL_FILE != "":
-                        inverse_bval_path = (
-                            (DATA_DIRECTORY + "/" + SUBJECT + "/dwi/" + INVERSE_BVAL_FILE)
-                            if SESSION is None
-                            else (
-                                DATA_DIRECTORY
-                                + "/"
-                                + SUBJECT
-                                + "/"
-                                + SESSION
-                                + "/dwi/"
-                                + INVERSE_BVAL_FILE
-                            )
-                        )
+                        inverse_bval_path = (DATA_DIRECTORY + "/" + SUBJECT + "/dwi/" + INVERSE_BVAL_FILE) if not SESSION else (DATA_DIRECTORY + "/" + SUBJECT + "/" + SESSION + "/dwi/" + INVERSE_BVAL_FILE)
                         if os.path.exists(inverse_bval_path):
                             print_note(
                                 f"Inverse BVAL file exists at path {inverse_bval_path}."
@@ -327,19 +240,7 @@ def check_paths(
 
                     # Check for inverse bvec file
                     if INVERSE_BVEC_FILE != "":
-                        inverse_bvec_path = (
-                            (DATA_DIRECTORY + "/" + SUBJECT + "/dwi/" + INVERSE_BVEC_FILE)
-                            if SESSION is None
-                            else (
-                                DATA_DIRECTORY
-                                + "/"
-                                + SUBJECT
-                                + "/"
-                                + SESSION
-                                + "/dwi/"
-                                + INVERSE_BVEC_FILE
-                            )
-                        )
+                        inverse_bvec_path = (DATA_DIRECTORY + "/" + SUBJECT + "/dwi/" + INVERSE_BVEC_FILE) if not SESSION else (DATA_DIRECTORY + "/" + SUBJECT + "/" + SESSION + "/dwi/" + INVERSE_BVEC_FILE)
                         if os.path.exists(inverse_bvec_path):
                             print_note(
                                 f"Inverse BVEC file exists at path {inverse_bvec_path}."

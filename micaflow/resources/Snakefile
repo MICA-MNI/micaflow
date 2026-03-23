@@ -4,6 +4,8 @@ from pathlib import Path
 import shutil
 from micaflow.scripts.util_bids_pathing import check_paths
 import json
+import sys
+import argparse
 
 # Default parameters
 SUBJECT = config.get("subject", "")
@@ -12,14 +14,27 @@ if SUBJECT and not SUBJECT.startswith("sub-"):
     SUBJECT = f"sub-{SUBJECT}"
 
 SESSION = config.get("session", "")
-# Ensure ses- prefix exists
-if SESSION and not SESSION.startswith("ses-"):
-    SESSION = f"ses-{SESSION}"
-    
-# Construct session string helper to handle empty sessions gracefully
-SESSION_STR = f"_{SESSION}" if SESSION else ""
+if SESSION == "None":
+    SESSION = ""
 
-OUT_DIR = config.get("output", "")
+# Instead of relying on a suffix, we create formatted path blocks and a prefix string
+if SESSION:
+    if not SESSION.startswith("ses-"):
+        SESSION = f"ses-{SESSION}"
+    PATH_SESSION = f"/{SESSION}"
+    FILE_SESSION = f"_{SESSION}"
+    # When using os.path.join, we can use SESSION safely
+    OS_JOIN_SESSION = SESSION
+else:
+    PATH_SESSION = ""
+    FILE_SESSION = ""
+    OS_JOIN_SESSION = "" # Empty strings passed to os.path.join are ignored properly
+
+# Backwards compatibility alias since many rules use SESSION_STR instead of FILE_SESSION
+SESSION_STR = FILE_SESSION
+
+# CHANGE: "output" to "output_dir"
+OUT_DIR = config.get("output_dir", "")
 THREADS = workflow.cores
 
 # Dynamic thread allocation logic:
@@ -32,7 +47,8 @@ else:
     HEAVY_THREADS = THREADS
     LIGHT_THREADS = 1
 
-DATA_DIRECTORY = config.get("data_directory", "")
+# CHANGE: "data_directory" to "data_dir"
+DATA_DIRECTORY = config.get("data_dir", "")
 FLAIR_FILE = config.get("flair_file", "")
 T1W_FILE = config.get("t1w_file", "")
 DWI_FILE = config.get("dwi_file", "")
@@ -44,7 +60,8 @@ INVERSE_BVEC_FILE = config.get("inverse_bvec_file", "")
 RM_CEREBELLUM = config.get("rm_cerebellum", False)
 KEEP_TEMP = config.get("keep_temp", False)  # New parameter to control temp directory cleanup
 PED = config.get("PED", "")
-DIRECTION_DIMENSION = config.get("DIRECTION_DIMENSION", 3)
+# CHANGE: "DIRECTION_DIMENSION" to "direction_dimension" so it correctly grabs the CLI argument
+DIRECTION_DIMENSION = config.get("direction_dimension", 3)
 EXTRACT_BRAIN = config.get("extract_brain", False)
 GPU = config.get("gpu", "")
 
@@ -72,7 +89,7 @@ ATLAS_SEG = os.path.join(ATLAS_DIR, "mni_icbm152_t1_tal_nlin_sym_09a_seg.nii")
 SCRIPT_DIR = os.path.join(os.path.dirname(workflow.basedir), "scripts")
 
 # Define temp directory
-TEMP_DIR = f"{OUT_DIR}/{SUBJECT}/{SESSION}/temp"
+TEMP_DIR = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/temp"
 os.makedirs(TEMP_DIR, exist_ok=True)
 
 # Cache file path for validated parameters
@@ -233,15 +250,15 @@ def get_final_output():
 
     if RUN_DWI:
         outputs.extend([
-            f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}{SESSION_STR}_space-T1w_FA.nii.gz",
-            f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}{SESSION_STR}_space-T1w_MD.nii.gz",
-            f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}{SESSION_STR}_desc-DWItoT1w_stat-DICE.tsv",
-            f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}{SESSION_STR}_space-T1w_desc-normalized_FA.nii.gz",
-            f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}{SESSION_STR}_space-T1w_desc-normalized_MD.nii.gz"
+            f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{SESSION_STR}_space-T1w_FA.nii.gz",
+            f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{SESSION_STR}_space-T1w_MD.nii.gz",
+            f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/metrics/{SUBJECT}{SESSION_STR}_desc-DWItoT1w_stat-DICE.tsv",
+            f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{SESSION_STR}_space-T1w_desc-normalized_FA.nii.gz",
+            f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{SESSION_STR}_space-T1w_desc-normalized_MD.nii.gz"
         ])
             
     if RUN_FLAIR:
-        outputs.append(f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}{SESSION_STR}_desc-FLAIRtoT1w_stat-DICE.tsv")
+        outputs.append(f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/metrics/{SUBJECT}{SESSION_STR}_desc-FLAIRtoT1w_stat-DICE.tsv")
         outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}{SESSION_STR}_space-T1w_FLAIR.nii.gz"))
         outputs.append(os.path.join(OUT_DIR, SUBJECT, SESSION, "anat", f"{SUBJECT}{SESSION_STR}_space-T1w_desc-normalized_FLAIR.nii.gz"))
 
@@ -284,7 +301,7 @@ rule synthseg_t1w:
     input:
         image = T1W_FILE
     output:
-        seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_space-T1w_desc-synthseg_dseg.nii.gz"
+        seg = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{FILE_SESSION}_space-T1w_desc-synthseg_dseg.nii.gz"
     threads: HEAVY_THREADS
     shell:
         "micaflow synthseg --i {input.image} --o {output.seg} --parc --robust --threads {threads} {CPU_FLAG}"
@@ -295,7 +312,7 @@ if RUN_FLAIR:
         input:
             image = FLAIR_FILE,
         output:
-            seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_space-FLAIR_desc-synthseg_dseg.nii.gz"
+            seg = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{FILE_SESSION}_space-FLAIR_desc-synthseg_dseg.nii.gz"
         threads: HEAVY_THREADS
         shell:
             "micaflow synthseg --i {input.image} --o {output.seg} --parc --robust --threads {threads} {CPU_FLAG}"
@@ -306,7 +323,7 @@ rule skull_strip_t1w:
         seg = rules.synthseg_t1w.output.seg
     output:
         brain = f"{TEMP_DIR}/{SUBJECT}{SESSION_STR}_space-T1w_desc-brain_T1w.nii.gz",
-        mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}{SESSION_STR}_space-T1w_desc-brain_mask.nii.gz"
+        mask = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{SESSION_STR}_space-T1w_desc-brain_mask.nii.gz"
     threads: LIGHT_THREADS
     params:
         parcellation = lambda wildcards, input: f"--parcellation {input.seg}",
@@ -326,7 +343,7 @@ rule bias_field_correction:
         image = T1W_FILE,
         mask = rules.skull_strip_t1w.output.mask
     output:
-        corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_space-T1w_T1w.nii.gz"
+        corrected = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{FILE_SESSION}_space-T1w_T1w.nii.gz"
     threads: LIGHT_THREADS
     shell:
         "micaflow bias_correction -i {input.image} -o {output.corrected} -m {input.mask}"
@@ -338,8 +355,8 @@ if RUN_FLAIR:
             image = FLAIR_FILE,
             seg = rules.synthseg_flair.output.seg
         output:
-            brain = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_space-FLAIR_desc-brain_FLAIR.nii.gz",
-            mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_space-FLAIR_desc-brain_mask.nii.gz"
+            brain = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_space-FLAIR_desc-brain_FLAIR.nii.gz",
+            mask = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{FILE_SESSION}_space-FLAIR_desc-brain_mask.nii.gz"
         threads: LIGHT_THREADS
         params:
             parcellation = lambda wildcards, input: f"--parcellation {input.seg}",
@@ -359,7 +376,7 @@ if RUN_FLAIR:
             image = FLAIR_FILE,
             mask = rules.skull_strip_flair.output.mask
         output:
-            corrected = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_space-FLAIR_desc-brain_FLAIR.nii.gz"
+            corrected = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{FILE_SESSION}_space-FLAIR_desc-brain_FLAIR.nii.gz"
         threads: LIGHT_THREADS
         shell:
             "micaflow bias_correction -i {input.image} -o {output.corrected} -m {input.mask}"
@@ -372,14 +389,14 @@ if RUN_FLAIR:
             anatomical_moving = rules.bias_field_correction_flair.output.corrected
         output:
             # We add 'desc-coreg' so it doesn't collide with apply_warp_flair_to_t1w
-            warped = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_space-T1w_FLAIR.nii.gz",
-            output_segmentation = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_space-T1w_desc-synthseg_dseg.nii.gz",
+            warped = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_space-T1w_FLAIR.nii.gz",
+            output_segmentation = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_space-T1w_desc-synthseg_dseg.nii.gz",
             
-            fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_mode-image_desc-warp_xfm.nii.gz",
-            fwd_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_mode-image_desc-secondarywarp_xfm.nii.gz",
-            bak_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-FLAIR_mode-image_desc-warp_xfm.nii.gz",
-            bak_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-FLAIR_mode-image_desc-secondarywarp_xfm.nii.gz",
-            fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-FLAIR_to-T1w_mode-image_desc-affine_xfm.mat"
+            fwd_field = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/xfm/{SUBJECT}{FILE_SESSION}_from-FLAIR_to-T1w_mode-image_desc-warp_xfm.nii.gz",
+            fwd_field_secondary = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/xfm/{SUBJECT}{FILE_SESSION}_from-FLAIR_to-T1w_mode-image_desc-secondarywarp_xfm.nii.gz",
+            bak_field = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/xfm/{SUBJECT}{FILE_SESSION}_from-T1w_to-FLAIR_mode-image_desc-warp_xfm.nii.gz",
+            bak_field_secondary = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/xfm/{SUBJECT}{FILE_SESSION}_from-T1w_to-FLAIR_mode-image_desc-secondarywarp_xfm.nii.gz",
+            fwd_affine = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/xfm/{SUBJECT}{FILE_SESSION}_from-FLAIR_to-T1w_mode-image_desc-affine_xfm.mat"
         threads: HEAVY_THREADS
         shell:
             """
@@ -405,7 +422,7 @@ if RUN_FLAIR:
             affine = rules.registration_t1w.output.fwd_affine,
             reference = rules.bias_field_correction.output.corrected
         output:
-            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_space-T1w_FLAIR.nii.gz"
+            warped = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{FILE_SESSION}_space-T1w_FLAIR.nii.gz"
         threads: LIGHT_THREADS
         shell:
             """
@@ -422,7 +439,7 @@ if RUN_FLAIR:
             image = rules.registration_t1w.output.output_segmentation,
             atlas = rules.synthseg_t1w.output.seg
         output:
-            metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_desc-FLAIRtoT1w_stat-DICE.tsv"
+            metrics = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/metrics/{SUBJECT}{FILE_SESSION}_desc-FLAIRtoT1w_stat-DICE.tsv"
         threads: LIGHT_THREADS
         shell:
             """
@@ -441,11 +458,11 @@ rule registration_mni152:
         fixed_segmentation = ATLAS_SEG
     output:
         warped = f"{TEMP_DIR}/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}_T1w.nii.gz",
-        output_segmentation = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}synthseg_dseg.nii.gz",
+        output_segmentation = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}synthseg_dseg.nii.gz",
         
-        fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}{SESSION_STR}_from-T1w_to-MNI152_mode-image_desc-{{reg_type}}warp_xfm.nii.gz",
-        bak_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}{SESSION_STR}_from-MNI152_to-T1w_mode-image_desc-{{reg_type}}warp_xfm.nii.gz",
-        fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}{SESSION_STR}_from-T1w_to-MNI152_mode-image_desc-{{reg_type}}affine_xfm.mat"
+        fwd_field = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/xfm/{SUBJECT}{SESSION_STR}_from-T1w_to-MNI152_mode-image_desc-{{reg_type}}warp_xfm.nii.gz",
+        bak_field = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/xfm/{SUBJECT}{SESSION_STR}_from-MNI152_to-T1w_mode-image_desc-{{reg_type}}warp_xfm.nii.gz",
+        fwd_affine = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/xfm/{SUBJECT}{SESSION_STR}_from-T1w_to-MNI152_mode-image_desc-{{reg_type}}affine_xfm.mat"
     threads: HEAVY_THREADS
     wildcard_constraints:
         reg_type = "linearreg|nonlinearreg"
@@ -481,7 +498,7 @@ rule apply_warp_t1w_to_mni:
         warp = rules.registration_mni152.output.fwd_field,
         reference = ATLAS
     output:
-        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}_T1w.nii.gz"
+        warped = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}_T1w.nii.gz"
     threads: LIGHT_THREADS
     wildcard_constraints:
         reg_type = "linearreg|nonlinearreg"
@@ -504,7 +521,7 @@ if RUN_FLAIR:
             secondary_warp_flair = rules.registration_t1w.output.fwd_field_secondary,
             reference = ATLAS
         output:
-            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}_FLAIR.nii.gz"
+            warped = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}_FLAIR.nii.gz"
         threads: LIGHT_THREADS
         wildcard_constraints:
             reg_type = "linearreg|nonlinearreg"
@@ -520,28 +537,28 @@ if RUN_FLAIR:
 
 rule run_texture_native:
     input:
-        image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_space-T1w_{{modality}}.nii.gz",
-        mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_space-T1w_desc-brain_mask.nii.gz"
+        image = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{FILE_SESSION}_space-T1w_{{modality}}.nii.gz",
+        mask = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{FILE_SESSION}_space-T1w_desc-brain_mask.nii.gz"
     output:
-        gradient = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_space-T1w_textures-{{modality}}_gradient-magnitude.nii.gz",
-        intensity = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_space-T1w_textures-{{modality}}_relative-intensity.nii.gz"
+        gradient = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/textures/{SUBJECT}{FILE_SESSION}_space-T1w_textures-{{modality}}_gradient-magnitude.nii.gz",
+        intensity = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/textures/{SUBJECT}{FILE_SESSION}_space-T1w_textures-{{modality}}_relative-intensity.nii.gz"
     threads: LIGHT_THREADS
     shell:
         """
         micaflow texture_generation \
             --input {input.image} \
             --mask {input.mask} \
-            --output {OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}_{SESSION}_space-T1w_textures-{wildcards.modality}
+            --output {OUT_DIR}/{SUBJECT}{PATH_SESSION}/textures/{SUBJECT}{FILE_SESSION}_space-T1w_textures-{wildcards.modality}
         """
 
 rule warp_texture_to_mni:
     input:
-        moving = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}{SESSION_STR}_space-T1w_textures-{{modality}}_{{metric}}.nii.gz",
+        moving = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/textures/{SUBJECT}{SESSION_STR}_space-T1w_textures-{{modality}}_{{metric}}.nii.gz",
         affine = rules.registration_mni152.output.fwd_affine,
         warp = rules.registration_mni152.output.fwd_field,
         reference = ATLAS
     output:
-        warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/textures/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}textures-{{modality}}_{{metric}}.nii.gz"
+        warped = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/textures/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}textures-{{modality}}_{{metric}}.nii.gz"
     wildcard_constraints:
         metric = "gradient-magnitude|relative-intensity",
         reg_type = "linearreg|nonlinearreg"
@@ -559,7 +576,7 @@ rule calculate_metrics_T1w:
         image = rules.registration_mni152.output.output_segmentation,
         atlas = ATLAS_SEG
     output:
-        metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}{SESSION_STR}_desc-{{reg_type}}T1wtoMNI152_stat-DICE.tsv"
+        metrics = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/metrics/{SUBJECT}{SESSION_STR}_desc-{{reg_type}}T1wtoMNI152_stat-DICE.tsv"
     wildcard_constraints:
         reg_type = "linearreg|nonlinearreg"
     threads: LIGHT_THREADS
@@ -575,9 +592,9 @@ rule calculate_metrics_T1w:
 if RUN_DWI:
     rule normalize_dwi_metrics:
         input:
-            image = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_{wildcards.metric}.nii.gz"
+            image = lambda wildcards: f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{FILE_SESSION}_space-T1w_{wildcards.metric}.nii.gz"
         output:
-            normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_desc-normalized_{{metric}}.nii.gz"
+            normalized = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{FILE_SESSION}_space-T1w_desc-normalized_{{metric}}.nii.gz"
         threads: LIGHT_THREADS
         shell:
             """
@@ -595,7 +612,7 @@ if RUN_DWI:
             bval = BVAL_FILE,
             bvec = BVEC_FILE
         output:
-            denoised = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_DWI.nii.gz"
+            denoised = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_denoised_DWI.nii.gz"
         threads: HEAVY_THREADS
         shell:
             """
@@ -613,12 +630,12 @@ if RUN_DWI:
             bval = BVAL_FILE,
             bvec = BVEC_FILE
         output:
-            b0 = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0_DWI.nii.gz",
-            output_bvec = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0_DWI.bvec",
-            output_bval = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0_DWI.bval",
-            output_dwi = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_DWI_nob0.nii.gz",
-            b0_bval = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0_only.bval",
-            b0_bvec = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0_only.bvec"
+            b0 = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_b0_DWI.nii.gz",
+            output_bvec = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_b0_DWI.bvec",
+            output_bval = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_b0_DWI.bval",
+            output_dwi = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_denoised_DWI_nob0.nii.gz",
+            b0_bval = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_b0_only.bval",
+            b0_bvec = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_b0_only.bvec"
         threads: LIGHT_THREADS
         shell:
             """
@@ -642,8 +659,8 @@ if RUN_DWI:
             b0 = rules.dwi_b0_extraction.output.b0,
             bval = rules.dwi_b0_extraction.output.output_bval
         output:
-            corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_motioncorrected_DWI.nii.gz",
-            corrected_bvec = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_motioncorrected_DWI.bvec"
+            corrected = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_denoised_motioncorrected_DWI.nii.gz",
+            corrected_bvec = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_denoised_motioncorrected_DWI.bvec"
         threads: HEAVY_THREADS
         shell:
             """
@@ -665,8 +682,8 @@ if RUN_DWI:
                 image = rules.dwi_motion_correction.output.corrected,
                 b0 = rules.dwi_b0_extraction.output.b0,
             output:
-                corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_bias-corrected_DWI.nii.gz",
-                b0_corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_biascorrected-b0.nii.gz"
+                corrected = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_denoised_bias-corrected_DWI.nii.gz",
+                b0_corrected = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_biascorrected-b0.nii.gz"
             threads: LIGHT_THREADS
             shell:
                 """
@@ -682,7 +699,7 @@ if RUN_DWI:
             input:
                 image = rules.dwi_bias_correction.output.b0_corrected,
             output:
-                seg = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_space-dwi_seg-synthseg_desc-preSDC_dseg.nii.gz"
+                seg = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_space-dwi_seg-synthseg_desc-preSDC_dseg.nii.gz"
             threads: LIGHT_THREADS
             shell:
                 """
@@ -701,11 +718,11 @@ if RUN_DWI:
                 fixed_seg = rules.synthseg_t1w.output.seg,
                 moving_seg = rules.b0_synthseg.output.seg
             output:
-                warped = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_registered-b0_NoSDC.nii.gz",
-                fwd_field = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0-to-t1_warp_NoSDC.nii.gz",
-                fwd_affine = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0-to-t1_affine_NoSDC.mat",
-                fwd_field_secondary = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0-to-t1_warp-secondary_NoSDC.nii.gz",
-                output_segmentation = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0-to-t1_synthseg_NoSDC.nii.gz"
+                warped = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_registered-b0_NoSDC.nii.gz",
+                fwd_field = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_b0-to-t1_warp_NoSDC.nii.gz",
+                fwd_affine = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_b0-to-t1_affine_NoSDC.mat",
+                fwd_field_secondary = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_b0-to-t1_warp-secondary_NoSDC.nii.gz",
+                output_segmentation = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_b0-to-t1_synthseg_NoSDC.nii.gz"
             threads: HEAVY_THREADS
             shell:
                 """
@@ -724,17 +741,17 @@ if RUN_DWI:
         
         rule dwi_create_synthetic_b0:
             input:
-                t1 = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_space-T1w_desc-normalized_T1w.nii.gz",
+                t1 = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{FILE_SESSION}_space-T1w_desc-normalized_T1w.nii.gz",
                 b0 = rules.b0_synth_registration.output.warped,
                 dwi = rules.dwi_bias_correction.output.corrected,
                 warp = rules.b0_synth_registration.output.fwd_field,
                 secondary_warp = rules.b0_synth_registration.output.fwd_field_secondary,
                 affine = rules.b0_synth_registration.output.fwd_affine,
             output:
-                corrected_DWI = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_SDCcorrected-DWI.nii.gz",
-                intermediate = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_synthetic-b0-t1space.nii.gz",
-                warp = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_SDC_warp_t1space.nii.gz",
-                corrected_b0 = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_SDCcorrected-b0.nii.gz"
+                corrected_DWI = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_SDCcorrected-DWI.nii.gz",
+                intermediate = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_synthetic-b0-t1space.nii.gz",
+                warp = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_SDC_warp_t1space.nii.gz",
+                corrected_b0 = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_SDCcorrected-b0.nii.gz"
             threads: HEAVY_THREADS
             params:
                 cpu_flag = "--cpu" if GPU == "--cpu" else ""
@@ -763,7 +780,7 @@ if RUN_DWI:
                 # This input needs to be adjusted to work with either workflow
                 image = rules.dwi_create_synthetic_b0.output.corrected_b0,
             output:
-                seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-DWI_desc-synthseg_dseg.nii.gz"
+                seg = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{FILE_SESSION}_space-DWI_desc-synthseg_dseg.nii.gz"
             threads: HEAVY_THREADS
             shell:
                 """
@@ -783,8 +800,8 @@ if RUN_DWI:
                 image = rules.dwi_create_synthetic_b0.output.corrected_b0,
                 seg = rules.synthseg_dwi.output.seg
             output:
-                image = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_space-DWI_desc-brain_DWI.nii.gz",
-                mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-DWI_desc-brain_mask.nii.gz"
+                image = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_space-DWI_desc-brain_DWI.nii.gz",
+                mask = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{FILE_SESSION}_space-DWI_desc-brain_mask.nii.gz"
             params:
                 rm_cerebellum = "--remove-cerebellum" if RM_CEREBELLUM else ""
             threads: LIGHT_THREADS
@@ -805,15 +822,15 @@ if RUN_DWI:
                 moving = rules.dwi_create_synthetic_b0.output.corrected_b0,
                 fixed = rules.bias_field_correction.output.corrected
             output:
-                warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_b0.nii.gz",
-                output_segmentation = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_desc-synthseg_dseg.nii.gz",
+                warped = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{FILE_SESSION}_space-T1w_b0.nii.gz",
+                output_segmentation = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{FILE_SESSION}_space-T1w_desc-synthseg_dseg.nii.gz",
                 
-                fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_mode-image_desc-warp_xfm.nii.gz",
-                rev_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-DWI_mode-image_desc-warp_xfm.nii.gz",
-                fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_mode-image_desc-affine_xfm.mat",
+                fwd_field = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/xfm/{SUBJECT}{FILE_SESSION}_from-DWI_to-T1w_mode-image_desc-warp_xfm.nii.gz",
+                rev_field = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/xfm/{SUBJECT}{FILE_SESSION}_from-T1w_to-DWI_mode-image_desc-warp_xfm.nii.gz",
+                fwd_affine = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/xfm/{SUBJECT}{FILE_SESSION}_from-DWI_to-T1w_mode-image_desc-affine_xfm.mat",
                 
-                fwd_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_mode-image_desc-secondarywarp_xfm.nii.gz",
-                rev_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-DWI_mode-image_desc-secondarywarp_xfm.nii.gz"
+                fwd_field_secondary = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/xfm/{SUBJECT}{FILE_SESSION}_from-DWI_to-T1w_mode-image_desc-secondarywarp_xfm.nii.gz",
+                rev_field_secondary = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/xfm/{SUBJECT}{FILE_SESSION}_from-T1w_to-DWI_mode-image_desc-secondarywarp_xfm.nii.gz"
             threads: HEAVY_THREADS
             shell:
                 """
@@ -842,8 +859,8 @@ if RUN_DWI:
                 b0_bvec = rules.dwi_b0_extraction.output.b0_bvec,
                 b0_bval = rules.dwi_b0_extraction.output.b0_bval
             output:
-                fa = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_DWI-space_FA.nii.gz",
-                md = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_DWI-space_MD.nii.gz"
+                fa = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{FILE_SESSION}_DWI-space_FA.nii.gz",
+                md = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{FILE_SESSION}_DWI-space_MD.nii.gz"
             threads: LIGHT_THREADS
             shell:
                 """
@@ -862,13 +879,13 @@ if RUN_DWI:
             input:
                 fa = rules.dwi_compute_fa_md.output.fa,
                 md = rules.dwi_compute_fa_md.output.md,
-                reference = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_space-T1w_T1w.nii.gz",
+                reference = lambda wildcards: f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{FILE_SESSION}_space-T1w_T1w.nii.gz",
                 affine = rules.dwi_registration.output.fwd_affine,
                 warp = rules.dwi_registration.output.fwd_field,
                 secondary_warp = rules.dwi_registration.output.fwd_field_secondary
             output:
-                fa_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_FA.nii.gz",
-                md_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_MD.nii.gz"
+                fa_reg = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{FILE_SESSION}_space-T1w_FA.nii.gz",
+                md_reg = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{FILE_SESSION}_space-T1w_MD.nii.gz"
             threads: LIGHT_THREADS
             wildcard_constraints:
                 modality="T1w"
@@ -888,7 +905,7 @@ if RUN_DWI:
                 image = rules.dwi_registration.output.output_segmentation,
                 atlas = rules.synthseg_t1w.output.seg
             output:
-                metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_desc-DWItoT1w_stat-DICE.tsv"
+                metrics = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/metrics/{SUBJECT}{FILE_SESSION}_desc-DWItoT1w_stat-DICE.tsv"
             threads: LIGHT_THREADS
             shell:
                 """
@@ -905,10 +922,10 @@ if RUN_DWI:
                 bval = INVERSE_BVAL_FILE,
                 bvec = INVERSE_BVEC_FILE
             output:
-                b0 = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0-inverse_DWI.nii.gz",
-                output_bvec = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0-inverse_DWI.bvec",
-                output_bval = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_b0-inverse_DWI.bval",
-                output_dwi = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_DWI_nob0-inverse.nii.gz"
+                b0 = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_b0-inverse_DWI.nii.gz",
+                output_bvec = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_b0-inverse_DWI.bvec",
+                output_bval = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_b0-inverse_DWI.bval",
+                output_dwi = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_denoised_DWI_nob0-inverse.nii.gz"
             threads: LIGHT_THREADS
             shell:
                 """
@@ -928,8 +945,8 @@ if RUN_DWI:
                 b0 = rules.dwi_b0_extraction.output.b0,
                 b0_inverse = rules.dwi_b0_extraction_reversePE.output.b0,
             output:
-                warp = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWIuncorrected_to-DWI_mode-image_desc-SDC_xfm.nii.gz",
-                corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_corrected-b0_DWI.nii.gz"
+                warp = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/xfm/{SUBJECT}{FILE_SESSION}_from-DWIuncorrected_to-DWI_mode-image_desc-SDC_xfm.nii.gz",
+                corrected = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_corrected-b0_DWI.nii.gz"
             threads: LIGHT_THREADS
             shell:
                 """
@@ -947,7 +964,7 @@ if RUN_DWI:
                 warp = rules.dwi_topup.output.warp,
                 affine = DWI_FILE
             output:
-                corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_SDC-DWI.nii.gz"
+                corrected = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_SDC-DWI.nii.gz"
             threads: LIGHT_THREADS
             shell:
                 """
@@ -964,7 +981,7 @@ if RUN_DWI:
                 # This input needs to be adjusted to work with either workflow
                 image = rules.dwi_topup.output.corrected,
             output:
-                seg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-DWI_desc-synthseg_dseg.nii.gz"
+                seg = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{FILE_SESSION}_space-DWI_desc-synthseg_dseg.nii.gz"
             threads: HEAVY_THREADS
             shell:
                 """
@@ -984,8 +1001,8 @@ if RUN_DWI:
                 image = rules.dwi_topup.output.corrected,
                 seg = rules.synthseg_dwi.output.seg
             output:
-                image = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_space-DWI_desc-brain_DWI.nii.gz",
-                mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-DWI_desc-brain_mask.nii.gz"
+                image = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_space-DWI_desc-brain_DWI.nii.gz",
+                mask = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{FILE_SESSION}_space-DWI_desc-brain_mask.nii.gz"
             params:
                 rm_cerebellum = "--remove-cerebellum" if RM_CEREBELLUM else ""
             threads: LIGHT_THREADS
@@ -1005,8 +1022,8 @@ if RUN_DWI:
                 mask = rules.dwi_skull_strip.output.mask,
                 b0 = rules.dwi_topup.output.corrected
             output:
-                corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_denoised_bias-corrected_DWI.nii.gz",
-                b0_corrected = f"{TEMP_DIR}/{SUBJECT}_{SESSION}_biascorrected-b0.nii.gz"
+                corrected = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_denoised_bias-corrected_DWI.nii.gz",
+                b0_corrected = f"{TEMP_DIR}/{SUBJECT}{FILE_SESSION}_biascorrected-b0.nii.gz"
             threads: LIGHT_THREADS
             shell:
                 """
@@ -1027,15 +1044,15 @@ if RUN_DWI:
                 moving = rules.dwi_bias_correction.output.b0_corrected,
                 fixed = rules.bias_field_correction.output.corrected
             output:
-                warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_b0.nii.gz",
-                output_segmentation = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_desc-synthseg_dseg.nii.gz",
+                warped = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{FILE_SESSION}_space-T1w_b0.nii.gz",
+                output_segmentation = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{FILE_SESSION}_space-T1w_desc-synthseg_dseg.nii.gz",
                 
-                fwd_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_mode-image_desc-warp_xfm.nii.gz",
-                rev_field = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-DWI_mode-image_desc-warp_xfm.nii.gz",
-                fwd_affine = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_mode-image_desc-affine_xfm.mat",
+                fwd_field = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/xfm/{SUBJECT}{FILE_SESSION}_from-DWI_to-T1w_mode-image_desc-warp_xfm.nii.gz",
+                rev_field = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/xfm/{SUBJECT}{FILE_SESSION}_from-T1w_to-DWI_mode-image_desc-warp_xfm.nii.gz",
+                fwd_affine = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/xfm/{SUBJECT}{FILE_SESSION}_from-DWI_to-T1w_mode-image_desc-affine_xfm.mat",
                 
-                fwd_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-DWI_to-T1w_mode-image_desc-secondarywarp_xfm.nii.gz",
-                rev_field_secondary = f"{OUT_DIR}/{SUBJECT}/{SESSION}/xfm/{SUBJECT}_{SESSION}_from-T1w_to-DWI_mode-image_desc-secondarywarp_xfm.nii.gz"
+                fwd_field_secondary = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/xfm/{SUBJECT}{FILE_SESSION}_from-DWI_to-T1w_mode-image_desc-secondarywarp_xfm.nii.gz",
+                rev_field_secondary = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/xfm/{SUBJECT}{FILE_SESSION}_from-T1w_to-DWI_mode-image_desc-secondarywarp_xfm.nii.gz"
             threads: HEAVY_THREADS
             shell:
                 """
@@ -1064,8 +1081,8 @@ if RUN_DWI:
                 b0_bvec = rules.dwi_b0_extraction.output.b0_bvec,
                 b0_bval = rules.dwi_b0_extraction.output.b0_bval
             output:
-                fa = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_DWI-space_FA.nii.gz",
-                md = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_DWI-space_MD.nii.gz"
+                fa = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{FILE_SESSION}_DWI-space_FA.nii.gz",
+                md = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{FILE_SESSION}_DWI-space_MD.nii.gz"
             threads: LIGHT_THREADS
             shell:
                 """
@@ -1084,13 +1101,13 @@ if RUN_DWI:
             input:
                 fa = rules.dwi_compute_fa_md.output.fa,
                 md = rules.dwi_compute_fa_md.output.md,
-                reference = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}_{SESSION}_space-T1w_T1w.nii.gz",
+                reference = lambda wildcards: f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{FILE_SESSION}_space-T1w_T1w.nii.gz",
                 affine = rules.dwi_registration.output.fwd_affine,
                 warp = rules.dwi_registration.output.fwd_field,
                 secondary_warp = rules.dwi_registration.output.fwd_field_secondary
             output:
-                fa_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_FA.nii.gz",
-                md_reg = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}_{SESSION}_space-T1w_MD.nii.gz"
+                fa_reg = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{FILE_SESSION}_space-T1w_FA.nii.gz",
+                md_reg = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{FILE_SESSION}_space-T1w_MD.nii.gz"
             threads: LIGHT_THREADS
             wildcard_constraints:
                 modality="T1w"
@@ -1110,7 +1127,7 @@ if RUN_DWI:
                 image = rules.dwi_registration.output.output_segmentation,
                 atlas = rules.synthseg_t1w.output.seg
             output:
-                metrics = f"{OUT_DIR}/{SUBJECT}/{SESSION}/metrics/{SUBJECT}_{SESSION}_desc-DWItoT1w_stat-DICE.tsv"
+                metrics = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/metrics/{SUBJECT}{FILE_SESSION}_desc-DWItoT1w_stat-DICE.tsv"
             threads: LIGHT_THREADS
             shell:
                 """
@@ -1127,7 +1144,7 @@ rule transform_mask_to_mni:
         warp = rules.registration_mni152.output.fwd_field,
         reference = ATLAS
     output:
-        mni_mask = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}brain_mask.nii.gz"
+        mni_mask = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}brain_mask.nii.gz"
     wildcard_constraints:
         reg_type = "linearreg|nonlinearreg"
     threads: LIGHT_THREADS
@@ -1142,7 +1159,7 @@ rule transform_mask_to_mni:
 if RUN_DWI:
     rule apply_warp_dwi_to_mni:
         input:
-            moving = lambda wildcards: f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}{SESSION_STR}_DWI-space_{wildcards.metric}.nii.gz",
+            moving = lambda wildcards: f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{SESSION_STR}_DWI-space_{wildcards.metric}.nii.gz",
             affine_mni = rules.registration_mni152.output.fwd_affine,
             warp_mni = rules.registration_mni152.output.fwd_field,
             affine_dwi = rules.dwi_registration.output.fwd_affine,
@@ -1150,7 +1167,7 @@ if RUN_DWI:
             secondary_warp_dwi = rules.dwi_registration.output.fwd_field_secondary,
             reference = ATLAS
         output:
-            warped = f"{OUT_DIR}/{SUBJECT}/{SESSION}/dwi/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}_{{metric}}.nii.gz"
+            warped = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/dwi/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}_{{metric}}.nii.gz"
         wildcard_constraints:
             metric="FA|MD",
             reg_type = "linearreg|nonlinearreg"
@@ -1168,10 +1185,10 @@ if RUN_DWI:
 if EXTRACT_BRAIN:
     rule skullstripping_native_BE:
         input:
-            image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}{SESSION_STR}_space-T1w_{{modality}}.nii.gz",
+            image = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{SESSION_STR}_space-T1w_{{modality}}.nii.gz",
             mask = rules.skull_strip_t1w.output.mask
         output:
-            brain = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}{SESSION_STR}_space-T1w_desc-brain_{{modality}}.nii.gz"
+            brain = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{SESSION_STR}_space-T1w_desc-brain_{{modality}}.nii.gz"
         wildcard_constraints:
             modality = "T1w|FLAIR"
         threads: LIGHT_THREADS
@@ -1184,10 +1201,10 @@ if EXTRACT_BRAIN:
 
     rule skullstripping_MNI152_BE:
         input:
-            image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}_{{modality}}.nii.gz",
+            image = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}_{{modality}}.nii.gz",
             mask = rules.transform_mask_to_mni.output.mni_mask
         output:
-            brain = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}brain_{{modality}}.nii.gz"
+            brain = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}brain_{{modality}}.nii.gz"
         wildcard_constraints:
             modality = "T1w|FLAIR",
             reg_type = "linearreg|nonlinearreg"
@@ -1201,9 +1218,9 @@ if EXTRACT_BRAIN:
 
     rule normalize_brain_extracted_native:
         input:
-            image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}{SESSION_STR}_space-T1w_desc-brain_{{modality}}.nii.gz"
+            image = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{SESSION_STR}_space-T1w_desc-brain_{{modality}}.nii.gz"
         output:
-            normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}{SESSION_STR}_space-T1w_desc-normalizedbrain_{{modality}}.nii.gz"
+            normalized = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{SESSION_STR}_space-T1w_desc-normalizedbrain_{{modality}}.nii.gz"
         wildcard_constraints:
             modality = "T1w|FLAIR"
         threads: LIGHT_THREADS
@@ -1220,9 +1237,9 @@ if EXTRACT_BRAIN:
 
     rule normalize_brain_extracted_mni:
         input:
-            image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}brain_{{modality}}.nii.gz"
+            image = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}brain_{{modality}}.nii.gz"
         output:
-            normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}normalizedbrain_{{modality}}.nii.gz"
+            normalized = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}normalizedbrain_{{modality}}.nii.gz"
         wildcard_constraints:
             modality = "T1w|FLAIR",
             reg_type = "linearreg|nonlinearreg"
@@ -1240,9 +1257,9 @@ if EXTRACT_BRAIN:
 
 rule normalize_anatomical_native:
     input:
-        image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}{SESSION_STR}_space-T1w_{{modality}}.nii.gz"
+        image = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{SESSION_STR}_space-T1w_{{modality}}.nii.gz"
     output:
-        normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}{SESSION_STR}_space-T1w_desc-normalized_{{modality}}.nii.gz"
+        normalized = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{SESSION_STR}_space-T1w_desc-normalized_{{modality}}.nii.gz"
     wildcard_constraints:
         modality = "T1w|FLAIR"
     threads: LIGHT_THREADS
@@ -1259,9 +1276,9 @@ rule normalize_anatomical_native:
 
 rule normalize_anatomical_mni:
     input:
-        image = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}_{{modality}}.nii.gz"
+        image = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}_{{modality}}.nii.gz"
     output:
-        normalized = f"{OUT_DIR}/{SUBJECT}/{SESSION}/anat/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}normalized_{{modality}}.nii.gz"
+        normalized = f"{OUT_DIR}/{SUBJECT}{PATH_SESSION}/anat/{SUBJECT}{SESSION_STR}_space-MNI152_desc-{{reg_type}}normalized_{{modality}}.nii.gz"
     wildcard_constraints:
         reg_type = "linearreg|nonlinearreg",
         modality = "T1w|FLAIR"

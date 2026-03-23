@@ -7,7 +7,8 @@ on:
     types: [published]
 
 env:
-  REGISTRY: ghcr.io
+  REGISTRY: docker.io
+  DOCKERHUB_USERNAME: micalab
 
 jobs:
   build-docker:
@@ -23,14 +24,16 @@ jobs:
       # Add this step to ensure the image name is lowercase
       - name: Set lower case owner name
         run: |
-          echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
+          # The format for Docker Hub is username/repo_name
+          echo "IMAGE_NAME=${{ env.DOCKERHUB_USERNAME }}/${GITHUB_REPOSITORY#*/}" >> ${GITHUB_ENV}
+          echo "IMAGE_NAME=${IMAGE_NAME,,}" >> ${GITHUB_ENV} # Ensure it's lowercase
 
       - name: Log in to the Container registry
         uses: docker/login-action@v2
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
@@ -62,7 +65,9 @@ jobs:
       # Add this step to ensure the image name is lowercase here as well
       - name: Set lower case owner name
         run: |
-          echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
+          # The format for Docker Hub is username/repo_name
+          echo "IMAGE_NAME=${{ env.DOCKERHUB_USERNAME }}/${GITHUB_REPOSITORY#*/}" >> ${GITHUB_ENV}
+          echo "IMAGE_NAME=${IMAGE_NAME,,}" >> ${GITHUB_ENV} # Ensure it's lowercase
         
       - name: Setup Apptainer/Singularity
         uses: eWaterCycle/setup-apptainer@v2
