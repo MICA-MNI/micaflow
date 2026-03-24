@@ -312,12 +312,12 @@ if __name__ == "__main__":
 
     # input/outputs
     parser.add_argument(
-        "--i", 
+        "--input", 
         required=True,
         help="Image(s) to segment. Can be a path to an image or to a folder."
     )
     parser.add_argument(
-        "--o",
+        "--output",
         required=True,
         help="Segmentation output(s). Must be a folder if --i designates a folder.",
     )
@@ -382,6 +382,13 @@ if __name__ == "__main__":
 
     # parse commandline
     args = vars(parser.parse_args())
+    
+    # Map 'input' and 'output' to 'i' and 'o' to match the internal logic and lamareg backend
+    if 'input' in args:
+        args['i'] = args.pop('input')
+    if 'output' in args:
+        args['o'] = args.pop('output')
+
     try:
         # Validate required files exist
         if not os.path.isdir(args['i']) and not os.path.exists(args['i']):

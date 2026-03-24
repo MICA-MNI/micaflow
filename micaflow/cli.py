@@ -608,8 +608,8 @@ def main():
         "--input", help="Image(s) to segment. Can be a path to an image or to a folder."
     )
     synthseg_parser.add_argument(
-        "--o",
-        help="Segmentation output(s). Must be a folder if --i designates a folder.",
+        "--output",
+        help="Segmentation output(s). Must be a folder if --input designates a folder.",
     )
     synthseg_parser.add_argument(
         "--parc",
@@ -1488,22 +1488,25 @@ def main():
         synthseg_args = []
         for arg_name, arg_value in vars(args).items():
             if arg_name != "command" and arg_value is not None:
+                # Map 'input' back to 'i' so the synthseg script recognizes it
+                passed_arg = "i" if arg_name == "input" else arg_name
+                
                 if isinstance(arg_value, bool):
                     if arg_value:
-                        synthseg_args.append(f"--{arg_name}")
+                        synthseg_args.append(f"--{passed_arg}")
                 elif isinstance(arg_value, list):
-                    synthseg_args.append(f"--{arg_name}")
+                    synthseg_args.append(f"--{passed_arg}")
                     synthseg_args.extend([str(x) for x in arg_value])
                 else:
-                    synthseg_args.append(f"--{arg_name}")
+                    synthseg_args.append(f"--{passed_arg}")
                     synthseg_args.append(str(arg_value))
         try:
-            print(f"Running SynthSeg brain segmentation on {args.i}...")
+            print(f"Running SynthSeg brain segmentation on {args.input}...")
             subprocess.run(
                 ["python", "-m", "micaflow.scripts.synthseg"] + synthseg_args,
                 check=True,
             )
-            print(f"Brain segmentation completed. Output saved to {args.o}")
+            print(f"Brain segmentation completed. Output saved to {args.output}")
         except subprocess.CalledProcessError as e:
             print(f"Error running brain segmentation: {e}")
             sys.exit(1)
