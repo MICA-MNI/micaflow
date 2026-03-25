@@ -66,9 +66,10 @@ jobs:
   
       - name: Set lower case owner name
         run: |
-          # The format for Docker Hub is username/repo_name
-          echo "IMAGE_NAME=${{ env.DOCKERHUB_USERNAME }}/${GITHUB_REPOSITORY#*/}" >> ${GITHUB_ENV}
-          echo "IMAGE_NAME=${IMAGE_NAME,,}" >> ${GITHUB_ENV} # Ensure it's lowercase
+          # Use a shell variable to manipulate the string first
+          RAW_NAME="${{ env.DOCKERHUB_USERNAME }}/${GITHUB_REPOSITORY#*/}"
+          # Write the lowercase version to GITHUB_ENV
+          echo "IMAGE_NAME=${RAW_NAME,,}" >> $GITHUB_ENV
         
       - name: Setup Apptainer/Singularity
         uses: eWaterCycle/setup-apptainer@v2
