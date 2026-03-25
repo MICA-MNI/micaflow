@@ -66,11 +66,9 @@ jobs:
   
       - name: Set lower case owner name
         run: |
-          # Use a shell variable to manipulate the string first
           RAW_NAME="${{ env.DOCKERHUB_USERNAME }}/${GITHUB_REPOSITORY#*/}"
-          # Write the lowercase version to GITHUB_ENV
-          echo "IMAGE_NAME=${RAW_NAME,,}" >> $GITHUB_ENV
-        
+          echo "IMAGE_NAME=${RAW_NAME,,}" >> "$GITHUB_ENV"
+
       - name: Setup Apptainer/Singularity
         uses: eWaterCycle/setup-apptainer@v2
         with:
@@ -84,5 +82,5 @@ jobs:
   
       - name: Build Singularity Image
         run: |
-          IMAGE_URL="docker://ghcr.io/${{ env.IMAGE_NAME }}:main"
+          IMAGE_URL="docker://${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main"
           apptainer build micaflow.sif "$IMAGE_URL"
