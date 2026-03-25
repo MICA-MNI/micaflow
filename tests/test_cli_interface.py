@@ -108,7 +108,7 @@ def test_pipeline_defaults(mock_subprocess_run):
     with patch("sys.argv", [
         "micaflow", "pipeline", 
         "--subject", "sub-01",
-        "--output", "/output", # Changed to --output
+        "--output", "test_output", # Changed to --output
         "--t1w-file", "t1w.nii.gz"
     ]):
         cli_main()
