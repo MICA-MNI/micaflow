@@ -40,7 +40,7 @@ Linear Only (--linear-only):
   - Rigid alignment + Affine transformation only
   - No nonlinear deformation
   - Best for: Intra-subject registration, quick alignment, motion correction
-  - Processing time: ~2-4 minutes
+  - Processing time: ~.5-1 minutes
 
 Command-Line Usage:
 ------------------
